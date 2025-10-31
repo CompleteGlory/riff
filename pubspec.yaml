@@ -92,9 +92,9 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   fonts:
-    - family: GeneralSans
+    - family: Rubik
       fonts:
-        - asset: assets/fonts/GeneralSans-Variable.ttf
+        - asset: assets/fonts/Rubik-VariableFont_wght.ttf
   #       - asset: fonts/Schyler-Italic.ttf
   #         style: italic
   #   - family: Trajan Pro
