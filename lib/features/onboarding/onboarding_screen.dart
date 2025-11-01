@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:riff/core/helpers/extenstions.dart';
+import 'package:riff/core/routing/routes.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/widgets/button.dart';
 
@@ -14,19 +16,12 @@ class OnBoardingScreen extends StatelessWidget {
         child: Stack(
         children: [
           Image.asset("assets/images/onboarding_background.png",width: double.infinity,fit: BoxFit.cover,),
-          // Column(
-          //   children: [
-              
-          //    // Image.asset("assets/images/onboarding_image.png",width: double.infinity,fit: BoxFit.cover,alignment: AlignmentDirectional.topCenter,height: 685.h,),
-          //   ],
-          // ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: Column(children: [
-              Center(child: Text("Define Yourself in your unique way.",style: TextStyles.font50SemiBold,)), 
+              Center(child: Text("Define Yourself in your unique way.",style: TextStyles.font45SemiBold,)), 
               ],),
           ),
-          
         ],
       )
       ),
@@ -36,7 +31,9 @@ class OnBoardingScreen extends StatelessWidget {
       height: 100.h,
       child: Padding(
         padding: const EdgeInsets.all(25.0),
-        child: AppButton(onPressed: (){}, text: "Get started", isWhite: false,icon: Icons.arrow_forward,),
+        child: AppButton(onPressed: (){
+          context.pushNamed(Routes.login);
+        }, text: "Get started", isWhite: false,icon: Icons.arrow_forward,),
       )
       ),
     );
