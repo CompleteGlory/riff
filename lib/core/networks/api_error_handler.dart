@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import 'api_error_model.dart';
 
 class ApiErrorHandler {
-  static ApiErrorModel? handle(dynamic error) {
+  static ApiErrorModel handle(dynamic error) {
     if (error is DioException) {
       switch (error.type) {
         case DioExceptionType.connectionError:
@@ -24,36 +24,51 @@ class ApiErrorHandler {
         case DioExceptionType.sendTimeout:
           return ApiErrorModel(
               message: "Send timeout in connection with the server");
-        default:
-          return ApiErrorModel(message: "Something went wrong");
-      }
+        case DioExceptionType.badCertificate:
+          return ApiErrorModel(message: "Bad certificate");
+        }
     } else {
       return ApiErrorModel(message: "Something went wrong");
     }
   }
 }
 
-ApiErrorModel? _handleError(dynamic data, Response? response) {
+ApiErrorModel _handleError(dynamic data, Response? response) {
   // Graceful handling of null data
   if (data == null || response == null) {
     return ApiErrorModel(
-      code: response?.statusCode,
+      statusCode: response?.statusCode,
       message: "Unexpected error occurred",
     );
   }
 
-  // Extract message and errors list
-  final String? message = data['message'] ?? "An error occurred";
-  final List<dynamic>? errorsList = data['errors'];
+  try {
+    // If data is already a Map, use it directly
+    Map<String, dynamic> errorData;
+    if (data is Map<String, dynamic>) {
+      errorData = data;
+    } else if (data is String) {
+      // If data is a string, try to parse it as JSON
+      return ApiErrorModel(
+        statusCode: response.statusCode,
+        message: data,
+      );
+    } else {
+      return ApiErrorModel(
+        statusCode: response.statusCode,
+        message: "Unexpected error format",
+      );
+    }
 
-  // Parse errors into List<ApiErrorDetail>
-  final List<ApiErrorDetail>? parsedErrors = errorsList?.map((error) {
-          return ApiErrorDetail.fromJson(error);
-        }).toList();
-
-  return ApiErrorModel(
-    code: response.statusCode,
-    message: message,
-    errors: parsedErrors,
-  );
+    // Try to parse as ApiErrorModel
+    return ApiErrorModel.fromJson(errorData);
+  } catch (e) {
+    // Fallback if parsing fails
+    return ApiErrorModel(
+      statusCode: response.statusCode,
+      message: data['message']?.toString() ?? 
+               data['error']?.toString() ?? 
+               "An error occurred",
+    );
+  }
 }

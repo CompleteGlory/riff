@@ -1,18 +1,19 @@
 import 'package:json_annotation/json_annotation.dart';
+
 part 'api_error_model.g.dart';
 
 @JsonSerializable()
 class ApiErrorModel {
+  @JsonKey(name: 'statusCode')
+  final int? statusCode;
   final String? message;
-  final int? code;
   
-  // Change type to List<ApiErrorDetail> to parse individual error objects
   @JsonKey(name: 'errors')
   final List<ApiErrorDetail>? errors;
 
   ApiErrorModel({
+    this.statusCode,
     this.message,
-    this.code,
     this.errors,
   });
 
@@ -28,24 +29,37 @@ class ApiErrorModel {
     }
 
     // Iterate over errors list and combine their messages
-    final errorMessage = errors!.map((error) => "${error.msg}").join('\n');
-    return errorMessage;
+    final errorMessage = errors!.map((error) => error.message ?? "").join('\n');
+    return errorMessage.isNotEmpty ? errorMessage : (message ?? "Unknown Error occurred");
   }
 }
 
-// New model to represent individual error details
 @JsonSerializable()
 class ApiErrorDetail {
-  final String? type;
-  final String? value;
-  final String? msg;
-  final String? path;
-  final String? location;
+  final String? origin;
+  final String? code;
+  final String? format;
+  final String? pattern;
+  
+  @JsonKey(name: 'path')
+  final List<String>? path;
+  
+  final String? message;
 
-  ApiErrorDetail({this.type, this.value, this.msg, this.path, this.location});
+  ApiErrorDetail({
+    this.origin,
+    this.code,
+    this.format,
+    this.pattern,
+    this.path,
+    this.message,
+  });
 
   factory ApiErrorDetail.fromJson(Map<String, dynamic> json) =>
       _$ApiErrorDetailFromJson(json);
 
   Map<String, dynamic> toJson() => _$ApiErrorDetailToJson(this);
+  
+  /// Get the field name from path array
+  String? get fieldName => path?.isNotEmpty == true ? path!.first : null;
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/helpers/spacing.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
@@ -7,8 +8,10 @@ import 'package:riff/core/widgets/button.dart';
 import 'package:riff/features/login/UI/widgets/or_divider.dart';
 import 'package:riff/features/login/UI/widgets/social_login.dart';
 import 'package:riff/features/signup/UI/widgets/already_have_account_text.dart';
+import 'package:riff/features/signup/UI/widgets/signup_bloc_listener.dart';
 import 'package:riff/features/signup/UI/widgets/signup_form_fields.dart';
 import 'package:riff/features/signup/UI/widgets/terms_and_conditions_text.dart';
+import 'package:riff/features/signup/logic/cubit/signup_cubit.dart';
 
 class SignupScreen extends StatelessWidget {
   const SignupScreen({super.key});
@@ -43,9 +46,11 @@ class SignupScreen extends StatelessWidget {
                         TermsAndConditionsText(),
                         verticalSpace(20),
                         AppButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            validateAndSignup(context);
+                          },
                           text: "Create An Account",
-                          isWhite: true,
+                          isWhite: false,
                         ),
                         verticalSpace(15),
                         OrDivider(),
@@ -56,6 +61,7 @@ class SignupScreen extends StatelessWidget {
                           child: AlreadyHaveAnAccountText(),
                         ),
                         verticalSpace(10),
+                        SignupBlocListener(),
                       ],
                     ),
                   ),
@@ -66,5 +72,11 @@ class SignupScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void validateAndSignup(BuildContext context) {
+    if (context.read<SignupCubit>().formKey.currentState!.validate()) {
+      context.read<SignupCubit>().emitSignupStates();
+    }
   }
 }
