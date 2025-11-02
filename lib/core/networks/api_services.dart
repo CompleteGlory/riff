@@ -17,5 +17,8 @@ abstract class ApiService {
   @POST(ApiConstants.signUp)
   Future<SignupResponse> signUp(@Body() SignupRequestBody signUpRequestBody);
 
+  @POST(ApiConstants.refreshToken)
+  Future<HttpResponse<void>> refreshToken();
 
+  
 }

@@ -14,19 +14,22 @@ class ApiErrorHandler {
           return ApiErrorModel(message: "Connection timeout with the server");
         case DioExceptionType.unknown:
           return ApiErrorModel(
-              message:
-                  "Connection to the server failed due to internet connection");
+            message:
+                "Connection to the server failed due to internet connection",
+          );
         case DioExceptionType.receiveTimeout:
           return ApiErrorModel(
-              message: "Receive timeout in connection with the server");
+            message: "Receive timeout in connection with the server",
+          );
         case DioExceptionType.badResponse:
           return _handleError(error.response?.data, error.response);
         case DioExceptionType.sendTimeout:
           return ApiErrorModel(
-              message: "Send timeout in connection with the server");
+            message: "Send timeout in connection with the server",
+          );
         case DioExceptionType.badCertificate:
           return ApiErrorModel(message: "Bad certificate");
-        }
+      }
     } else {
       return ApiErrorModel(message: "Something went wrong");
     }
@@ -49,10 +52,7 @@ ApiErrorModel _handleError(dynamic data, Response? response) {
       errorData = data;
     } else if (data is String) {
       // If data is a string, try to parse it as JSON
-      return ApiErrorModel(
-        statusCode: response.statusCode,
-        message: data,
-      );
+      return ApiErrorModel(statusCode: response.statusCode, message: data);
     } else {
       return ApiErrorModel(
         statusCode: response.statusCode,
@@ -66,9 +66,10 @@ ApiErrorModel _handleError(dynamic data, Response? response) {
     // Fallback if parsing fails
     return ApiErrorModel(
       statusCode: response.statusCode,
-      message: data['message']?.toString() ?? 
-               data['error']?.toString() ?? 
-               "An error occurred",
+      message:
+          data['message']?.toString() ??
+          data['error']?.toString() ??
+          "An error occurred",
     );
   }
 }

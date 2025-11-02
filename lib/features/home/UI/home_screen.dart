@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:riff/core/helpers/constants.dart';
+import 'package:riff/core/helpers/extenstions.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
+import 'package:riff/core/routing/routes.dart';
 import 'package:riff/core/widgets/button.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -13,8 +15,8 @@ class HomeScreen extends StatelessWidget {
         title: const Text('Home Screen'),
       ),
       body: AppButton(onPressed: ()async{
-       String token = await SharedPrefHelper.getString(SharedPrefKeys.userToken);
-        print("User Token: $token");
+        await SharedPrefHelper.removeData(SharedPrefKeys.userToken);
+        context.pushReplacementNamed(Routes.login);
         }, text: "Log Out", isWhite:false),
     );
   }
