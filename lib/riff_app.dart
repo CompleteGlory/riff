@@ -19,6 +19,7 @@ class RiffApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,
+          scaffoldBackgroundColor: Colors.white,
         ),
          navigatorKey: NavigationService.navigatorKey,
          onGenerateRoute: appRouter.generateRoute,
