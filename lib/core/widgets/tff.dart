@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
@@ -10,7 +9,7 @@ class AppTextField extends StatefulWidget {
   final bool isPassword;
   final double? height;
   final Function(String?) validator;
-  final double ? width;
+  final double? width;
   final String? hintText;
 
   const AppTextField({
@@ -41,6 +40,18 @@ class AppTextFieldState extends State<AppTextField> {
           return widget.validator(value);
         },
         builder: (FormFieldState<String> field) {
+          // Determine the state
+          bool hasError = field.hasError;
+          bool hasValue = widget.controller.text.isNotEmpty;
+          bool isSuccess = hasValue && !hasError && field.value != null;
+
+          // Determine border color
+          Color borderColor = hasError
+              ? Colors.red
+              : isSuccess
+                  ? Colors.green
+                  : ColorManager.lightGrey;
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -49,7 +60,7 @@ class AppTextFieldState extends State<AppTextField> {
                 decoration: ShapeDecoration(
                   color: ColorManager.white,
                   shape: RoundedRectangleBorder(
-                    side: const BorderSide(width: 1, color: ColorManager.lightGrey),
+                    side: BorderSide(width: 1, color: borderColor),
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -65,23 +76,10 @@ class AppTextFieldState extends State<AppTextField> {
                   textAlignVertical: TextAlignVertical.top,
                   decoration: InputDecoration(
                     hintText: widget.hintText,
-                    hintStyle: TextStyles.font15semiBold.copyWith(color: ColorManager.lightGrey),  
-                    suffixIcon: widget.isPassword
-                        ? IconButton(
-                            icon: Icon(
-                              _isPasswordVisible
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                              size: 25,
-                              color: ColorManager.lightGrey,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _isPasswordVisible = !_isPasswordVisible;
-                              });
-                            },
-                          )
-                        : null,
+                    hintStyle: TextStyles.font15semiBold.copyWith(
+                      color: ColorManager.lightGrey,
+                    ),
+                    suffixIcon: _buildSuffixIcon(isSuccess, hasError),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 15,
@@ -91,7 +89,7 @@ class AppTextFieldState extends State<AppTextField> {
                   ),
                 ),
               ),
-              if (field.hasError)
+              if (hasError)
                 Padding(
                   padding: const EdgeInsets.only(left: 16, top: 8),
                   child: Text(
@@ -107,5 +105,38 @@ class AppTextFieldState extends State<AppTextField> {
         },
       ),
     );
+  }
+
+  Widget? _buildSuffixIcon(bool isSuccess, bool hasError) {
+    if (widget.isPassword) {
+      // Password field always shows visibility toggle
+      return IconButton(
+        icon: Icon(
+          _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+          size: 25,
+          color: ColorManager.lightGrey,
+        ),
+        onPressed: () {
+          setState(() {
+            _isPasswordVisible = !_isPasswordVisible;
+          });
+        },
+      );
+    } else if (isSuccess) {
+      // Success state: show green checkmark
+      return const Icon(
+        Icons.check_circle,
+        color: Colors.green,
+        size: 25,
+      );
+    } else if (hasError) {
+      // Error state: show red error icon (optional)
+      return const Icon(
+        Icons.error,
+        color: Colors.red,
+        size: 25,
+      );
+    }
+    return null;
   }
 }

@@ -22,26 +22,37 @@ class _ApiService implements ApiService {
   final ParseErrorLogger? errorLogger;
 
   @override
-  Future<LoginResponse> login(LoginRequestBody loginRequestBody) async {
+  Future<Response<Map<String, dynamic>>> login(
+    LoginRequestBody loginRequestBody,
+  ) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
     _data.addAll(loginRequestBody.toJson());
-    final _options = _setStreamType<LoginResponse>(
+    final _options = _setStreamType<Response<Map<String, dynamic>>>(
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'auth/login',
+            'auth/log-in',
             queryParameters: queryParameters,
             data: _data,
           )
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late LoginResponse _value;
+    late Response<Map<String, dynamic>> _value;
     try {
-      _value = LoginResponse.fromJson(_result.data!);
+      _value = Response(
+        data: _result.data,
+        headers: _result.headers,
+        requestOptions: _result.requestOptions,
+        statusCode: _result.statusCode,
+        statusMessage: _result.statusMessage,
+        isRedirect: _result.isRedirect,
+        redirects: _result.redirects,
+        extra: _result.extra,
+      );
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options);
       rethrow;

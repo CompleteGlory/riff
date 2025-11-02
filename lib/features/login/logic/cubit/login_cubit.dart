@@ -23,9 +23,7 @@ class LoginCubit extends Cubit<LoginState> {
         email: mailController.text, password: passwordController.text));
     response.when(
       success: (data) async {
-       await saveToken(data.refreshToken ??'');
-        await saveUserId(data.id);
-        DioFactory.setTokenIntoHeaderAfterLogin(data.refreshToken ?? "");
+        await saveUserId(data.user.id);
         emit(LoginState.success(data));
       },
 
@@ -34,6 +32,7 @@ class LoginCubit extends Cubit<LoginState> {
       },
     );
   }
+  
 
   saveToken(String? token) async {
     // save token to shared preferences
