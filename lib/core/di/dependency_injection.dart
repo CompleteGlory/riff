@@ -5,6 +5,8 @@ import 'package:riff/core/networks/api_services.dart';
 import 'package:riff/core/networks/dio_factory.dart';
 import 'package:riff/features/login/data/repos/login_repo.dart';
 import 'package:riff/features/login/logic/cubit/login_cubit.dart';
+import 'package:riff/features/signup/data/repos/signup_repo.dart';
+import 'package:riff/features/signup/logic/cubit/signup_cubit.dart';
 
 final getIt = GetIt.instance;
 
@@ -17,5 +19,9 @@ Future<void> setUpGetIt() async {
  //login
   getIt.registerLazySingleton<LoginRepo>(()=>LoginRepo(getIt()));
   getIt.registerFactory<LoginCubit>(()=>LoginCubit(getIt()));
+
+  //signup
+  getIt.registerLazySingleton<SignupRepo>(()=>SignupRepo(getIt()));
+  getIt.registerFactory<SignupCubit>(()=>SignupCubit(getIt()));
 
 }

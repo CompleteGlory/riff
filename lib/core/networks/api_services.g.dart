@@ -22,7 +22,7 @@ class _ApiService implements ApiService {
   final ParseErrorLogger? errorLogger;
 
   @override
-  Future<Response<Map<String, dynamic>>> login(
+  Future<HttpResponse<LoginResponse>> login(
     LoginRequestBody loginRequestBody,
   ) async {
     final _extra = <String, dynamic>{};
@@ -30,7 +30,7 @@ class _ApiService implements ApiService {
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
     _data.addAll(loginRequestBody.toJson());
-    final _options = _setStreamType<Response<Map<String, dynamic>>>(
+    final _options = _setStreamType<HttpResponse<LoginResponse>>(
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
@@ -41,18 +41,38 @@ class _ApiService implements ApiService {
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late Response<Map<String, dynamic>> _value;
+    late LoginResponse _value;
     try {
-      _value = Response(
-        data: _result.data,
-        headers: _result.headers,
-        requestOptions: _result.requestOptions,
-        statusCode: _result.statusCode,
-        statusMessage: _result.statusMessage,
-        isRedirect: _result.isRedirect,
-        redirects: _result.redirects,
-        extra: _result.extra,
-      );
+      _value = LoginResponse.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    final httpResponse = HttpResponse(_value, _result);
+    return httpResponse;
+  }
+
+  @override
+  Future<SignupResponse> signUp(SignupRequestBody signUpRequestBody) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(signUpRequestBody.toJson());
+    final _options = _setStreamType<SignupResponse>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            'auth/sign-up',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late SignupResponse _value;
+    try {
+      _value = SignupResponse.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options);
       rethrow;
