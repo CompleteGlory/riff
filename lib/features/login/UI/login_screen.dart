@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/helpers/spacing.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
@@ -6,9 +7,11 @@ import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/widgets/button.dart';
 import 'package:riff/features/login/UI/widgets/dont_have_account_text.dart';
 import 'package:riff/features/login/UI/widgets/forgot_password_text.dart';
+import 'package:riff/features/login/UI/widgets/login_bloc_listener.dart';
 import 'package:riff/features/login/UI/widgets/login_form_fields.dart';
 import 'package:riff/features/login/UI/widgets/or_divider.dart';
 import 'package:riff/features/login/UI/widgets/social_login.dart';
+import 'package:riff/features/login/logic/cubit/login_cubit.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -42,7 +45,9 @@ class LoginScreen extends StatelessWidget {
                         verticalSpace(10),
                         ForgotPasswordText(),
                         verticalSpace(20),
-                        AppButton(onPressed: () {}, text: "Login", isWhite: true),
+                        AppButton(onPressed: () {
+                          validateAndLogin(context);
+                        }, text: "Login", isWhite: false),
                         verticalSpace(15),
                         OrDivider(),
                         SocialLogin(),
@@ -52,6 +57,7 @@ class LoginScreen extends StatelessWidget {
                           child: DonotHaveAnAccountText(),
                         ),
                         verticalSpace(10),
+                        const LoginBlocListener(),
                       ],
                     ),
                   ),
@@ -62,5 +68,10 @@ class LoginScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+  void validateAndLogin(BuildContext context) {
+    if (context.read<LoginCubit>().formKey.currentState!.validate()) {
+      context.read<LoginCubit>().emitLoginStates();
+    }
   }
 }
