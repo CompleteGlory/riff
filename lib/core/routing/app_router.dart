@@ -6,6 +6,7 @@ import 'package:riff/features/home/UI/home_screen.dart';
 import 'package:riff/features/login/UI/login_screen.dart';
 import 'package:riff/features/login/logic/cubit/login_cubit.dart';
 import 'package:riff/features/onboarding/onboarding_screen.dart';
+import 'package:riff/features/signup/UI/signup_screen.dart';
 
 class AppRouter {
    Route? generateRoute(RouteSettings settings) {
@@ -24,6 +25,10 @@ class AppRouter {
       case Routes.home:
          return MaterialPageRoute(
           builder: (_) => const HomeScreen(),
+        );
+      case Routes.signup:
+        return MaterialPageRoute(
+          builder: (_) => const SignupScreen(),
         );
         default:
         null;
