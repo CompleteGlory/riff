@@ -47,7 +47,7 @@ dependencies:
   easy_localization: ^3.0.8
   flutter_svg: ^2.2.1
   flutter_screenutil: ^5.9.3
-  build_runner: ^2.9.0
+  build_runner: ^2.10.1
   shared_preferences: ^2.5.3
   flutter_native_splash: ^2.4.7
   shimmer: ^3.0.0
