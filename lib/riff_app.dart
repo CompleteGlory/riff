@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/routing/app_router.dart';
 import 'package:riff/core/routing/routes.dart';
 import 'package:riff/core/routing/navigation_service.dart';
-import 'package:riff/main.dart';
+import 'package:riff/main_development.dart';
 
 
 class RiffApp extends StatelessWidget {
