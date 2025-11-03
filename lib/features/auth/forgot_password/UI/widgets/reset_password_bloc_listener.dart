@@ -60,7 +60,7 @@ class ResetPasswordBlocListener extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'User registered successfully.\nPlease login to continue.',
+                        'Password updated successfully.\nPlease login to continue.',
                         textAlign: TextAlign.center,
                         style: TextStyles.font14Medium.copyWith(
                           color: ColorManager.lightGrey,
