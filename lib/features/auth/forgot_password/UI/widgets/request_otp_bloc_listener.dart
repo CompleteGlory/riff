@@ -3,21 +3,23 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:riff/core/routing/routes.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
-import 'package:riff/features/auth/login/logic/cubit/login_cubit.dart';
-import 'package:riff/features/auth/login/logic/cubit/login_state.dart';
+import 'package:riff/features/auth/forgot_password/logic/cubit/forgot_password_cubit.dart';
+import 'package:riff/features/auth/forgot_password/logic/cubit/forgot_password_state.dart';
 
-class LoginBlocListener extends StatelessWidget {
-  const LoginBlocListener({super.key});
+class VerifyOTPBlocListener extends StatelessWidget {
+  const VerifyOTPBlocListener({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<LoginCubit, LoginState>(
+    return BlocListener<ForgotPasswordCubit, ForgotPasswordState>(
       listenWhen: (previous, current) =>
-          current is Loading || current is Success || current is Error,
+          current is OtpVerificationLoading ||
+          current is OtpVerified ||
+          current is OtpVerificationFailed,
       listener: (context, state) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           state.whenOrNull(
-            loading: () {
+            otpVerificationLoading: () {
               // show loading dialog on root navigator so it can be popped reliably
               showDialog(
                 context: context,
@@ -30,15 +32,15 @@ class LoginBlocListener extends StatelessWidget {
                 ),
               );
             },
-            success: (loginResponse) async {
-              // dismiss loading dialog if present on root navigator
+            otpVerified: (forgotPasswordResponse) async {
+              // attempt to dismiss loading dialog only on root navigator
               if (Navigator.of(context, rootNavigator: true).canPop()) {
                 Navigator.of(context, rootNavigator: true).pop();
               }
-              Navigator.of(context).pushReplacementNamed(Routes.home);
+              Navigator.of(context).pushReplacementNamed(Routes.resetPassword);
             },
-            failure: (error) {
-              _setupErrorState(context, error.message.toString());
+            otpVerificationFailed: (error) {
+              _setupErrorState(context, error.message!);
             },
           );
         });
