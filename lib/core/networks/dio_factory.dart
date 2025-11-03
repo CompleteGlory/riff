@@ -60,6 +60,13 @@ class DioFactory {
           final requestOptions = err.requestOptions;
 
           // Only attempt refresh once per request
+          // Also skip refresh-navigation behavior for the login endpoint itself
+          final requestPath = requestOptions.uri.toString();
+          if (requestPath.contains(ApiConstants.login)) {
+            // If the login call itself failed, let the caller handle the error
+            return handler.next(err);
+          }
+
           if (statusCode == 401 && requestOptions.extra['retried'] != true) {
             try {
               // Use a clean Dio instance to call refresh so we don't trigger the same interceptor
@@ -76,7 +83,7 @@ class DioFactory {
                 // Retry original request with the (possibly) updated dio instance
                 final Response retryResponse = await dio!.fetch(requestOptions);
                 return handler.resolve(retryResponse);
-              } else if (refreshStatus == 401) {
+              } else if (refreshStatus == 401 && requestPath.contains(ApiConstants.refreshToken)) {
                 // Refresh token is invalid — navigate to login
                 NavigationService.navigateToLoginAndClearStack();
                 return handler.next(err);

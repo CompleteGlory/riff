@@ -55,14 +55,20 @@ extension ForgotPasswordStatePatterns on ForgotPasswordState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( _Initial value)?  initial,TResult Function( Loading value)?  loading,TResult Function( Success value)?  success,TResult Function( Error value)?  failure,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( _Initial value)?  initial,TResult Function( Loading value)?  loading,TResult Function( Success value)?  success,TResult Function( Error value)?  failure,TResult Function( OtpVerificationLoading value)?  otpVerificationLoading,TResult Function( OtpVerified value)?  otpVerified,TResult Function( OtpVerificationFailed value)?  otpVerificationFailed,TResult Function( ResetPasswordLoading value)?  resetPasswordLoading,TResult Function( ResetPasswordSuccess value)?  resetPasswordSuccess,TResult Function( ResetPasswordFailed value)?  resetPasswordFailed,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
 return initial(_that);case Loading() when loading != null:
 return loading(_that);case Success() when success != null:
 return success(_that);case Error() when failure != null:
-return failure(_that);case _:
+return failure(_that);case OtpVerificationLoading() when otpVerificationLoading != null:
+return otpVerificationLoading(_that);case OtpVerified() when otpVerified != null:
+return otpVerified(_that);case OtpVerificationFailed() when otpVerificationFailed != null:
+return otpVerificationFailed(_that);case ResetPasswordLoading() when resetPasswordLoading != null:
+return resetPasswordLoading(_that);case ResetPasswordSuccess() when resetPasswordSuccess != null:
+return resetPasswordSuccess(_that);case ResetPasswordFailed() when resetPasswordFailed != null:
+return resetPasswordFailed(_that);case _:
   return orElse();
 
 }
@@ -80,14 +86,20 @@ return failure(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( _Initial value)  initial,required TResult Function( Loading value)  loading,required TResult Function( Success value)  success,required TResult Function( Error value)  failure,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( _Initial value)  initial,required TResult Function( Loading value)  loading,required TResult Function( Success value)  success,required TResult Function( Error value)  failure,required TResult Function( OtpVerificationLoading value)  otpVerificationLoading,required TResult Function( OtpVerified value)  otpVerified,required TResult Function( OtpVerificationFailed value)  otpVerificationFailed,required TResult Function( ResetPasswordLoading value)  resetPasswordLoading,required TResult Function( ResetPasswordSuccess value)  resetPasswordSuccess,required TResult Function( ResetPasswordFailed value)  resetPasswordFailed,}){
 final _that = this;
 switch (_that) {
 case _Initial():
 return initial(_that);case Loading():
 return loading(_that);case Success():
 return success(_that);case Error():
-return failure(_that);case _:
+return failure(_that);case OtpVerificationLoading():
+return otpVerificationLoading(_that);case OtpVerified():
+return otpVerified(_that);case OtpVerificationFailed():
+return otpVerificationFailed(_that);case ResetPasswordLoading():
+return resetPasswordLoading(_that);case ResetPasswordSuccess():
+return resetPasswordSuccess(_that);case ResetPasswordFailed():
+return resetPasswordFailed(_that);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -104,14 +116,20 @@ return failure(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( _Initial value)?  initial,TResult? Function( Loading value)?  loading,TResult? Function( Success value)?  success,TResult? Function( Error value)?  failure,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( _Initial value)?  initial,TResult? Function( Loading value)?  loading,TResult? Function( Success value)?  success,TResult? Function( Error value)?  failure,TResult? Function( OtpVerificationLoading value)?  otpVerificationLoading,TResult? Function( OtpVerified value)?  otpVerified,TResult? Function( OtpVerificationFailed value)?  otpVerificationFailed,TResult? Function( ResetPasswordLoading value)?  resetPasswordLoading,TResult? Function( ResetPasswordSuccess value)?  resetPasswordSuccess,TResult? Function( ResetPasswordFailed value)?  resetPasswordFailed,}){
 final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
 return initial(_that);case Loading() when loading != null:
 return loading(_that);case Success() when success != null:
 return success(_that);case Error() when failure != null:
-return failure(_that);case _:
+return failure(_that);case OtpVerificationLoading() when otpVerificationLoading != null:
+return otpVerificationLoading(_that);case OtpVerified() when otpVerified != null:
+return otpVerified(_that);case OtpVerificationFailed() when otpVerificationFailed != null:
+return otpVerificationFailed(_that);case ResetPasswordLoading() when resetPasswordLoading != null:
+return resetPasswordLoading(_that);case ResetPasswordSuccess() when resetPasswordSuccess != null:
+return resetPasswordSuccess(_that);case ResetPasswordFailed() when resetPasswordFailed != null:
+return resetPasswordFailed(_that);case _:
   return null;
 
 }
@@ -128,13 +146,19 @@ return failure(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( String data)?  success,TResult Function( ApiErrorModel apiErrorModel)?  failure,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( String data)?  success,TResult Function( ApiErrorModel apiErrorModel)?  failure,TResult Function()?  otpVerificationLoading,TResult Function( String data)?  otpVerified,TResult Function( ApiErrorModel apiErrorModel)?  otpVerificationFailed,TResult Function()?  resetPasswordLoading,TResult Function( String data)?  resetPasswordSuccess,TResult Function( ApiErrorModel apiErrorModel)?  resetPasswordFailed,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
 return initial();case Loading() when loading != null:
 return loading();case Success() when success != null:
 return success(_that.data);case Error() when failure != null:
-return failure(_that.apiErrorModel);case _:
+return failure(_that.apiErrorModel);case OtpVerificationLoading() when otpVerificationLoading != null:
+return otpVerificationLoading();case OtpVerified() when otpVerified != null:
+return otpVerified(_that.data);case OtpVerificationFailed() when otpVerificationFailed != null:
+return otpVerificationFailed(_that.apiErrorModel);case ResetPasswordLoading() when resetPasswordLoading != null:
+return resetPasswordLoading();case ResetPasswordSuccess() when resetPasswordSuccess != null:
+return resetPasswordSuccess(_that.data);case ResetPasswordFailed() when resetPasswordFailed != null:
+return resetPasswordFailed(_that.apiErrorModel);case _:
   return orElse();
 
 }
@@ -152,13 +176,19 @@ return failure(_that.apiErrorModel);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( String data)  success,required TResult Function( ApiErrorModel apiErrorModel)  failure,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( String data)  success,required TResult Function( ApiErrorModel apiErrorModel)  failure,required TResult Function()  otpVerificationLoading,required TResult Function( String data)  otpVerified,required TResult Function( ApiErrorModel apiErrorModel)  otpVerificationFailed,required TResult Function()  resetPasswordLoading,required TResult Function( String data)  resetPasswordSuccess,required TResult Function( ApiErrorModel apiErrorModel)  resetPasswordFailed,}) {final _that = this;
 switch (_that) {
 case _Initial():
 return initial();case Loading():
 return loading();case Success():
 return success(_that.data);case Error():
-return failure(_that.apiErrorModel);case _:
+return failure(_that.apiErrorModel);case OtpVerificationLoading():
+return otpVerificationLoading();case OtpVerified():
+return otpVerified(_that.data);case OtpVerificationFailed():
+return otpVerificationFailed(_that.apiErrorModel);case ResetPasswordLoading():
+return resetPasswordLoading();case ResetPasswordSuccess():
+return resetPasswordSuccess(_that.data);case ResetPasswordFailed():
+return resetPasswordFailed(_that.apiErrorModel);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -175,13 +205,19 @@ return failure(_that.apiErrorModel);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( String data)?  success,TResult? Function( ApiErrorModel apiErrorModel)?  failure,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( String data)?  success,TResult? Function( ApiErrorModel apiErrorModel)?  failure,TResult? Function()?  otpVerificationLoading,TResult? Function( String data)?  otpVerified,TResult? Function( ApiErrorModel apiErrorModel)?  otpVerificationFailed,TResult? Function()?  resetPasswordLoading,TResult? Function( String data)?  resetPasswordSuccess,TResult? Function( ApiErrorModel apiErrorModel)?  resetPasswordFailed,}) {final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
 return initial();case Loading() when loading != null:
 return loading();case Success() when success != null:
 return success(_that.data);case Error() when failure != null:
-return failure(_that.apiErrorModel);case _:
+return failure(_that.apiErrorModel);case OtpVerificationLoading() when otpVerificationLoading != null:
+return otpVerificationLoading();case OtpVerified() when otpVerified != null:
+return otpVerified(_that.data);case OtpVerificationFailed() when otpVerificationFailed != null:
+return otpVerificationFailed(_that.apiErrorModel);case ResetPasswordLoading() when resetPasswordLoading != null:
+return resetPasswordLoading();case ResetPasswordSuccess() when resetPasswordSuccess != null:
+return resetPasswordSuccess(_that.data);case ResetPasswordFailed() when resetPasswordFailed != null:
+return resetPasswordFailed(_that.apiErrorModel);case _:
   return null;
 
 }
@@ -377,6 +413,334 @@ class _$ErrorCopyWithImpl<$Res>
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? apiErrorModel = null,}) {
   return _then(Error(
+null == apiErrorModel ? _self.apiErrorModel : apiErrorModel // ignore: cast_nullable_to_non_nullable
+as ApiErrorModel,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class OtpVerificationLoading implements ForgotPasswordState {
+  const OtpVerificationLoading();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OtpVerificationLoading);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'ForgotPasswordState.otpVerificationLoading()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class OtpVerified implements ForgotPasswordState {
+  const OtpVerified(this.data);
+  
+
+ final  String data;
+
+/// Create a copy of ForgotPasswordState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$OtpVerifiedCopyWith<OtpVerified> get copyWith => _$OtpVerifiedCopyWithImpl<OtpVerified>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OtpVerified&&(identical(other.data, data) || other.data == data));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,data);
+
+@override
+String toString() {
+  return 'ForgotPasswordState.otpVerified(data: $data)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $OtpVerifiedCopyWith<$Res> implements $ForgotPasswordStateCopyWith<$Res> {
+  factory $OtpVerifiedCopyWith(OtpVerified value, $Res Function(OtpVerified) _then) = _$OtpVerifiedCopyWithImpl;
+@useResult
+$Res call({
+ String data
+});
+
+
+
+
+}
+/// @nodoc
+class _$OtpVerifiedCopyWithImpl<$Res>
+    implements $OtpVerifiedCopyWith<$Res> {
+  _$OtpVerifiedCopyWithImpl(this._self, this._then);
+
+  final OtpVerified _self;
+  final $Res Function(OtpVerified) _then;
+
+/// Create a copy of ForgotPasswordState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? data = null,}) {
+  return _then(OtpVerified(
+null == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class OtpVerificationFailed implements ForgotPasswordState {
+  const OtpVerificationFailed(this.apiErrorModel);
+  
+
+ final  ApiErrorModel apiErrorModel;
+
+/// Create a copy of ForgotPasswordState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$OtpVerificationFailedCopyWith<OtpVerificationFailed> get copyWith => _$OtpVerificationFailedCopyWithImpl<OtpVerificationFailed>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OtpVerificationFailed&&(identical(other.apiErrorModel, apiErrorModel) || other.apiErrorModel == apiErrorModel));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,apiErrorModel);
+
+@override
+String toString() {
+  return 'ForgotPasswordState.otpVerificationFailed(apiErrorModel: $apiErrorModel)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $OtpVerificationFailedCopyWith<$Res> implements $ForgotPasswordStateCopyWith<$Res> {
+  factory $OtpVerificationFailedCopyWith(OtpVerificationFailed value, $Res Function(OtpVerificationFailed) _then) = _$OtpVerificationFailedCopyWithImpl;
+@useResult
+$Res call({
+ ApiErrorModel apiErrorModel
+});
+
+
+
+
+}
+/// @nodoc
+class _$OtpVerificationFailedCopyWithImpl<$Res>
+    implements $OtpVerificationFailedCopyWith<$Res> {
+  _$OtpVerificationFailedCopyWithImpl(this._self, this._then);
+
+  final OtpVerificationFailed _self;
+  final $Res Function(OtpVerificationFailed) _then;
+
+/// Create a copy of ForgotPasswordState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? apiErrorModel = null,}) {
+  return _then(OtpVerificationFailed(
+null == apiErrorModel ? _self.apiErrorModel : apiErrorModel // ignore: cast_nullable_to_non_nullable
+as ApiErrorModel,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ResetPasswordLoading implements ForgotPasswordState {
+  const ResetPasswordLoading();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResetPasswordLoading);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'ForgotPasswordState.resetPasswordLoading()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class ResetPasswordSuccess implements ForgotPasswordState {
+  const ResetPasswordSuccess(this.data);
+  
+
+ final  String data;
+
+/// Create a copy of ForgotPasswordState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ResetPasswordSuccessCopyWith<ResetPasswordSuccess> get copyWith => _$ResetPasswordSuccessCopyWithImpl<ResetPasswordSuccess>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResetPasswordSuccess&&(identical(other.data, data) || other.data == data));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,data);
+
+@override
+String toString() {
+  return 'ForgotPasswordState.resetPasswordSuccess(data: $data)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ResetPasswordSuccessCopyWith<$Res> implements $ForgotPasswordStateCopyWith<$Res> {
+  factory $ResetPasswordSuccessCopyWith(ResetPasswordSuccess value, $Res Function(ResetPasswordSuccess) _then) = _$ResetPasswordSuccessCopyWithImpl;
+@useResult
+$Res call({
+ String data
+});
+
+
+
+
+}
+/// @nodoc
+class _$ResetPasswordSuccessCopyWithImpl<$Res>
+    implements $ResetPasswordSuccessCopyWith<$Res> {
+  _$ResetPasswordSuccessCopyWithImpl(this._self, this._then);
+
+  final ResetPasswordSuccess _self;
+  final $Res Function(ResetPasswordSuccess) _then;
+
+/// Create a copy of ForgotPasswordState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? data = null,}) {
+  return _then(ResetPasswordSuccess(
+null == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ResetPasswordFailed implements ForgotPasswordState {
+  const ResetPasswordFailed(this.apiErrorModel);
+  
+
+ final  ApiErrorModel apiErrorModel;
+
+/// Create a copy of ForgotPasswordState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ResetPasswordFailedCopyWith<ResetPasswordFailed> get copyWith => _$ResetPasswordFailedCopyWithImpl<ResetPasswordFailed>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResetPasswordFailed&&(identical(other.apiErrorModel, apiErrorModel) || other.apiErrorModel == apiErrorModel));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,apiErrorModel);
+
+@override
+String toString() {
+  return 'ForgotPasswordState.resetPasswordFailed(apiErrorModel: $apiErrorModel)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ResetPasswordFailedCopyWith<$Res> implements $ForgotPasswordStateCopyWith<$Res> {
+  factory $ResetPasswordFailedCopyWith(ResetPasswordFailed value, $Res Function(ResetPasswordFailed) _then) = _$ResetPasswordFailedCopyWithImpl;
+@useResult
+$Res call({
+ ApiErrorModel apiErrorModel
+});
+
+
+
+
+}
+/// @nodoc
+class _$ResetPasswordFailedCopyWithImpl<$Res>
+    implements $ResetPasswordFailedCopyWith<$Res> {
+  _$ResetPasswordFailedCopyWithImpl(this._self, this._then);
+
+  final ResetPasswordFailed _self;
+  final $Res Function(ResetPasswordFailed) _then;
+
+/// Create a copy of ForgotPasswordState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? apiErrorModel = null,}) {
+  return _then(ResetPasswordFailed(
 null == apiErrorModel ? _self.apiErrorModel : apiErrorModel // ignore: cast_nullable_to_non_nullable
 as ApiErrorModel,
   ));

@@ -30,7 +30,9 @@ class ForgotPasswordBlocListener extends StatelessWidget {
             },
             success: (forgotPasswordResponse) {
               Navigator.of(context).pop();
-              Navigator.of(context).pushReplacementNamed(Routes.enterCode);
+              // pass the email to the enter code screen so the cubit there can use it
+              final email = context.read<ForgotPasswordCubit>().mailController.text;
+              Navigator.of(context).pushReplacementNamed(Routes.enterCode, arguments: email);
             },
             failure: (error) {
               _setupErrorState(context, error.message!);

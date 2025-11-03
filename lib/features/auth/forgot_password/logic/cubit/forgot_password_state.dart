@@ -10,4 +10,13 @@ part 'forgot_password_state.freezed.dart';
   const factory ForgotPasswordState.loading() = Loading;
   const factory ForgotPasswordState.success(String data) = Success;
   const factory ForgotPasswordState.failure(ApiErrorModel apiErrorModel) = Error;
+
+
+  const factory ForgotPasswordState.otpVerificationLoading() = OtpVerificationLoading;
+  const factory ForgotPasswordState.otpVerified(String data) = OtpVerified;
+  const factory ForgotPasswordState.otpVerificationFailed(ApiErrorModel apiErrorModel) = OtpVerificationFailed;
+
+  const factory ForgotPasswordState.resetPasswordLoading() = ResetPasswordLoading;
+  const factory ForgotPasswordState.resetPasswordSuccess(String data) = ResetPasswordSuccess;
+  const factory ForgotPasswordState.resetPasswordFailed(ApiErrorModel apiErrorModel) = ResetPasswordFailed;
  }

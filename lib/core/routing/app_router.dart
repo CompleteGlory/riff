@@ -4,6 +4,7 @@ import 'package:riff/core/di/dependency_injection.dart';
 import 'package:riff/core/routing/routes.dart';
 import 'package:riff/features/auth/forgot_password/UI/enter_code_screen.dart';
 import 'package:riff/features/auth/forgot_password/UI/forgot_password_screen.dart';
+import 'package:riff/features/auth/forgot_password/UI/reset_password_screen.dart';
 import 'package:riff/features/auth/forgot_password/logic/cubit/forgot_password_cubit.dart';
 import 'package:riff/features/home/UI/home_screen.dart';
 import 'package:riff/features/auth/login/UI/login_screen.dart';
@@ -41,12 +42,23 @@ class AppRouter {
           ),
         );
         case Routes.enterCode:
+          return MaterialPageRoute(
+            builder: (context) {
+              final args = settings.arguments as String?;
+              return BlocProvider(
+                create: (context) => getIt<ForgotPasswordCubit>(),
+                child: EnterCodeScreen(email: args),
+              );
+            },
+          );
+      case Routes.resetPassword:
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
             create: (context) => getIt<ForgotPasswordCubit>(),
-            child: const EnterCodeScreen(),
+            child: const ResetPasswordScreen(),
           ),
         );
+
       default:
         null;
     }
