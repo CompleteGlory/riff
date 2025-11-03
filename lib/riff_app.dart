@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/routing/app_router.dart';
 import 'package:riff/core/routing/routes.dart';
+import 'package:riff/core/routing/navigation_service.dart';
+import 'package:riff/main.dart';
 
 
 class RiffApp extends StatelessWidget {
@@ -17,9 +19,11 @@ class RiffApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,
+          scaffoldBackgroundColor: Colors.white,
         ),
+         navigatorKey: NavigationService.navigatorKey,
          onGenerateRoute: appRouter.generateRoute,
-              initialRoute:  Routes.onBoarding,
+         initialRoute: isLoggedInUser ? Routes.home : Routes.onBoarding,
             ),
       );
   }

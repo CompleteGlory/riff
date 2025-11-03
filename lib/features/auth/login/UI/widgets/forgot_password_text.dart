@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:riff/core/helpers/extenstions.dart';
+import 'package:riff/core/routing/routes.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 
@@ -11,7 +13,9 @@ class ForgotPasswordText extends StatelessWidget {
       children: [
         Text("Forgot your Password?", style: TextStyles.font14regular.copyWith(color: ColorManager.lightGrey)),
         TextButton(
-          onPressed: () {},
+          onPressed: () {
+            context.pushNamed(Routes.forgotPassword);
+          },
           child: Text(
             "Reset your password",
             style: TextStyles.font16Medium.copyWith(
