@@ -1,0 +1,39 @@
+default_platform(:android)
+
+platform :android do
+  desc "Android Firebase App Distribution"
+  lane :firebase_distribution do
+    sh "flutter clean"
+    sh "flutter build apk --release --flavor production --target lib/main_production.dart --no-tree-shake-icons"
+    firebase_app_distribution(
+      app: "1:369305642937:android:5cc3706f66335b573d7868",
+      firebase_cli_token: ENV["FIREBASE_CLI_TOKEN"],
+      android_artifact_type: "APK",
+      android_artifact_path: "../build/app/outputs/flutter-apk/app-production-release.apk",
+      testers: "fadyalaa441@gmail.com, fadyalaa2112@gmail.com, zakymagd@gmail.com",
+      upload_timeout: 600,
+      release_notes: "1.0.1 version release notes:
+Onboarding
+User-facing: Onboarding screens continue to route users to login when complete.
+Dev note: Onboarding triggers Routes.login for a consistent entry point into auth flow.
+
+Login
+User-facing: Keeps your typed inputs on error; loading spinner no longer causes a black screen.
+Dev note: Loading dialog shown on root navigator and dismissed safely; interceptor no longer auto-clears nav stack when the login endpoint returns 401 (caller handles error).
+
+Signup
+User-facing: Smooth signup flow with clear success dialog and navigation to login.
+Dev note: Signup success uses in-app dialog + explicit navigation to Routes.login.
+
+Forgot password (OTP → Reset)
+User-facing: OTP and reset-password flow now reliably uses the reset token (you won't hit invalid token due to an empty token). Errors don't clear the screen or inputs.
+Dev note: Repo extracts/ persists reset token (SharedPrefs + Dio header); cubit falls back to SharedPrefs when in-memory token is missing. Loading/error dialogs use root navigator to avoid popping the page route.
+
+One-line changelog suggestions:
+- Fix: Preserve login inputs on error and avoid black screen when dismissing dialogs.
+- Fix: Ensure reset-token is included in reset-password requests (SharedPrefs fallback).
+- Change: Login 401s are handled by UI (no automatic nav-clear from interceptor).
+- UX: Loading and error dialogs shown/dismissed on root navigator for consistency."
+    )
+  end
+end
