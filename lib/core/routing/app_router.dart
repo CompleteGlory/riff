@@ -6,12 +6,13 @@ import 'package:riff/features/auth/forgot_password/UI/enter_code_screen.dart';
 import 'package:riff/features/auth/forgot_password/UI/forgot_password_screen.dart';
 import 'package:riff/features/auth/forgot_password/UI/reset_password_screen.dart';
 import 'package:riff/features/auth/forgot_password/logic/cubit/forgot_password_cubit.dart';
-import 'package:riff/features/home/UI/home_screen.dart';
+import 'package:riff/features/home/core/UI/home_layout.dart';
 import 'package:riff/features/auth/login/UI/login_screen.dart';
 import 'package:riff/features/auth/login/logic/cubit/login_cubit.dart';
 import 'package:riff/features/auth/onboarding/onboarding_screen.dart';
 import 'package:riff/features/auth/signup/UI/signup_screen.dart';
 import 'package:riff/features/auth/signup/logic/cubit/signup_cubit.dart';
+import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 
 class AppRouter {
   Route? generateRoute(RouteSettings settings) {
@@ -26,7 +27,10 @@ class AppRouter {
           ),
         );
       case Routes.home:
-        return MaterialPageRoute(builder: (_) => const HomeScreen());
+        return MaterialPageRoute(builder: (_) => BlocProvider(
+              create: (context) => getIt<HomeCubit>(),
+              child: const HomeLayout(),
+            ));
       case Routes.signup:
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
