@@ -9,6 +9,8 @@ import 'package:riff/features/auth/login/data/repos/login_repo.dart';
 import 'package:riff/features/auth/login/logic/cubit/login_cubit.dart';
 import 'package:riff/features/auth/signup/data/repos/signup_repo.dart';
 import 'package:riff/features/auth/signup/logic/cubit/signup_cubit.dart';
+import 'package:riff/features/home/core/data/repos/home_repo.dart';
+import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 
 final getIt = GetIt.instance;
 
@@ -30,4 +32,7 @@ Future<void> setUpGetIt() async {
   getIt.registerLazySingleton<ForgotPasswordRepo>(()=>ForgotPasswordRepo(getIt()));
   getIt.registerFactory<ForgotPasswordCubit>(()=>ForgotPasswordCubit(getIt()));
 
+  //home
+  getIt.registerLazySingleton<HomeRepo>(()=>HomeRepo(getIt()));
+  getIt.registerFactory<HomeCubit>(()=>HomeCubit(getIt()));
 }
