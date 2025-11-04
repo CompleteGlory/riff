@@ -22,7 +22,6 @@ jobs:
       uses: subosito/flutter-action@v2
       with:
         channel: main
-        flutter-version: '3.38.0-1.0.pre-409'
 
     - name: Setup Ruby
       uses: ruby/setup-ruby@v1
