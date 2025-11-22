@@ -9,39 +9,39 @@ import 'package:riff/features/auth/login/logic/cubit/login_state.dart';
 
 class LoginCubit extends Cubit<LoginState> {
   final LoginRepo _loginRepo;
+
   LoginCubit(this._loginRepo) : super(const LoginState.initial());
 
-  TextEditingController mailController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
-  GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  final TextEditingController mailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
-  void emitLoginStates() async {
+  Future<void> emitLoginStates() async {
     emit(const LoginState.loading());
 
-    final response = await _loginRepo.login(LoginRequestBody(
-        email: mailController.text, password: passwordController.text));
+    final response = await _loginRepo.login(
+      LoginRequestBody(
+        email: mailController.text,
+        password: passwordController.text,
+      ),
+    );
+
     response.when(
       success: (data) async {
         await saveUserId(data.user.id);
         emit(LoginState.success(data));
       },
-
       failure: (apiErrorModel) {
         emit(LoginState.failure(apiErrorModel));
       },
     );
   }
-  
 
-  saveToken(String? token) async {
-    // save token to shared preferences
+  Future<void> saveToken(String? token) async {
     await SharedPrefHelper.setData(SharedPrefKeys.userToken, token);
   }
 
-  saveUserId(String? id) async {
+  Future<void> saveUserId(String? id) async {
     await SharedPrefHelper.setData(SharedPrefKeys.userId, id);
   }
-
-  
-
 }
