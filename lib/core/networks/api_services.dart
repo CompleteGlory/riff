@@ -15,7 +15,7 @@ abstract class ApiService {
   factory ApiService(Dio dio, {String baseUrl}) = _ApiService;
 
   @POST(ApiConstants.login)
-  Future<HttpResponse<LoginResponse>> login(@Body() LoginRequestBody loginRequestBody);
+  Future<HttpResponse<dynamic>> login(@Body() LoginRequestBody loginRequestBody);
 
   @POST(ApiConstants.signUp)
   Future<SignupResponse> signUp(@Body() SignupRequestBody signUpRequestBody);
