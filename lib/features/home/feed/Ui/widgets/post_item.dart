@@ -3,12 +3,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:riff/core/helpers/spacing.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:share_plus/share_plus.dart';
 
-SizedBox verticalSpace(double height) => SizedBox(height: height.h);
-SizedBox horizontalSpace(double width) => SizedBox(width: width.w);
 
 class PostItem extends StatefulWidget {
   final String username;
