@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/features/auth/login/data/models/login_request_body.dart';
+import 'package:riff/features/auth/login/data/models/login_response.dart';
 import 'package:riff/features/auth/login/data/repos/login_repo.dart';
 import 'package:riff/features/auth/login/logic/cubit/login_state.dart';
 
@@ -26,6 +26,18 @@ class LoginCubit extends Cubit<LoginState> {
       ),
     );
 
+    _handleResponse(response);
+  }
+
+ Future<void> loginWithGoogle(String idToken) async {
+  emit(const LoginState.loading());
+
+  final response = await _loginRepo.loginWithGoogle(idToken);
+
+  _handleResponse(response);
+}
+
+  void _handleResponse(ApiResult<LoginResponse> response) async {
     response.when(
       success: (data) async {
         await saveUserId(data.user.id);
@@ -37,11 +49,9 @@ class LoginCubit extends Cubit<LoginState> {
     );
   }
 
-  Future<void> saveToken(String? token) async {
-    await SharedPrefHelper.setData(SharedPrefKeys.userToken, token);
-  }
+  Future<void> saveToken(String? token) async =>
+      await SharedPrefHelper.setData('userToken', token);
 
-  Future<void> saveUserId(String? id) async {
-    await SharedPrefHelper.setData(SharedPrefKeys.userId, id);
-  }
+  Future<void> saveUserId(String? id) async =>
+      await SharedPrefHelper.setData('userId', id);
 }

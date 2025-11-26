@@ -50,6 +50,7 @@ class LoginScreen extends StatelessWidget {
                         }, text: "Login", isWhite: false),
                         verticalSpace(15),
                         OrDivider(),
+                        verticalSpace(15),
                         SocialLogin(),
                         Spacer(),
                         Align(

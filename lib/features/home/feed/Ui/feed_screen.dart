@@ -6,7 +6,7 @@ import 'package:riff/core/helpers/shared_pref_helper.dart';
 import 'package:riff/core/routing/routes.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/widgets/button.dart';
-import 'package:riff/features/home/core/UI/widgets/post_item.dart';
+import 'package:riff/features/home/feed/Ui/widgets/post_item.dart';
 
 class FeedScreen extends StatelessWidget {
   const FeedScreen({super.key});
