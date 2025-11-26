@@ -18,7 +18,7 @@ import 'package:riff/features/home/feed/logic/cubit/feed_cubit.dart';
 final getIt = GetIt.instance;
 
 Future<void> setUpGetIt() async {
-  Dio dio =  DioFactory.getDio();
+  Dio dio = await DioFactory.getDio();
 
   //Dio & ApiService
   getIt.registerLazySingleton<ApiService>(()=>ApiService(dio));
@@ -42,8 +42,4 @@ Future<void> setUpGetIt() async {
   //feed
   getIt.registerLazySingleton<FeedRepo>(()=>FeedRepo(getIt()));
   getIt.registerFactory<FeedCubit>(()=>FeedCubit(getIt()));
-
-  //Create post
-  getIt.registerLazySingleton<CreatePostRepo>(()=>CreatePostRepo(getIt()));
-  getIt.registerFactory<CreatePostCubit>(()=>CreatePostCubit(getIt()));
 }

@@ -29,18 +29,18 @@ class LoginCubit extends Cubit<LoginState> {
     _handleResponse(response);
   }
 
- Future<void> loginWithGoogle(String idToken) async {
-  emit(const LoginState.loading());
+  Future<void> loginWithGoogle(String idToken) async {
+    emit(const LoginState.loading());
 
-  final response = await _loginRepo.loginWithGoogle(idToken);
+    final response = await _loginRepo.loginWithGoogle(idToken);
 
-  _handleResponse(response);
-}
+    _handleResponse(response);
+  }
 
-  void _handleResponse(ApiResult<LoginResponse> response) async {
+  void _handleResponse(ApiResult<LoginResponse> response) {
     response.when(
-      success: (data) async {
-        await saveUserId(data.user.id);
+      success: (data) {
+        // ✅ Token and userId are already saved in LoginRepo
         emit(LoginState.success(data));
       },
       failure: (apiErrorModel) {
@@ -49,9 +49,10 @@ class LoginCubit extends Cubit<LoginState> {
     );
   }
 
-  Future<void> saveToken(String? token) async =>
-      await SharedPrefHelper.setData('userToken', token);
-
-  Future<void> saveUserId(String? id) async =>
-      await SharedPrefHelper.setData('userId', id);
+  @override
+  Future<void> close() {
+    mailController.dispose();
+    passwordController.dispose();
+    return super.close();
+  }
 }
