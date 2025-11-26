@@ -9,6 +9,10 @@ import 'package:riff/features/auth/login/data/models/login_request_body.dart';
 import 'package:riff/features/auth/login/data/models/login_response.dart';
 import 'package:riff/features/auth/signup/data/models/signup_request_body.dart';
 import 'package:riff/features/auth/signup/data/models/signup_response.dart';
+import 'package:riff/features/home/add_post/data/models/create_post_request_model.dart';
+import 'package:riff/features/home/feed/data/models/posts_response.dart';
+
+import '../../features/home/feed/data/models/post.dart' show Post;
 part 'api_services.g.dart';
 
 @RestApi(baseUrl: ApiConstants.apiBASEURL)
@@ -43,5 +47,15 @@ abstract class ApiService {
 
   @POST(ApiConstants.googleSignin)
   Future<HttpResponse<dynamic>> googleLogin(@Body() GoogleAuthRequestBody body);
-  
+
+  @GET(ApiConstants.posts)
+  Future<PostsResponse> getPosts(
+    @Query("page") int page,
+    @Query("limit") int limit,
+  );
+
+  @POST(ApiConstants.posts)
+  Future<Post> createPost(
+    @Body() CreatePostRequestModel createPostRequestModel,
+  );
 }

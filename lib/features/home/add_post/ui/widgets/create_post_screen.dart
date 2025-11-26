@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart'; // Added for Cubit access
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/helpers/spacing.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
+import 'package:riff/core/widgets/button.dart';
+import 'package:riff/features/home/add_post/data/models/create_post_request_model.dart';
+import 'package:riff/features/home/add_post/logic/cubit/create_post_cubit.dart';
 
-class AddPostScreen extends StatefulWidget {
-  const AddPostScreen({super.key});
+class CreatePostScreen extends StatefulWidget {
+  const CreatePostScreen({super.key});
 
   @override
-  State<AddPostScreen> createState() => _AddPostScreenState();
+  State<CreatePostScreen> createState() => _CreatePostScreenState();
 }
 
-class _AddPostScreenState extends State<AddPostScreen> {
+class _CreatePostScreenState extends State<CreatePostScreen> {
   final TextEditingController _contentController = TextEditingController();
   String? _selectedMediaUrl; // Simulated media selection
 
@@ -25,24 +29,23 @@ class _AddPostScreenState extends State<AddPostScreen> {
     final content = _contentController.text.trim();
     if (content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter content before posting.')),
+        SnackBar(backgroundColor: ColorManager.primaryBlack,content: Text('Please enter content before posting.',style: TextStyles.font14Medium.copyWith(color: ColorManager.lighterGrey),)),
       );
       return;
     }
 
-    // NOTE: This is where you would call your Cubit/Repo to create the post.
-    // For now, we simulate success and pop the screen.
-    
-    print('Posting content: $content');
-    if (_selectedMediaUrl != null) {
-      print('With media: $_selectedMediaUrl');
-    }
-
-    // Show confirmation and close the screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Post is being created!')),
+    // 1. Create the Request Model
+    final requestModel = CreatePostRequestModel(
+      content: content,
+      // NOTE: Assuming your media list is a list of URLs or paths
+      media: _selectedMediaUrl != null ? [_selectedMediaUrl!] : null,
     );
-    Navigator.pop(context);
+
+    // 2. Call the Cubit to initiate the post creation process
+    context.read<CreatePostCubit>().createPost(requestModel);
+
+    // 3. REMOVED SIMULATED SUCCESS/POP LOGIC: The AddPostListener now handles
+    // showing the loading indicator, success message, and popping the screen.
   }
 
   void _selectMedia() {
@@ -56,66 +59,18 @@ class _AddPostScreenState extends State<AddPostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorManager.lightGrey,
-      appBar: AppBar(
-        backgroundColor: ColorManager.white,
-        elevation: 0,
-        title: Text(
-          'Create New Riff',
-          style: TextStyles.font18Semibold.copyWith(color: ColorManager.primaryBlack),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: ColorManager.darkGrey),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          Padding(
-            padding: EdgeInsets.only(right: 8.w),
-            child: TextButton(
-              onPressed: _handlePost,
-              style: TextButton.styleFrom(
-                backgroundColor: ColorManager.primaryBlack,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-              ),
-              child: Text(
-                'Post',
-                style: TextStyles.font15semiBold.copyWith(color: ColorManager.white),
-              ),
-            ),
-          ),
-        ],
-      ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.symmetric(vertical: 35.h, horizontal: 20.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // User Info Header (similar to PostItem)
-            Row(
-              children: [
-                const CircleAvatar(
-                  radius: 24,
-                  backgroundColor: ColorManager.lighterGrey,
-                  child: Icon(Icons.person, color: ColorManager.white),
-                ),
-                horizontalSpace(12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Current User', style: TextStyles.font15semiBold),
-                    Text('What\'s on your mind?',
-                        style: TextStyles.font12regular
-                            .copyWith(color: ColorManager.normalGrey)),
-                  ],
-                ),
-              ],
+            Text(
+              'What\'s on your mind?',
+              style: TextStyles.font28Bold.copyWith(
+                color: ColorManager.primaryBlack,
+              ),
             ),
             verticalSpace(20),
-
             // Content Input Field
             Container(
               decoration: BoxDecoration(
@@ -136,14 +91,17 @@ class _AddPostScreenState extends State<AddPostScreen> {
                 keyboardType: TextInputType.multiline,
                 style: TextStyles.font16Medium,
                 decoration: InputDecoration(
-                  hintText: "Share your latest music riff, thoughts, or gear...",
-                  hintStyle: TextStyles.font16Medium.copyWith(color: ColorManager.normalGrey),
+                  hintText:
+                      "Share your latest music riff, thoughts, or gear...",
+                  hintStyle: TextStyles.font16Medium.copyWith(
+                    color: ColorManager.normalGrey,
+                  ),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.all(16.w),
                 ),
               ),
             ),
-            
+
             verticalSpace(20),
 
             // Media Preview/Selection Area
@@ -165,23 +123,30 @@ class _AddPostScreenState extends State<AddPostScreen> {
                           borderRadius: BorderRadius.circular(16.r),
                           // Use a placeholder network image URL if you don't have local assets
                           child: Image.network(
-                            'https://placehold.co/600x200/5C6BC0/FFFFFF/png?text=Media+Attached', 
-                            width: double.infinity, 
-                            fit: BoxFit.cover
+                            'https://placehold.co/600x200/5C6BC0/FFFFFF/png?text=Media+Attached',
+                            width: double.infinity,
+                            fit: BoxFit.cover,
                           ),
                         ),
                         Positioned(
                           top: 8.h,
                           right: 8.w,
                           child: InkWell(
-                            onTap: () => setState(() => _selectedMediaUrl = null),
+                            onTap: () =>
+                                setState(() => _selectedMediaUrl = null),
                             child: Container(
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
-                                color: ColorManager.primaryBlack.withOpacity(0.5),
+                                color: ColorManager.primaryBlack.withOpacity(
+                                  0.5,
+                                ),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.close, color: ColorManager.white, size: 20),
+                              child: const Icon(
+                                Icons.close,
+                                color: ColorManager.white,
+                                size: 20,
+                              ),
                             ),
                           ),
                         ),
@@ -192,19 +157,30 @@ class _AddPostScreenState extends State<AddPostScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.add_a_photo_outlined, color: ColorManager.primaryBlack),
+                            icon: const Icon(
+                              Icons.add_a_photo_outlined,
+                              color: ColorManager.primaryBlack,
+                            ),
                             iconSize: 30,
                             onPressed: _selectMedia,
                           ),
                           verticalSpace(4),
                           Text(
                             'Tap to add photo or video',
-                            style: TextStyles.font14regular.copyWith(color: ColorManager.primaryBlack),
+                            style: TextStyles.font14regular.copyWith(
+                              color: ColorManager.primaryBlack,
+                            ),
                           ),
                         ],
                       ),
                     ),
             ),
+            verticalSpace(50),
+            // Post Button
+            AppButton(onPressed: (){
+              _handlePost(); // Triggers the Cubit
+            }, text: "Post", isWhite: false),
+            // AddPostListener is now in the parent wrapper
           ],
         ),
       ),
