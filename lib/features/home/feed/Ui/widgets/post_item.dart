@@ -32,7 +32,7 @@ class _PostItemState extends State<PostItem>
     super.initState();
     isLiked = widget.post.isLiked?? false;
     // The likesCount is a String, parse it safely
-    likeCount = int.tryParse(widget.post.likesCount) ?? 0; 
+    likeCount = int.tryParse(widget.post.likesCount ?? '0') ?? 0; 
 
     _heartController = AnimationController(
       vsync: this,
@@ -113,7 +113,7 @@ class _PostItemState extends State<PostItem>
 
   void _sharePost() {
     final textToShare =
-        '${widget.post.author.fullName} on Riff 🎸:\n${widget.post.content}\n\n#RiffApp #MusicCommunity';
+        '${widget.post.author?.fullName ?? "Unknown"} on Riff 🎸:\n${widget.post.content ?? ""}\n\n#RiffApp #MusicCommunity';
     Share.share(textToShare);
   }
 
@@ -169,7 +169,7 @@ class _PostItemState extends State<PostItem>
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(widget.post.author.fullName,
+                    Text(widget.post.author?.fullName ?? "Unknown",
                         style: TextStyles.font15semiBold),
                     Text(_formatTimeAgo(widget.post.createdAt),
                         style: TextStyles.font12regular
@@ -181,7 +181,7 @@ class _PostItemState extends State<PostItem>
             verticalSpace(12),
 
             // Post Content
-            Text(widget.post.content, style: TextStyles.font16Medium),
+            Text(widget.post.content ?? "", style: TextStyles.font16Medium),
             verticalSpace(16),
 
             // Post Image with Heart Animation

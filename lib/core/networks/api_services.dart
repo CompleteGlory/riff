@@ -8,6 +8,8 @@ import 'package:riff/features/auth/login/data/models/google_auth_request_body.da
 import 'package:riff/features/auth/login/data/models/login_request_body.dart';
 import 'package:riff/features/auth/signup/data/models/signup_request_body.dart';
 import 'package:riff/features/auth/signup/data/models/signup_response.dart';
+import 'package:riff/features/home/add_post/data/models/create_post_request_model.dart';
+import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/feed/data/models/posts_response.dart';
 part 'api_services.g.dart';
 
@@ -49,4 +51,7 @@ abstract class ApiService {
     @Query("page") int page,
     @Query("limit") int limit,
   );
+
+  @POST(ApiConstants.posts)
+  Future<Post> createPost(@Body() CreatePostRequestModel createPostRequestModel);
 }

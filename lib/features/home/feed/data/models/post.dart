@@ -15,9 +15,9 @@ class Post {
   final String? authorId; 
   
   // FIX 2: Use the simpler Author model
-  final Author author; 
+  final Author? author; 
   
-  final String content;
+  final String? content;
   
   // FIX 3: Make nullable to handle 'media: null'
   final List<String>? media; 
@@ -37,7 +37,7 @@ class Post {
   
   // This field matches the JSON (String)
   @JsonKey(name: 'likes_count')
-  final String likesCount; 
+  final String ?likesCount; 
 
   Post({
     required this.id,

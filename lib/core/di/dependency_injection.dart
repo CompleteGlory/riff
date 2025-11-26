@@ -42,4 +42,8 @@ Future<void> setUpGetIt() async {
   //feed
   getIt.registerLazySingleton<FeedRepo>(()=>FeedRepo(getIt()));
   getIt.registerFactory<FeedCubit>(()=>FeedCubit(getIt()));
+
+  //create post
+  getIt.registerLazySingleton<CreatePostRepo>(()=>CreatePostRepo(getIt()));
+  getIt.registerFactory<CreatePostCubit>(()=>CreatePostCubit(getIt()));
 }

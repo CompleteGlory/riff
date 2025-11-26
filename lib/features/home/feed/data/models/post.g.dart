@@ -8,12 +8,14 @@ part of 'post.dart';
 
 Post _$PostFromJson(Map<String, dynamic> json) => Post(
   id: (json['id'] as num).toInt(),
-  author: Author.fromJson(json['author'] as Map<String, dynamic>),
-  content: json['content'] as String,
+  author: json['author'] == null
+      ? null
+      : Author.fromJson(json['author'] as Map<String, dynamic>),
+  content: json['content'] as String?,
   createdAt: json['created_at'] as String,
   updatedAt: json['updated_at'] as String,
   isLiked: json['isLiked'] as bool?,
-  likesCount: json['likes_count'] as String,
+  likesCount: json['likes_count'] as String?,
   authorId: json['author_id'] as String?,
   media: (json['media'] as List<dynamic>?)?.map((e) => e as String).toList(),
   likes: (json['likes'] as List<dynamic>?)

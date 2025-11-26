@@ -11,11 +11,11 @@ class CreatePostRepo {
   CreatePostRepo(this._apiService);
 
   Future<ApiResult<Post>> createPost(CreatePostRequestModel createPostRequestModel) async {
-    try {
+   try {
       final response = await _apiService.createPost(createPostRequestModel);
       return ApiResult.success(response);
-    } catch (e) {
+     } catch (e) {
       return ApiResult.failure(ApiErrorHandler.handle(e));
-    }
+     }
   }
 }
