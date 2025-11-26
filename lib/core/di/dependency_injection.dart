@@ -1,4 +1,3 @@
-
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:riff/core/networks/api_services.dart';
@@ -9,6 +8,8 @@ import 'package:riff/features/auth/login/data/repos/login_repo.dart';
 import 'package:riff/features/auth/login/logic/cubit/login_cubit.dart';
 import 'package:riff/features/auth/signup/data/repos/signup_repo.dart';
 import 'package:riff/features/auth/signup/logic/cubit/signup_cubit.dart';
+import 'package:riff/features/home/add_post/data/repos/create_post_repo.dart';
+import 'package:riff/features/home/add_post/logic/cubit/create_post_cubit.dart';
 import 'package:riff/features/home/core/data/repos/home_repo.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 import 'package:riff/features/home/feed/data/repos/feed_repo.dart';
