@@ -17,9 +17,11 @@ class AppBottomNav extends StatelessWidget {
             const Spacer(),
             BottomNavItem(index: 1, cubit: cubit, image: cubit.currentIndex == 1 ? "assets/svgs/search_filled.svg" : "assets/svgs/search.svg"),
             const Spacer(),
-            BottomNavItem(index: 2, cubit: cubit, image: cubit.currentIndex == 2 ? "assets/svgs/notifications_filled.svg" : "assets/svgs/notifications.svg"),
+            BottomNavItem(index: 2, cubit: cubit, image: cubit.currentIndex == 2 ? "assets/svgs/plus_filled.svg" : "assets/svgs/plus.svg"),
             const Spacer(),
-            BottomNavItem(index: 3, cubit: cubit, image: cubit.currentIndex == 3 ? "assets/svgs/profile_filled.svg" : "assets/svgs/profile.svg"),
+            BottomNavItem(index: 3, cubit: cubit, image: cubit.currentIndex == 3 ? "assets/svgs/notifications_filled.svg" : "assets/svgs/notifications.svg"),
+            const Spacer(),
+            BottomNavItem(index: 4, cubit: cubit, image: cubit.currentIndex == 4 ? "assets/svgs/profile_filled.svg" : "assets/svgs/profile.svg"),
             ],),
       ));
   }

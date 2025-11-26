@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:riff/features/home/add_post/ui/add_post_screen.dart';
 import 'package:riff/features/home/core/data/repos/home_repo.dart';
 import 'package:riff/features/home/core/logic/cubit/home_state.dart';
 import 'package:riff/features/home/feed/Ui/feed_screen.dart';
@@ -13,6 +14,7 @@ class HomeCubit extends Cubit<HomeState> {
   List<Widget> screens = [
     const FeedScreen(),
     const SearchScreen(),
+    const AddPostScreen(),
     const NotificationsScreen(),
     const ProfileScreen(),
   ];
