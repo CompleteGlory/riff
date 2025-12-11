@@ -157,7 +157,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           IconButton(
-                            icon: const Icon(
+                            icon:  Icon(
                               Icons.add_a_photo_outlined,
                               color: ColorManager.primaryBlack,
                             ),

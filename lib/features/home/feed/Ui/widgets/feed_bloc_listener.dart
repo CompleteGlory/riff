@@ -19,23 +19,6 @@ class FeedBlocListener extends StatelessWidget {
       listener: (context, state) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           state.whenOrNull(
-            loading: () {
-              showDialog(
-                context: context,
-                useRootNavigator: true,
-                barrierDismissible: false,
-                builder: (context) => const Center(
-                  child: CircularProgressIndicator(
-                    color: ColorManager.primaryBlack,
-                  ),
-                ),
-              );
-            },
-            success: (_) {
-              // if (Navigator.of(context, rootNavigator: true).canPop()) {
-              //   Navigator.of(context, rootNavigator: true).pop();
-              // }
-            },
             failure: (error) {
               _setupErrorState(context, error.message.toString());
             },
@@ -47,9 +30,6 @@ class FeedBlocListener extends StatelessWidget {
   }
 
   void _setupErrorState(BuildContext context, String error) {
-    // if (Navigator.of(context, rootNavigator: true).canPop()) {
-    //   Navigator.of(context, rootNavigator: true).pop();
-    // }
 
     showDialog(
       context: context,

@@ -11,7 +11,7 @@ class ForgotPasswordText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Text("Forgot your Password?", style: TextStyles.font14regular.copyWith(color: ColorManager.lightGrey)),
+        Text("Forgot your Password?", style: TextStyles.font12regular.copyWith(color: ColorManager.lightGrey)),
         TextButton(
           onPressed: () {
             context.pushNamed(Routes.forgotPassword);

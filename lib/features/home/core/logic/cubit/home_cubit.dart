@@ -26,5 +26,13 @@ class HomeCubit extends Cubit<HomeState> {
     currentIndex = index;
     emit(HomeState.changeScreen(index));
   }
+
+  final List<String> titles = [
+    'Feed',
+    'Search',
+    'Create Post',
+    'Notifications',
+    'Profile',
+  ];
   
 }

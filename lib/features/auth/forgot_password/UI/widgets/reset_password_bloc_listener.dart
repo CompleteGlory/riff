@@ -28,7 +28,7 @@ class ResetPasswordBlocListener extends StatelessWidget {
                 context: context,
                 useRootNavigator: true,
                 barrierDismissible: false,
-                builder: (context) => const Center(
+                builder: (context) => Center(
                   child: CircularProgressIndicator(
                     color: ColorManager.primaryBlack,
                   ),
