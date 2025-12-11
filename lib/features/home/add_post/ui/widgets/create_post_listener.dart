@@ -4,6 +4,7 @@ import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/home/add_post/logic/cubit/create_post_cubit.dart';
 import 'package:riff/features/home/add_post/logic/cubit/create_post_state.dart';
+import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 
 
 class AddPostListener extends StatelessWidget {
@@ -22,7 +23,7 @@ class AddPostListener extends StatelessWidget {
             showDialog(
               context: context,
               barrierDismissible: false,
-              builder: (context) => const Center(
+              builder: (context) =>  Center(
                 child: CircularProgressIndicator(
                   color: ColorManager.primaryBlack,
                 ),
@@ -38,6 +39,13 @@ class AddPostListener extends StatelessWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(backgroundColor: ColorManager.primaryBlack,content: Text('Post created successfully!',style: TextStyles.font12Medium.copyWith(color: ColorManager.lighterGrey),),),
             );
+            
+            // 3. Switch to Feed tab so the user sees their new post
+            try {
+              context.read<HomeCubit>().changeScreen(0);
+            } catch (_) {
+              // If HomeCubit is not available in context for some reason, ignore.
+            }
           },
           // Handle failure state
           failure: (error) {

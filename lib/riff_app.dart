@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/routing/app_router.dart';
 import 'package:riff/core/routing/routes.dart';
+import 'package:riff/core/themes/colors/color_manager.dart';
 
 class RiffApp extends StatelessWidget {
   final AppRouter appRouter;
@@ -21,6 +22,19 @@ class RiffApp extends StatelessWidget {
       builder: (context, child) {
         return MaterialApp(
           title: 'Riff App',
+          theme: ThemeData(
+            useMaterial3: true,
+            progressIndicatorTheme: ProgressIndicatorThemeData(
+              color: ColorManager.primaryBlack,
+            ),
+            // refreshIndicatorTheme: RefreshIndicatorThemeData(
+            //   color: ColorManager.primaryBlack,
+            // ),
+            indicatorColor: ColorManager.primaryBlack,
+            
+            primaryColor: ColorManager.primaryBlack,
+            primarySwatch: ColorManager.primaryBlack,
+          ),
           debugShowCheckedModeBanner: false,
           initialRoute: startAtHome ? Routes.home : Routes.onBoarding,
           onGenerateRoute: appRouter.generateRoute,

@@ -6,7 +6,7 @@ part 'feed_state.freezed.dart';
 
 @freezed
 class FeedState<T> with _$FeedState<T> {
-  const factory FeedState.initial() = _Initial;
+  const factory FeedState.initial() = Initial;
   const factory FeedState.loading() = Loading;
   const factory FeedState.success(T data) = Success<T>;
   const factory FeedState.failure(ApiErrorModel apiErrorModel) = Error;
