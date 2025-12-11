@@ -14,12 +14,11 @@ class SocialLogin extends StatelessWidget {
         final token = await GoogleSignInHelper.signInAndGetIdToken();
 
         if (token == null) {
-          print("Google: Failed to get ID token");
+          debugPrint("Google: Failed to get ID token");
           return;
         }
 
-        print("Google ID TOKEN = $token");
-
+        debugPrint("Google ID TOKEN = $token");
         // ignore: use_build_context_synchronously
         context.read<LoginCubit>().loginWithGoogle(token);
       },

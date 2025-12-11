@@ -1,14 +1,16 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:riff/core/helpers/constants.dart';
+import 'package:riff/core/helpers/shared_pref_helper.dart';
 import 'package:riff/core/helpers/spacing.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
+import 'package:riff/features/home/feed/Ui/widgets/post_options.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:share_plus/share_plus.dart';
-
 
 class PostItem extends StatefulWidget {
   final Post post;
@@ -26,13 +28,14 @@ class _PostItemState extends State<PostItem>
   bool showHeart = false;
   late AnimationController _heartController;
   late Animation<double> _scaleAnimation;
+  late String currentUserId;
 
   @override
   void initState() {
     super.initState();
-    isLiked = widget.post.isLiked?? false;
+    isLiked = widget.post.isLiked ?? false;
     // The likesCount is a String, parse it safely
-    likeCount = int.tryParse(widget.post.likesCount ?? '0') ?? 0; 
+    likeCount = int.tryParse(widget.post.likesCount ?? '0') ?? 0;
 
     _heartController = AnimationController(
       vsync: this,
@@ -72,7 +75,7 @@ class _PostItemState extends State<PostItem>
   void _openComments() {
     // FIX: Safely access comments list, use null-aware operator
     final commentsCount = widget.post.comments?.length ?? 0;
-    
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -121,9 +124,7 @@ class _PostItemState extends State<PostItem>
     if (imageUrl.isEmpty) return;
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => FullScreenImage(imageUrl: imageUrl),
-      ),
+      MaterialPageRoute(builder: (_) => FullScreenImage(imageUrl: imageUrl)),
     );
   }
 
@@ -131,11 +132,14 @@ class _PostItemState extends State<PostItem>
   Widget build(BuildContext context) {
     // FIX: Safely access the media list. Use the null-aware operator `?`
     // If widget.post.media is null or empty, mediaUrl will be an empty string.
-    final mediaUrl = widget.post.media?.firstWhere(
-        (e) => e.isNotEmpty, 
-        orElse: () => '' // If media is not null but empty, or no item is not empty
-    ) ?? ''; 
-    
+    final mediaUrl =
+        widget.post.media?.firstWhere(
+          (e) => e.isNotEmpty,
+          orElse: () =>
+              '', // If media is not null but empty, or no item is not empty
+        ) ??
+        '';
+
     final commentsCount = widget.post.comments?.length ?? 0;
 
     return AnimatedContainer(
@@ -169,12 +173,36 @@ class _PostItemState extends State<PostItem>
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(widget.post.author?.fullName ?? "Unknown",
-                        style: TextStyles.font15semiBold),
-                    Text(_formatTimeAgo(widget.post.createdAt),
-                        style: TextStyles.font12regular
-                            .copyWith(color: ColorManager.normalGrey)),
+                    Text(
+                      widget.post.author?.fullName ?? "Unknown",
+                      style: TextStyles.font15semiBold,
+                    ),
+                    Text(
+                      _formatTimeAgo(widget.post.createdAt),
+                      style: TextStyles.font12regular.copyWith(
+                        color: ColorManager.normalGrey,
+                      ),
+                    ),
                   ],
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.more_horiz),
+                  onPressed: () async {
+                    currentUserId =
+                        await SharedPrefHelper.getString(
+                          SharedPrefKeys.userId,
+                        ) ??
+                        "";
+
+                    final isMine = widget.post.author?.id == currentUserId;
+
+                    showPostOptions(
+                      isMine: isMine,
+                      context: context,
+                      post: widget.post,
+                    );
+                  },
                 ),
               ],
             ),
@@ -196,7 +224,7 @@ class _PostItemState extends State<PostItem>
                       borderRadius: BorderRadius.circular(12.r),
                       // NOTE: If mediaUrl contains a network path, you must use Image.network
                       // If it's a local asset, keep Image.asset
-                      child: Image.asset( 
+                      child: Image.asset(
                         mediaUrl,
                         width: double.infinity,
                         height: 220.h,
@@ -206,8 +234,11 @@ class _PostItemState extends State<PostItem>
                     if (showHeart)
                       ScaleTransition(
                         scale: _scaleAnimation,
-                        child: const Icon(Icons.favorite,
-                            color: ColorManager.red, size: 100),
+                        child: const Icon(
+                          Icons.favorite,
+                          color: ColorManager.red,
+                          size: 100,
+                        ),
                       ),
                   ],
                 ),
@@ -236,14 +267,20 @@ class _PostItemState extends State<PostItem>
               ],
             ),
             verticalSpace(4),
-            Text('$likeCount likes',
-                style: TextStyles.font14semiBold
-                    .copyWith(color: ColorManager.darkGrey)),
+            Text(
+              '$likeCount likes',
+              style: TextStyles.font14semiBold.copyWith(
+                color: ColorManager.darkGrey,
+              ),
+            ),
             verticalSpace(4),
             // FIX: Use the calculated commentsCount
-            Text('$commentsCount comments', 
-                style: TextStyles.font14regular
-                    .copyWith(color: ColorManager.normalGrey)),
+            Text(
+              '$commentsCount comments',
+              style: TextStyles.font14regular.copyWith(
+                color: ColorManager.normalGrey,
+              ),
+            ),
           ],
         ),
       ),
@@ -279,7 +316,7 @@ class FullScreenImage extends StatelessWidget {
           Center(
             child: InteractiveViewer(
               // NOTE: If mediaUrl is a network path, this should be Image.network
-              child: Image.asset(imageUrl, fit: BoxFit.contain), 
+              child: Image.asset(imageUrl, fit: BoxFit.contain),
             ),
           ),
           Positioned(

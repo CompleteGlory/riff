@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
 import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
 import 'package:riff/core/networks/api_error_handler.dart';
@@ -58,20 +59,20 @@ class LoginRepo {
         if (accessToken != null) {
           await SharedPrefHelper.setData(SharedPrefKeys.userToken, accessToken);
           DioFactory.setTokenIntoHeaderAfterLogin(accessToken);
-          print('✅ Access token saved: ${accessToken.substring(0, 20)}...');
+          debugPrint('✅ Access token saved: ${accessToken.substring(0, 20)}...');
         } else {
-          print('⚠️ No AccessToken found in cookies');
+          debugPrint('⚠️ No AccessToken found in cookies');
         }
 
         // ✅ Save Refresh Token
         if (refreshToken != null) {
           await SharedPrefHelper.setData(SharedPrefKeys.refreshToken, refreshToken);
-          print('✅ Refresh token saved: ${refreshToken.substring(0, 20)}...');
+          debugPrint('✅ Refresh token saved: ${refreshToken.substring(0, 20)}...');
         } else {
-          print('⚠️ No RefreshToken found in cookies');
+          debugPrint('⚠️ No RefreshToken found in cookies');
         }
       } else {
-        print('⚠️ No cookies found in response');
+        debugPrint('⚠️ No cookies found in response');
       }
 
       // ✅ Parse user data
@@ -85,11 +86,11 @@ class LoginRepo {
 
       // ✅ Save userId
       await SharedPrefHelper.setData(SharedPrefKeys.userId, user.id);
-      print('✅ User ID saved: ${user.id}');
+      debugPrint('✅ User ID saved: ${user.id}');
 
       return ApiResult.success(LoginResponse(user: user));
     } catch (e) {
-      print('❌ Error in _handleLoginResponse: $e');
+      debugPrint('❌ Error in _handleLoginResponse: $e');
       return ApiResult.failure(ApiErrorHandler.handle(e));
     }
   }

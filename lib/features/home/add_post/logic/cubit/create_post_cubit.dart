@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/features/home/add_post/data/models/create_post_request_model.dart';
@@ -20,7 +21,7 @@ class CreatePostCubit extends Cubit<CreatePostState> {
         emit(CreatePostState.success(post));
       },
       failure: (apiErrorModel) {
-        print('CreatePostCubit - createPost failure: ${apiErrorModel.errors.toString()}');
+        debugPrint('CreatePostCubit - createPost failure: ${apiErrorModel.errors.toString()}');
         // Post creation failed, emit failure state with the error model
         emit(CreatePostState.failure(apiErrorModel));
       },
