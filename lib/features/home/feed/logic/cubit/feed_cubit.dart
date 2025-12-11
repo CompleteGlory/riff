@@ -1,4 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:riff/core/helpers/constants.dart';
+import 'package:riff/core/helpers/shared_pref_helper.dart';
 import 'package:riff/features/home/feed/data/repos/feed_repo.dart';
 import 'package:riff/features/home/feed/logic/cubit/feed_state.dart';
 import 'package:riff/core/networks/api_result.dart' hide Success;
@@ -13,7 +15,7 @@ class FeedCubit extends Cubit<FeedState> {
   FeedCubit(this._feedRepo) : super(const FeedState.initial());
 
   int page = 1;
-  final int limit = 10;
+  final int limit = 4;
 
   final List<Post> _posts = [];
   bool _isLoadingMore = false;
@@ -27,6 +29,48 @@ class FeedCubit extends Cubit<FeedState> {
   Future<void> retryLoadMore() async {
     _lastError = null;
     await getPosts();
+  }
+
+  /// Remove a post locally from the posts list
+  void removePostLocally(String postId) {
+    _posts.removeWhere((post) => post.id.toString() == postId);
+    if (state is Success) {
+      final currentState = state as Success;
+      emit(FeedState.success(PostsResponse(
+        data: List<Post>.from(_posts),
+        pagination: currentState.data.pagination,
+      )));
+    }
+  }
+
+  /// Update a post locally in the posts list
+  void updatePostLocally(String postId, String newContent, List<String>? newMedia) {
+    final postIndex = _posts.indexWhere((post) => post.id.toString() == postId);
+    if (postIndex != -1) {
+      final post = _posts[postIndex];
+      // Create updated post with new content and media
+      final updatedPost = Post(
+        id: post.id,
+        author: post.author,
+        content: newContent,
+        createdAt: post.createdAt,
+        updatedAt: DateTime.now().toIso8601String(),
+        isLiked: post.isLiked,
+        likesCount: post.likesCount,
+        media: newMedia,
+        authorId: post.authorId,
+        likes: post.likes,
+        comments: post.comments,
+      );
+      _posts[postIndex] = updatedPost;
+      if (state is Success) {
+        final currentState = state as Success;
+        emit(FeedState.success(PostsResponse(
+          data: List<Post>.from(_posts),
+          pagination: currentState.data.pagination,
+        )));
+      }
+    }
   }
 
   Future<void> getPosts({bool refresh = false}) async {

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class GoogleSignInHelper {
@@ -13,7 +14,7 @@ class GoogleSignInHelper {
       final auth = await account.authentication;
       return auth.idToken;
     } catch (e) {
-      print("Google Sign-In Error: $e");
+      debugPrint("Google Sign-In Error: $e");
       return null;
     }
   }

@@ -46,6 +46,9 @@ abstract class ApiService {
   @POST(ApiConstants.googleSignin)
   Future<HttpResponse<dynamic>> googleLogin(@Body() GoogleAuthRequestBody body);
 
+  @GET(ApiConstants.getUser)
+  Future<HttpResponse<dynamic>> getUser();
+
   @GET(ApiConstants.posts)
   Future<PostsResponse> getPosts(
     @Query("page") int page,
@@ -54,4 +57,16 @@ abstract class ApiService {
 
   @POST(ApiConstants.posts)
   Future<Post> createPost(@Body() CreatePostRequestModel createPostRequestModel);
+
+  @PATCH(ApiConstants.updateDeletePost)
+  Future<HttpResponse<dynamic>> updatePost(
+    @Path("id") String postId,
+    @Body() CreatePostRequestModel updatePostRequestModel,
+  );
+
+  @DELETE(ApiConstants.updateDeletePost)
+  Future<HttpResponse<void>> deletePost(@Path("id") String postId);
+
+  @POST(ApiConstants.likePost)
+  Future<Post> likePost(@Path("id") String postId);
 }

@@ -39,7 +39,7 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
       success: (resetToken) async {
         if (resetToken != null) {
           _resetToken = resetToken; // Store token from requestOtp
-           print('Debug: Token received from requestOtp: "$resetToken"');
+           debugPrint('Debug: Token received from requestOtp: "$resetToken"');
         }
         emit(ForgotPasswordState.success("OTP sent successfully"));
       },
@@ -59,7 +59,7 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
       success: (resetToken) async {
         if (resetToken != null) {
           _resetToken = resetToken;  // Store token from verifyOtp
-           print('Debug: Token received from verifyOtp: "$resetToken"');
+           debugPrint('Debug: Token received from verifyOtp: "$resetToken"');
         }
         emit(const ForgotPasswordState.otpVerified("OTP verified successfully"));
       },
@@ -71,16 +71,16 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
 
   void emitResetPasswordState() async {
     emit(const ForgotPasswordState.resetPasswordLoading());
-    print('Debug: Reset token before request: "$_resetToken"');
+    debugPrint('Debug: Reset token before request: "$_resetToken"');
 
     // If token not present in memory, try to recover it from SharedPreferences
     if (_resetToken.isEmpty) {
       final stored = await SharedPrefHelper.getString(SharedPrefKeys.userToken);
       if (stored != null && stored.isNotEmpty) {
         _resetToken = stored;
-        print('Debug: Reset token recovered from SharedPrefs: "$_resetToken"');
+        debugPrint('Debug: Reset token recovered from SharedPrefs: "$_resetToken"');
       } else {
-        print('Debug: No reset token available in SharedPrefs');
+        debugPrint('Debug: No reset token available in SharedPrefs');
       }
     }
 

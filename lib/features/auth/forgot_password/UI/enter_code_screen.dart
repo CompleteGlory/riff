@@ -73,7 +73,6 @@ class EnterCodeScreen extends StatelessWidget {
   void validateAndVerify(BuildContext context) {
    
     final forgotPasswordCubit = context.read<ForgotPasswordCubit>();
-    print(forgotPasswordCubit.email);
     if(forgotPasswordCubit.otp.isNotEmpty && forgotPasswordCubit.email.isNotEmpty) {
       forgotPasswordCubit.emitVerifyOtpState();
     }
