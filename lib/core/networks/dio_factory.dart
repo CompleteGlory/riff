@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
@@ -68,7 +69,7 @@ class DioFactory {
           // Only attempt refresh once per request
           if (statusCode == 401 && requestOptions.extra['retried'] != true) {
             try {
-              print('🔄 Attempting token refresh...');
+              debugPrint('🔄 Attempting token refresh...');
               
               // Get refresh token from storage
               final refreshToken = await SharedPrefHelper.getString(
@@ -76,7 +77,7 @@ class DioFactory {
               );
               
               if (refreshToken == null || refreshToken.isEmpty) {
-                print('❌ No refresh token found, navigating to login');
+                debugPrint('❌ No refresh token found, navigating to login');
                 NavigationService.navigateToLoginAndClearStack();
                 return handler.next(err);
               }
@@ -98,7 +99,7 @@ class DioFactory {
               final refreshStatus = refreshResp.response.statusCode;
 
               if (refreshStatus == 200 || refreshStatus == 201) {
-                print('✅ Token refresh successful');
+                debugPrint('✅ Token refresh successful');
                 
                 // Extract new access token from cookies
                 final cookies = refreshResp.response.headers.map['set-cookie'];
@@ -135,9 +136,9 @@ class DioFactory {
                   requestOptions.headers['Cookie'] = 
                       'AccessToken=$newAccessToken';
                   
-                  print('✅ New access token set: ${newAccessToken.substring(0, 20)}...');
+                  debugPrint('✅ New access token set: ${newAccessToken.substring(0, 20)}...');
                 } else {
-                  print('⚠️ No new access token in refresh response');
+                  debugPrint('⚠️ No new access token in refresh response');
                   NavigationService.navigateToLoginAndClearStack();
                   return handler.next(err);
                 }
@@ -148,25 +149,25 @@ class DioFactory {
                     SharedPrefKeys.refreshToken,
                     newRefreshToken
                   );
-                  print('✅ New refresh token saved');
+                  debugPrint('✅ New refresh token saved');
                 }
 
                 // Mark as retried to prevent infinite loop
                 requestOptions.extra['retried'] = true;
 
                 // Retry the original request with new token
-                print('🔄 Retrying original request...');
+                debugPrint('🔄 Retrying original request...');
                 final retryResponse = await dio!.fetch(requestOptions);
-                print('✅ Retry successful!');
+                debugPrint('✅ Retry successful!');
                 return handler.resolve(retryResponse);
                 
               } else {
-                print('❌ Refresh failed with status: $refreshStatus');
+                debugPrint('❌ Refresh failed with status: $refreshStatus');
                 NavigationService.navigateToLoginAndClearStack();
                 return handler.next(err);
               }
             } catch (e) {
-              print('❌ Refresh token error: $e');
+              debugPrint('❌ Refresh token error: $e');
               NavigationService.navigateToLoginAndClearStack();
               return handler.next(err);
             }

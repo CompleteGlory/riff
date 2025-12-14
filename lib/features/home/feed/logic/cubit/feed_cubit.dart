@@ -32,10 +32,12 @@ class FeedCubit extends Cubit<FeedState> {
     await getPosts();
   }
 
-  
-
   /// Update a post locally in the posts list
-  void updatePostLocally(String postId, String newContent, List<String>? newMedia) {
+  void updatePostLocally(
+    String postId,
+    String newContent,
+    List<String>? newMedia,
+  ) {
     final postIndex = _posts.indexWhere((post) => post.id.toString() == postId);
     if (postIndex != -1) {
       final post = _posts[postIndex];
@@ -56,10 +58,14 @@ class FeedCubit extends Cubit<FeedState> {
       _posts[postIndex] = updatedPost;
       if (state is Success) {
         final currentState = state as Success;
-        emit(FeedState.success(PostsResponse(
-          data: List<Post>.from(_posts),
-          pagination: currentState.data.pagination,
-        )));
+        emit(
+          FeedState.success(
+            PostsResponse(
+              data: List<Post>.from(_posts),
+              pagination: currentState.data.pagination,
+            ),
+          ),
+        );
       }
     }
   }
@@ -85,10 +91,14 @@ class FeedCubit extends Cubit<FeedState> {
       _posts[postIndex] = updatedPost;
       if (state is Success) {
         final currentState = state as Success;
-        emit(FeedState.success(PostsResponse(
-          data: List<Post>.from(_posts),
-          pagination: currentState.data.pagination,
-        )));
+        emit(
+          FeedState.success(
+            PostsResponse(
+              data: List<Post>.from(_posts),
+              pagination: currentState.data.pagination,
+            ),
+          ),
+        );
       }
     }
   }
@@ -116,10 +126,14 @@ class FeedCubit extends Cubit<FeedState> {
       _posts[postIndex] = updatedPost;
       if (state is Success) {
         final currentState = state as Success;
-        emit(FeedState.success(PostsResponse(
-          data: List<Post>.from(_posts),
-          pagination: currentState.data.pagination,
-        )));
+        emit(
+          FeedState.success(
+            PostsResponse(
+              data: List<Post>.from(_posts),
+              pagination: currentState.data.pagination,
+            ),
+          ),
+        );
       }
     }
   }
@@ -147,10 +161,15 @@ class FeedCubit extends Cubit<FeedState> {
     response.when(
       success: (PostsResponse data) {
         // append new posts but avoid duplicates
-        final newPosts = data.data.where((p) => !_posts.any((existing) => existing.id == p.id)).toList();
+        final newPosts = data.data
+            .where((p) => !_posts.any((existing) => existing.id == p.id))
+            .toList();
         _posts.addAll(newPosts);
 
-        final combined = PostsResponse(data: List<Post>.from(_posts), pagination: data.pagination);
+        final combined = PostsResponse(
+          data: List<Post>.from(_posts),
+          pagination: data.pagination,
+        );
 
         emit(FeedState.success(combined));
 
@@ -191,13 +210,19 @@ class FeedCubit extends Cubit<FeedState> {
   }
 
   /// Create a comment for a post. Returns the ApiResult with created Comment.
-  Future<ApiResult<Comment>> createComment(String postId, String content, {int? parentCommentId}) async {
+  Future<ApiResult<Comment>> createComment(
+    String postId,
+    String content, {
+    int? parentCommentId,
+  }) async {
     try {
-      final body = CreateCommentRequestModel(content: content, parentCommentId: parentCommentId);
+      final body = CreateCommentRequestModel(
+        content: content,
+        parentCommentId: parentCommentId,
+      );
       final response = await _feedRepo.createComment(postId, body);
       return response;
     } catch (e) {
-      
       return ApiResult.failure(ApiErrorHandler.handle(e));
     }
   }
@@ -209,5 +234,27 @@ class FeedCubit extends Cubit<FeedState> {
     } catch (e) {
       return ApiResult.failure(ApiErrorHandler.handle(e));
     }
+  }
+
+  // FeedCubit additions
+
+  Future<ApiResult<String>> updateComment(
+    String commentId,
+    String content,
+  ) async {
+    final body = CreateCommentRequestModel(content: content);
+    return await _feedRepo.updateComment(commentId, body);
+  }
+
+  Future<ApiResult<bool>> deleteComment(String commentId) async {
+    return await _feedRepo.deleteComment(commentId);
+  }
+
+  Future<ApiResult<bool>> likeComment(String commentId) async {
+    return await _feedRepo.likeComment(commentId);
+  }
+
+  Future<ApiResult<bool>> unlikeComment(String commentId) async {
+    return await _feedRepo.unlikeComment(commentId);
   }
 }

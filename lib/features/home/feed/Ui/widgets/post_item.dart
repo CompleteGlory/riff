@@ -258,6 +258,8 @@ class _PostItemState extends State<PostItem>
         ) ??
         '';
 
+
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       margin: EdgeInsets.symmetric(vertical: 10.h),

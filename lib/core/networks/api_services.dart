@@ -10,7 +10,6 @@ import 'package:riff/features/auth/signup/data/models/signup_request_body.dart';
 import 'package:riff/features/auth/signup/data/models/signup_response.dart';
 import 'package:riff/features/home/add_post/data/models/create_post_request_model.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
-import 'package:riff/features/home/feed/data/models/comments_response.dart';
 import 'package:riff/features/home/feed/data/models/create_comment_request_model.dart';
 import 'package:riff/features/home/feed/data/models/comment.dart';
 import 'package:riff/features/home/feed/data/models/posts_response.dart';
@@ -86,4 +85,20 @@ abstract class ApiService {
     @Path("id") String postId,
     @Body() CreateCommentRequestModel body,
   );
+
+  @POST(ApiConstants.likeComment)
+  Future<HttpResponse<dynamic>> likeComment(@Path("id") String commentId);
+
+  @DELETE(ApiConstants.unlikeComment)
+  Future<HttpResponse<dynamic>> unlikeComment(@Path("id") String commentId);
+
+  @PATCH(ApiConstants.comments)
+  Future<HttpResponse<dynamic>> updateComment(
+    @Path("id") String commentId,
+    @Body() CreateCommentRequestModel body,
+  );
+
+  @DELETE(ApiConstants.comments)
+  Future<HttpResponse<void>> deleteComment(@Path("id") String commentId);
+
 }

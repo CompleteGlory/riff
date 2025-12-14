@@ -92,7 +92,7 @@ class FeedRepo {
         id: SharedPrefHelper.getString(SharedPrefKeys.userId).toString(),
         fullName: 'You',
         username: '',
-      ),
+      ), isLiked: false,
     );
   }
 
@@ -122,5 +122,56 @@ class FeedRepo {
     return ApiResult.failure(ApiErrorHandler.handle(e));
   }
 }
+
+// FeedRepo additions
+
+Future<ApiResult<String>> updateComment(
+  String commentId,
+  CreateCommentRequestModel body,
+) async {
+  //try {
+    final response = await _apiService.updateComment(commentId, body);
+    final data = response.data;
+
+    if (data is Comment) return ApiResult.success("success");
+    if (data is Map<String, dynamic>) {
+      return ApiResult.success("success");
+    }
+
+    return ApiResult.failure(
+      ApiErrorHandler.handle(Exception('Invalid updateComment response')),
+    );
+  // } catch (e) {
+  //   return ApiResult.failure(ApiErrorHandler.handle(e));
+  // }
+}
+
+Future<ApiResult<bool>> deleteComment(String commentId) async {
+  try {
+    await _apiService.deleteComment(commentId);
+    return ApiResult.success(true);
+  } catch (e) {
+    return ApiResult.failure(ApiErrorHandler.handle(e));
+  }
+}
+
+Future<ApiResult<bool>> likeComment(String commentId) async {
+  try {
+    await _apiService.likeComment(commentId);
+    return ApiResult.success(true);
+  } catch (e) {
+    return ApiResult.failure(ApiErrorHandler.handle(e));
+  }
+}
+
+Future<ApiResult<bool>> unlikeComment(String commentId) async {
+  try {
+    await _apiService.unlikeComment(commentId);
+    return ApiResult.success(true);
+  } catch (e) {
+    return ApiResult.failure(ApiErrorHandler.handle(e));
+  }
+}
+
 
 }
