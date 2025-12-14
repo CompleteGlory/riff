@@ -10,6 +10,9 @@ import 'package:riff/features/auth/signup/data/models/signup_request_body.dart';
 import 'package:riff/features/auth/signup/data/models/signup_response.dart';
 import 'package:riff/features/home/add_post/data/models/create_post_request_model.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
+import 'package:riff/features/home/feed/data/models/comments_response.dart';
+import 'package:riff/features/home/feed/data/models/create_comment_request_model.dart';
+import 'package:riff/features/home/feed/data/models/comment.dart';
 import 'package:riff/features/home/feed/data/models/posts_response.dart';
 part 'api_services.g.dart';
 
@@ -68,5 +71,19 @@ abstract class ApiService {
   Future<HttpResponse<void>> deletePost(@Path("id") String postId);
 
   @POST(ApiConstants.likePost)
-  Future<Post> likePost(@Path("id") String postId);
+  Future<HttpResponse<dynamic>> likePost(@Path("id") String postId);
+
+  @DELETE(ApiConstants.unlikePost)
+  Future<HttpResponse<dynamic>> unlikePost(@Path("id") String postId);
+
+  @GET(ApiConstants.postComments)
+  Future<HttpResponse<List<Comment>>> getPostComments(
+    @Path("id") String postId,
+  );
+
+  @POST(ApiConstants.postComments)
+  Future<HttpResponse<Comment>> createComment(
+    @Path("id") String postId,
+    @Body() CreateCommentRequestModel body,
+  );
 }

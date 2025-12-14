@@ -11,4 +11,7 @@ class ApiConstants {
   static const String posts = "posts";
   static const String updateDeletePost = "posts/{id}";
   static const String likePost = "posts/{id}/like";
+  static const String unlikePost = "posts/{id}/unlike";
+  // Comments for a post (GET list, POST create)
+  static const String postComments = "posts/{id}/comments";
 }

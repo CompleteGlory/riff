@@ -1,16 +1,24 @@
 // ignore_for_file: use_build_context_synchronously, deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
 import 'package:riff/core/helpers/spacing.dart';
+import 'package:riff/core/helpers/time_ago.dart';
+import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
+import 'package:riff/features/home/feed/Ui/widgets/comment_sheet.dart';
+import 'package:riff/features/home/feed/Ui/widgets/fullscsreen_image.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post_options.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:riff/core/di/dependency_injection.dart';
+import 'package:riff/features/home/feed/data/models/comment.dart';
+import 'package:riff/features/home/feed/logic/cubit/feed_cubit.dart';
+import 'package:riff/features/home/feed/logic/cubit/like_post_cubit.dart';
 
 class PostItem extends StatefulWidget {
   final Post post;
@@ -55,8 +63,9 @@ class _PostItemState extends State<PostItem>
 
   void _toggleLike() async {
     HapticFeedback.mediumImpact();
-
-    // NOTE: You'll likely need to call a cubit method here to update the like status on the server.
+    // Optimistic UI update
+    final previousLiked = isLiked;
+    final previousLikeCount = likeCount;
 
     setState(() {
       isLiked = !isLiked;
@@ -70,49 +79,158 @@ class _PostItemState extends State<PostItem>
       await _heartController.reverse();
       setState(() => showHeart = false);
     }
-  }
 
-  void _openComments() {
-    // FIX: Safely access comments list, use null-aware operator
-    final commentsCount = widget.post.comments?.length ?? 0;
+    // Call cubit to like/unlike the post and reconcile
+    final likeCubit = getIt<LikePostCubit>();
+    final postId = (widget.post.id).toString();
 
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      backgroundColor: ColorManager.white,
-      builder: (context) => Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 50.w,
-              height: 5.h,
-              decoration: BoxDecoration(
-                color: ColorManager.lighterGrey,
-                borderRadius: BorderRadius.circular(10.r),
+    try {
+      final feedCubit = getIt<FeedCubit>();
+      if (isLiked) {
+        // we just liked the post
+        final result = await likeCubit.likePost(postId);
+        result.when(
+          success: (liked) {
+            if (liked) {
+              try {
+                feedCubit.updatePostLikeLocally(postId, isLiked, likeCount);
+              } catch (_) {}
+            } else {
+              setState(() {
+                isLiked = previousLiked;
+                likeCount = previousLikeCount;
+              });
+            }
+          },
+          failure: (_) {
+            setState(() {
+              isLiked = previousLiked;
+              likeCount = previousLikeCount;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                backgroundColor: ColorManager.primaryBlack,
+                content: Text(
+                  'Failed to update like. Please try again.',
+                  style: TextStyles.font12Medium.copyWith(
+                    color: ColorManager.lighterGrey,
+                  ),
+                ),
               ),
-            ),
-            verticalSpace(16),
-            Text('Comments', style: TextStyles.font18Semibold),
-            verticalSpace(16),
-            Text(
-              // FIX: Use the calculated commentsCount
-              commentsCount == 0
-                  ? '💬 No comments yet. Be the first to say something!'
-                  : '💬 $commentsCount comments',
-              style: TextStyles.font14regular.copyWith(
-                color: ColorManager.normalGrey,
+            );
+          },
+        );
+      } else {
+        // we just unliked the post
+        final result = await likeCubit.unlikePost(postId);
+        result.when(
+          success: (ok) {
+            if (ok) {
+              try {
+                feedCubit.updatePostLikeLocally(postId, isLiked, likeCount);
+              } catch (_) {}
+            } else {
+              setState(() {
+                isLiked = previousLiked;
+                likeCount = previousLikeCount;
+              });
+            }
+          },
+          failure: (_) {
+            setState(() {
+              isLiked = previousLiked;
+              likeCount = previousLikeCount;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                backgroundColor: ColorManager.primaryBlack,
+                content: Text(
+                  'Failed to update like. Please try again.',
+                  style: TextStyles.font12Medium.copyWith(
+                    color: ColorManager.lighterGrey,
+                  ),
+                ),
               ),
+            );
+          },
+        );
+      }
+    } catch (e) {
+      // revert on unexpected error
+      setState(() {
+        isLiked = previousLiked;
+        likeCount = previousLikeCount;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: ColorManager.primaryBlack,
+          content: Text(
+            'Failed to update like. Please try again.',
+            style: TextStyles.font12Medium.copyWith(
+              color: ColorManager.lighterGrey,
             ),
-            verticalSpace(20),
-          ],
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
+
+  void _openComments(String postId) async {
+  final feedCubit = getIt<FeedCubit>();
+
+  // show loading first
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: ColorManager.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (_) => const Center(
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        child: CircularProgressIndicator(),
+      ),
+    ),
+  );
+
+  final result = await feedCubit.getPostComments(postId);
+
+  Navigator.pop(context); // close loading sheet
+
+  result.when(
+    success: (comments) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: ColorManager.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (_) => Padding(
+          padding: EdgeInsets.all(16.w),
+          child: CommentsSheet(
+            comments: comments,
+            postId: postId,
+            initialCommentsCount: comments.length,
+            onCommentCreated: (Comment newComment) {
+              // optional: local update
+            },
+          ),
+        ),
+      );
+    },
+    failure: (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to load comments'),
+        ),
+      );
+    },
+  );
+}
+
 
   void _sharePost() {
     final textToShare =
@@ -139,8 +257,6 @@ class _PostItemState extends State<PostItem>
               '', // If media is not null but empty, or no item is not empty
         ) ??
         '';
-
-    final commentsCount = widget.post.comments?.length ?? 0;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
@@ -178,7 +294,7 @@ class _PostItemState extends State<PostItem>
                       style: TextStyles.font15semiBold,
                     ),
                     Text(
-                      _formatTimeAgo(widget.post.createdAt),
+                      timeAgo(widget.post.createdAt),
                       style: TextStyles.font12regular.copyWith(
                         color: ColorManager.normalGrey,
                       ),
@@ -194,7 +310,6 @@ class _PostItemState extends State<PostItem>
                           SharedPrefKeys.userId,
                         ) ??
                         "";
-
                     final isMine = widget.post.author?.id == currentUserId;
 
                     showPostOptions(
@@ -244,91 +359,58 @@ class _PostItemState extends State<PostItem>
                 ),
               ),
             verticalSpace(10),
-
             // Action Buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                IconButton(
-                  icon: Icon(
-                    isLiked ? Icons.favorite : Icons.favorite_border,
-                    color: isLiked ? ColorManager.red : ColorManager.darkGrey,
+                GestureDetector(
+                  onTap: _toggleLike,
+                  child: SvgPicture.asset(
+                    isLiked
+                        ? "assets/svgs/Heart-filled.svg"
+                        : "assets/svgs/Heart.svg",
+                    width: 24.w,
+                    height: 24.h,
+                    color: isLiked
+                        ? ColorManager.red
+                        : ColorManager.primaryBlack,
                   ),
-                  onPressed: _toggleLike,
                 ),
-                IconButton(
-                  icon: const Icon(Icons.comment_outlined),
-                  onPressed: _openComments,
+                GestureDetector(
+                  onTap: () => _openComments((widget.post.id).toString()),
+                  child: SvgPicture.asset(
+                    "assets/svgs/Chat.svg",
+                    width: 24.w,
+                    height: 24.h,
+                    color: ColorManager.primaryBlack,
+                  ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.share_outlined),
-                  onPressed: _sharePost,
+                GestureDetector(
+                  onTap: _sharePost,
+                  child: SvgPicture.asset(
+                    "assets/svgs/share.svg",
+                    width: 32.w,
+                    height: 32.h,
+                    color: ColorManager.primaryBlack,
+                  ),
                 ),
               ],
             ),
             verticalSpace(4),
-            Text(
-              '$likeCount likes',
-              style: TextStyles.font14semiBold.copyWith(
-                color: ColorManager.darkGrey,
+            Padding(
+              padding:  EdgeInsets.symmetric(horizontal: 33.w,),
+              child: Text(
+                '$likeCount likes',
+                style: TextStyles.font14semiBold.copyWith(
+                  color: ColorManager.darkGrey,
+                ),
               ),
-            ),
+            ),   
             verticalSpace(4),
-            // FIX: Use the calculated commentsCount
-            Text(
-              '$commentsCount comments',
-              style: TextStyles.font14regular.copyWith(
-                color: ColorManager.normalGrey,
-              ),
-            ),
           ],
         ),
       ),
     );
   }
-
-  String _formatTimeAgo(String createdAt) {
-    try {
-      final createdDate = DateTime.parse(createdAt);
-      final diff = DateTime.now().difference(createdDate);
-
-      if (diff.inSeconds < 60) return "Just now";
-      if (diff.inMinutes < 60) return "${diff.inMinutes}m ago";
-      if (diff.inHours < 24) return "${diff.inHours}h ago";
-      return "${diff.inDays}d ago";
-    } catch (_) {
-      return "Just now";
-    }
-  }
 }
 
-// Fullscreen Image Viewer
-class FullScreenImage extends StatelessWidget {
-  final String imageUrl;
-  const FullScreenImage({super.key, required this.imageUrl});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          Center(
-            child: InteractiveViewer(
-              // NOTE: If mediaUrl is a network path, this should be Image.network
-              child: Image.asset(imageUrl, fit: BoxFit.contain),
-            ),
-          ),
-          Positioned(
-            top: 40.h,
-            right: 20.w,
-            child: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white, size: 30),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

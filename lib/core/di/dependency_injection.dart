@@ -18,6 +18,7 @@ import 'package:riff/features/home/core/data/repos/home_repo.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 import 'package:riff/features/home/feed/data/repos/feed_repo.dart';
 import 'package:riff/features/home/feed/logic/cubit/feed_cubit.dart';
+import 'package:riff/features/home/feed/logic/cubit/like_post_cubit.dart';
 
 final getIt = GetIt.instance;
 
@@ -46,6 +47,7 @@ Future<void> setUpGetIt() async {
   //feed
   getIt.registerLazySingleton<FeedRepo>(()=>FeedRepo(getIt()));
   getIt.registerFactory<FeedCubit>(()=>FeedCubit(getIt()));
+  getIt.registerFactory<LikePostCubit>(()=>LikePostCubit(getIt()));
 
   //create post
   getIt.registerLazySingleton<CreatePostRepo>(()=>CreatePostRepo(getIt()));
