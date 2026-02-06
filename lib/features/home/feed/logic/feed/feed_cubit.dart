@@ -1,11 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:riff/features/home/feed/data/repos/feed_repo.dart';
-import 'package:riff/features/home/feed/logic/cubit/feed/feed_state.dart';
 import 'package:riff/core/networks/api_result.dart' hide Success;
 import 'package:riff/core/networks/api_error_model.dart';
 import 'package:riff/features/home/feed/data/models/posts_response.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/feed/data/models/comment.dart';
+import 'package:riff/features/home/feed/logic/cubit/feed/feed_state.dart';
 
 class FeedCubit extends Cubit<FeedState> {
   final FeedRepo _feedRepo;
