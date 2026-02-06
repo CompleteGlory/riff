@@ -14,7 +14,7 @@ Post _$PostFromJson(Map<String, dynamic> json) => Post(
   content: json['content'] as String?,
   createdAt: json['created_at'] as String,
   updatedAt: json['updated_at'] as String,
-  isLiked: json['isLiked'] as bool?,
+  isLiked: json['is_liked'] as bool?,
   likesCount: json['likes_count'] as String?,
   authorId: json['author_id'] as String?,
   media: (json['media'] as List<dynamic>?)?.map((e) => e as String).toList(),
@@ -36,6 +36,6 @@ Map<String, dynamic> _$PostToJson(Post instance) => <String, dynamic>{
   'updated_at': instance.updatedAt,
   'likes': instance.likes,
   'comments': instance.comments,
-  'isLiked': instance.isLiked,
+  'is_liked': instance.isLiked,
   'likes_count': instance.likesCount,
 };

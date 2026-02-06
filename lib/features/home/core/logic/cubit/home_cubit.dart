@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:riff/features/home/add_post/ui/widgets/create_post_screen.dart';
 import 'package:riff/features/home/add_post/ui/widgets/create_post_wrapper.dart';
 import 'package:riff/features/home/core/data/repos/home_repo.dart';
 import 'package:riff/features/home/core/logic/cubit/home_state.dart';
-import 'package:riff/features/home/feed/Ui/feed_screen.dart';
+import 'package:riff/features/home/feed/Ui/widgets/feed/feed_screen.dart';
 import 'package:riff/features/home/notifications/UI/notifications_screen.dart';
 import 'package:riff/features/home/profile/UI/profile_screen.dart';
 import 'package:riff/features/home/search/UI/search_screen.dart';

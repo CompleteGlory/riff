@@ -1,5 +1,8 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:riff/core/helpers/spacing.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
@@ -10,12 +13,13 @@ class AppButton extends StatelessWidget {
   final bool isWhite;
   final double ? width;
   final IconData ? icon;
+  final String? image;
   
   const AppButton({
     super.key, 
     required this.onPressed, 
     required this.text, 
-    required this.isWhite, this.width, this.icon
+    required this.isWhite, this.width, this.icon, this.image
   });
 
   @override
@@ -43,10 +47,17 @@ class AppButton extends StatelessWidget {
                 color: isWhite ? Colors.black : Colors.white,
               ),
             ),
-            if(icon != null)
-            horizontalSpace(10.w),
+            if(icon != null || image != null)
+            horizontalSpace(20.w),
             if(icon != null)
             Icon(icon,color: isWhite?Colors.black:Colors.white,),
+            if(image != null)
+            SvgPicture.asset(
+              image ?? '',
+              width: 24.w,
+              height: 24.h,
+              color: isWhite ? Colors.black : Colors.white,
+            ),
           ],
         ),
       ),

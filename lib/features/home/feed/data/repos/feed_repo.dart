@@ -9,19 +9,11 @@ class FeedRepo {
   FeedRepo(this._apiService);
 
   Future<ApiResult<PostsResponse>> getPosts(int page, int limit) async {
-    // TEMPORARILY REMOVED try-catch TO UNMASK THE ERROR
-    // The raw exception (e.g., TypeError) will now crash the app,
-    // and the console will show the full stack trace, pointing to the exact model field.
-    final response = await _apiService.getPosts(page, limit);
-    return ApiResult.success(response);
-    
-    /* Original handled code:
     try {
       final response = await _apiService.getPosts(page, limit);
       return ApiResult.success(response);
     } catch (e) {
       return ApiResult.failure(ApiErrorHandler.handle(e));
     }
-    */
   }
 }

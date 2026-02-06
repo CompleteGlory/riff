@@ -33,6 +33,7 @@ class Post {
   // FIX 5: Make nullable as the array is missing in the response
   final List<Comment>? comments; 
   
+  @JsonKey(name: 'is_liked')
   final bool? isLiked;
   
   // This field matches the JSON (String)

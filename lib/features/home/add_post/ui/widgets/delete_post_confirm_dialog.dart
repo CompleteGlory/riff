@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:riff/core/di/dependency_injection.dart';
-import 'package:riff/core/helpers/extenstions.dart';
-import 'package:riff/core/routing/routes.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/widgets/button.dart';
 import 'package:riff/features/home/add_post/logic/cubit/delete_post_cubit.dart';
 import 'package:riff/features/home/add_post/logic/cubit/delete_post_state.dart';
-import 'package:riff/features/home/feed/logic/cubit/feed_cubit.dart';
 
 class DeletePostConfirmDialog extends StatelessWidget {
   final String postId;
@@ -56,16 +52,7 @@ class DeletePostConfirmDialog extends StatelessWidget {
                   ),
                 ),
               );
-              
-              // Close the confirm dialog
               Navigator.pop(context);
-              
-              // Remove post locally from feed
-              try {
-                getIt<FeedCubit>().removePostLocally(postId);
-              } catch (_) {
-                // FeedCubit might not be available
-              }
             },
             failure: (error) {
               // Pop loading dialog

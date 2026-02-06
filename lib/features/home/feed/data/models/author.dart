@@ -5,8 +5,10 @@ part 'author.g.dart';
 @JsonSerializable()
 class Author {
   final String id;
+
   @JsonKey(name: 'full_name')
   final String fullName;
+
   final String username;
 
   Author({
@@ -15,6 +17,8 @@ class Author {
     required this.username,
   });
 
-  factory Author.fromJson(Map<String, dynamic> json) => _$AuthorFromJson(json);
+  factory Author.fromJson(Map<String, dynamic> json) =>
+      _$AuthorFromJson(json);
+
   Map<String, dynamic> toJson() => _$AuthorToJson(this);
 }

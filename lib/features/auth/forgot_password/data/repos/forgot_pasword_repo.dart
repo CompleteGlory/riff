@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:riff/core/networks/api_error_handler.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/networks/api_services.dart';
@@ -28,7 +29,7 @@ class ForgotPasswordRepo {
           }
 
           if (resetToken != null && resetToken.isNotEmpty) {
-            print('Debug: Repo - requestOtp found token: "$resetToken"');
+            debugPrint('Debug: Repo - requestOtp found token: "$resetToken"');
             // override the Authorization header with the reset token so subsequent requests
             // (verify OTP / reset password) use it
             DioFactory.setTokenIntoHeaderAfterLogin(resetToken);
@@ -59,7 +60,7 @@ class ForgotPasswordRepo {
           }
 
           if (resetToken != null && resetToken.isNotEmpty) {
-             print('Debug: Repo - verifyOtp found token: "$resetToken"');
+             debugPrint('Debug: Repo - verifyOtp found token: "$resetToken"');
             // Store reset token for use in reset password request
             DioFactory.setTokenIntoHeaderAfterLogin(resetToken);
             await SharedPrefHelper.setData(SharedPrefKeys.userToken, resetToken);
@@ -78,7 +79,7 @@ class ForgotPasswordRepo {
   }
 
   Future<ApiResult<void>> resetPassword(ResetPasswordRequestBody resetPasswordRequestBody) async {
-     print('Debug: Repo - resetPassword using token: "${resetPasswordRequestBody.resetToken}"');
+     debugPrint('Debug: Repo - resetPassword using token: "${resetPasswordRequestBody.resetToken}"');
     try {
       final response = await _apiService.resetPassword(resetPasswordRequestBody);
       return ApiResult.success(response.data);

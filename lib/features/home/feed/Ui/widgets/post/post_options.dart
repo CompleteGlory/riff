@@ -1,6 +1,7 @@
+// ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:riff/core/di/dependency_injection.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/home/add_post/logic/cubit/update_post_cubit.dart';
@@ -45,7 +46,7 @@ void showPostOptions({
 
             if (isMine) ...[
               _optionTile(
-                icon: Icons.edit,
+                picture: "assets/svgs/edit.svg",
                 text: "Edit Post",
                 onTap: () {
                   Navigator.pop(context);
@@ -61,14 +62,14 @@ void showPostOptions({
                 },
               ),
               _optionTile(
-                icon: Icons.delete_forever,
+                picture: "assets/svgs/delete.svg",
                 text: "Delete Post",
                 color: Colors.red,
                 onTap: () {
                   Navigator.pop(context);
                   // Get the delete cubit from the service locator
                   final deletePostCubit = getIt<DeletePostCubit>();
-                  final postId = (post.id ?? '').toString();
+                  final postId = (post.id).toString();
                   showDialog(
                     context: context,
                     builder: (context) => DeletePostConfirmDialog(
@@ -80,16 +81,7 @@ void showPostOptions({
               ),
             ] else ...[
               _optionTile(
-                icon: Icons.repeat_rounded,
-                text: "Repost",
-                onTap: () {
-                  Navigator.pop(context);
-                  // TODO: repost
-                  print("repost");
-                },
-              ),
-              _optionTile(
-                icon: Icons.flag_outlined,
+                picture: "assets/svgs/report.svg",
                 text: "Report Post",
                 color: Colors.red,
                 onTap: () {
@@ -109,13 +101,13 @@ void showPostOptions({
 }
 
 Widget _optionTile({
-  required IconData icon,
+  required String picture,
   required String text,
   required VoidCallback onTap,
   Color color = Colors.black,
 }) {
   return ListTile(
-    leading: Icon(icon, size: 26, color: color),
+    leading: SvgPicture.asset(picture, width: 24.w, height: 24.h, color: color),
     title: Text(
       text,
       style: TextStyles.font16Medium.copyWith(color: color),

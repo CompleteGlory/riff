@@ -1,7 +1,13 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:riff/core/helpers/extenstions.dart';
+import 'package:riff/core/helpers/shared_pref_helper.dart';
+import 'package:riff/core/routing/routes.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
+import 'package:riff/core/widgets/button.dart';
 import 'package:riff/features/home/core/UI/app_bottom_nav.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 import 'package:riff/features/home/core/logic/cubit/home_state.dart';
@@ -44,19 +50,32 @@ class HomeLayout extends StatelessWidget {
       onWillPop: () => _onWillPop(context),
       child: BlocBuilder<HomeCubit, HomeState>(
         builder: (context, state) => Scaffold(
-          appBar: AppBar(
-            leading: IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () {
-               // Scaffold.of(context).openDrawer();
-              },
-            ),
+          appBar: AppBar(     
             title: Text(
               context.read<HomeCubit>().titles[
                   context.read<HomeCubit>().currentIndex],
                   style: TextStyles.font28Bold,
             ),
           ),
+          drawer: Drawer(
+            child: Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: Column(
+                children: [
+                  DrawerHeader(
+                    child: Text(
+                      'Riff',
+                      style: TextStyles.font28Bold,
+                    ),
+                  ),
+                  AppButton(onPressed: (){
+                      context.pushReplacementNamed(Routes.login);
+                      SharedPrefHelper.clearAllData();
+                  }, text:"Logout", isWhite: false,image: "assets/svgs/Logout.svg")
+                ],
+              ),
+            ),
+          ), // Add your drawer widget here
           body: context
               .read<HomeCubit>()
               .screens[context.read<HomeCubit>().currentIndex],
