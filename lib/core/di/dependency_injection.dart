@@ -17,8 +17,12 @@ import 'package:riff/features/home/add_post/logic/cubit/delete_post_cubit.dart';
 import 'package:riff/features/home/core/data/repos/home_repo.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 import 'package:riff/features/home/feed/data/repos/feed_repo.dart';
-import 'package:riff/features/home/feed/logic/cubit/feed_cubit.dart';
-import 'package:riff/features/home/feed/logic/cubit/like_post_cubit.dart';
+import 'package:riff/features/home/feed/data/repos/like_repo.dart';
+import 'package:riff/features/home/feed/data/repos/comment_repo.dart';
+import 'package:riff/features/home/feed/logic/cubit/feed/feed_cubit.dart';
+import 'package:riff/features/home/feed/logic/cubit/likes/like_cubit.dart';
+import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
+import 'package:riff/features/home/feed/logic/cubit/posts/post_cubit.dart';
 
 final getIt = GetIt.instance;
 
@@ -47,7 +51,17 @@ Future<void> setUpGetIt() async {
   //feed
   getIt.registerLazySingleton<FeedRepo>(()=>FeedRepo(getIt()));
   getIt.registerFactory<FeedCubit>(()=>FeedCubit(getIt()));
-  getIt.registerFactory<LikePostCubit>(()=>LikePostCubit(getIt()));
+  
+  // like operations
+  getIt.registerLazySingleton<LikeRepo>(()=>LikeRepo(getIt()));
+  getIt.registerFactory<LikeCubit>(()=>LikeCubit(getIt()));
+  
+  // comment operations
+  getIt.registerLazySingleton<CommentRepo>(()=>CommentRepo(getIt()));
+  getIt.registerFactory<CommentCubit>(()=>CommentCubit(getIt()));
+  
+  // post operations
+  getIt.registerFactory<PostCubit>(()=>PostCubit(getIt<LikeCubit>(), getIt<FeedCubit>()));
 
   //create post
   getIt.registerLazySingleton<CreatePostRepo>(()=>CreatePostRepo(getIt()));

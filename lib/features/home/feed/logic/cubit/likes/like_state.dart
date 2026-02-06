@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riff/core/networks/api_error_model.dart';
 
-part 'like_post_state.freezed.dart';
+part 'like_state.freezed.dart';
 
 @freezed
 class LikePostState with _$LikePostState {

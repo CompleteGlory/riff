@@ -3,13 +3,12 @@ import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/features/home/feed/data/repos/like_repo.dart';
 import 'package:riff/features/home/feed/logic/cubit/likes/like_state.dart';
 
-class LikePostCubit extends Cubit<LikePostState> {
+class LikeCubit extends Cubit<LikePostState> {
   final LikeRepo _likeRepo;
 
-  LikePostCubit(this._likeRepo) : super(const LikePostState.initial());
+  LikeCubit(this._likeRepo) : super(const LikePostState.initial());
 
-  /// Likes/unlikes a post using the LikeRepo and updates FeedCubit on success.
-  /// Returns the ApiResult so callers (UI) can await and react if needed.
+  /// Likes a post with animation control support
   Future<ApiResult<bool>> likePost(String postId) async {
     emit(const LikePostState.loading());
 
@@ -27,6 +26,7 @@ class LikePostCubit extends Cubit<LikePostState> {
     return response;
   }
 
+  /// Unlikes a post with animation control support
   Future<ApiResult<bool>> unlikePost(String postId) async {
     emit(const LikePostState.loading());
 

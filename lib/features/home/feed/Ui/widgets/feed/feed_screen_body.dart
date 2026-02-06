@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lottie/lottie.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
-import 'package:riff/features/home/feed/Ui/widgets/post_item.dart';
-import 'package:riff/features/home/feed/logic/cubit/feed_cubit.dart';
-import 'package:riff/features/home/feed/logic/cubit/feed_state.dart';
+import 'package:riff/features/home/feed/Ui/widgets/feed/lottie_loader.dart';
+import 'package:riff/features/home/feed/Ui/widgets/post/post_item.dart';
+import 'package:riff/features/home/feed/logic/cubit/feed/feed_cubit.dart';
+import 'package:riff/features/home/feed/logic/cubit/feed/feed_state.dart';
 
 class FeedScreenBody extends StatefulWidget {
   const FeedScreenBody({super.key});
@@ -102,11 +102,10 @@ class _FeedScreenBodyState extends State<FeedScreenBody> {
                     ),
                   );
                 }
-
                 // bottom loader with Lottie
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(child: _LottieLoader()),
+                  child: Center(child: LottieLoader()),
                 );
               },
             );
@@ -121,91 +120,5 @@ class _FeedScreenBodyState extends State<FeedScreenBody> {
   }
 }
 
-class _LottieLoader extends StatelessWidget {
-  const _LottieLoader();
 
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 56,
-      child: Center(
-        child: Lottie.asset(
-          'assets/animations/loading.json',
-          width: 100,
-          height: 100,
-          fit: BoxFit.contain,
-          animate: true,
-        ),
-      ),
-    );
-  }
-}
 
-// Fallback animation (used if Lottie asset is not available)
-class _LoadingMore extends StatefulWidget {
-  const _LoadingMore();
-
-  @override
-  State<_LoadingMore> createState() => _LoadingMoreState();
-}
-
-class _LoadingMoreState extends State<_LoadingMore> with SingleTickerProviderStateMixin {
-  late final AnimationController _anim;
-
-  @override
-  void initState() {
-    super.initState();
-    _anim = AnimationController(vsync: this, duration: const Duration(milliseconds: 900),)..repeat();
-  }
-
-  @override
-  void dispose() {
-    _anim.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-
-      height: 56,
-      child: Center(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ScaleTransition(
-              scale: Tween(begin: 0.6, end: 1.0).animate(CurvedAnimation(parent: _anim, curve: const Interval(0.0, 0.33, curve: Curves.easeInOut))),
-              child: const _Dot(),
-            ),
-            const SizedBox(width: 8),
-            ScaleTransition(
-              scale: Tween(begin: 0.6, end: 1.0).animate(CurvedAnimation(parent: _anim, curve: const Interval(0.33, 0.66, curve: Curves.easeInOut))),
-              child: const _Dot(),
-            ),
-            const SizedBox(width: 8),
-            ScaleTransition(
-              scale: Tween(begin: 0.6, end: 1.0).animate(CurvedAnimation(parent: _anim, curve: const Interval(0.66, 1.0, curve: Curves.easeInOut))),
-              child: const _Dot(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Dot extends StatelessWidget {
-  const _Dot();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 10,
-      height: 10,
-      decoration: BoxDecoration(
-        color: ColorManager.primaryBlack,
-        shape: BoxShape.circle,
-      ),
-    );
-  }
-}

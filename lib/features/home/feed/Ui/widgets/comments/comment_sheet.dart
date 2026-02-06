@@ -15,7 +15,7 @@ import 'package:riff/core/widgets/button.dart';
 import 'package:riff/core/widgets/tff.dart';
 import 'package:riff/features/home/feed/data/models/author.dart';
 import 'package:riff/features/home/feed/data/models/comment.dart';
-import 'package:riff/features/home/feed/logic/cubit/feed_cubit.dart';
+import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
 
 class CommentsSheet extends StatefulWidget {
   final List<Comment> comments;
@@ -105,8 +105,8 @@ class _CommentsSheetState extends State<CommentsSheet> {
       _controller.clear();
     });
 
-    final feedCubit = getIt<FeedCubit>();
-    final res = await feedCubit.createComment(widget.postId, text);
+    final commentCubit = getIt<CommentCubit>();
+    final res = await commentCubit.createComment(widget.postId, text);
 
     setState(() => _isSending = false);
 
@@ -147,10 +147,10 @@ class _CommentsSheetState extends State<CommentsSheet> {
       _commentLikes[comment.id] = !isCurrentlyLiked;
     });
 
-    final feedCubit = getIt<FeedCubit>();
+    final commentCubit = getIt<CommentCubit>();
     final res = isCurrentlyLiked
-        ? await feedCubit.unlikeComment(commentId)
-        : await feedCubit.likeComment(commentId);
+        ? await commentCubit.unlikeComment(commentId)
+        : await commentCubit.likeComment(commentId);
 
     res.when(
       success: (_) {
@@ -193,8 +193,8 @@ class _CommentsSheetState extends State<CommentsSheet> {
 
     if (confirmed != true) return;
 
-    final feedCubit = getIt<FeedCubit>();
-    final res = await feedCubit.deleteComment(commentId);
+    final commentCubit = getIt<CommentCubit>();
+    final res = await commentCubit.deleteComment(commentId);
 
     res.when(
       success: (_) {
@@ -234,8 +234,8 @@ class _CommentsSheetState extends State<CommentsSheet> {
       _editController.clear();
     });
 
-    final feedCubit = getIt<FeedCubit>();
-    final res = await feedCubit.updateComment(commentId, text);
+    final commentCubit = getIt<CommentCubit>();
+    final res = await commentCubit.updateComment(commentId, text);
 
     res.when(
       success: (updatedComment) {
