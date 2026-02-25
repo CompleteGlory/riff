@@ -13,7 +13,6 @@ import 'package:riff/features/home/feed/Ui/widgets/comments/comment_sheet.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_header.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_content.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_actions.dart';
-import 'package:riff/features/home/feed/Ui/widgets/post/post_stats.dart';
 import 'package:riff/features/home/feed/logic/cubit/posts/post_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
 
@@ -30,6 +29,7 @@ class _PostItemState extends State<PostItem>
     with SingleTickerProviderStateMixin {
   late bool isLiked;
   late int likeCount;
+  late int commentCount;
   bool showHeart = false;
   late AnimationController _heartController;
   late Animation<double> _scaleAnimation;
@@ -39,7 +39,7 @@ class _PostItemState extends State<PostItem>
     super.initState();
     isLiked = widget.post.isLiked ?? false;
     likeCount = int.tryParse(widget.post.likesCount ?? '0') ?? 0;
-
+    commentCount = int.tryParse(widget.post.commentsCount ?? '0') ?? 0;
     _heartController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
@@ -61,7 +61,6 @@ class _PostItemState extends State<PostItem>
 
     final postCubit = getIt<PostCubit>();
 
-    // Play animation
     if (!isLiked) {
       setState(() => showHeart = true);
       await _heartController.forward();
@@ -70,7 +69,6 @@ class _PostItemState extends State<PostItem>
       setState(() => showHeart = false);
     }
 
-    // Call cubit to handle like/unlike
     await postCubit.toggleLike(
       widget.post,
       onOptimisticUpdate: (newIsLiked, newLikeCount) {
@@ -104,7 +102,6 @@ class _PostItemState extends State<PostItem>
   void _openComments(String postId) async {
     final commentCubit = getIt<CommentCubit>();
 
-    // Show loading sheet
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -125,6 +122,9 @@ class _PostItemState extends State<PostItem>
 
     result.when(
       success: (comments) {
+        // Sync comment count with actual loaded comments
+        setState(() => commentCount = comments.length);
+
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
@@ -138,7 +138,9 @@ class _PostItemState extends State<PostItem>
               comments: comments,
               postId: postId,
               initialCommentsCount: comments.length,
-              onCommentCreated: (Comment newComment) {},
+              onCommentCreated: (Comment newComment) {
+                setState(() => commentCount++);
+              },
             ),
           ),
         );
@@ -177,11 +179,9 @@ class _PostItemState extends State<PostItem>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             PostHeader(post: widget.post, onMoreTapped: () {}),
             verticalSpace(12),
 
-            // Content & Image
             PostContent(
               post: widget.post,
               onImageDoubleTap: _toggleLike,
@@ -190,21 +190,17 @@ class _PostItemState extends State<PostItem>
             ),
             verticalSpace(10),
 
-            // Actions
             PostActions(
               isLiked: isLiked,
+              likeCount: likeCount,
+              commentCount: commentCount,
               onLikeTap: _toggleLike,
               onCommentTap: () => _openComments(widget.post.id.toString()),
               onShareTap: _sharePost,
             ),
-            verticalSpace(4),
-
-            // Stats
-            PostStats(likeCount: likeCount),
           ],
         ),
       ),
     );
   }
 }
-

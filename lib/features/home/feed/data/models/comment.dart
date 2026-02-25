@@ -1,3 +1,5 @@
+// comment.dart
+
 import 'package:json_annotation/json_annotation.dart';
 import 'author.dart';
 
@@ -8,15 +10,18 @@ class Comment {
   final int? id;
   final String? content;
 
-  /// Maps backend `user` → frontend `Author`
   @JsonKey(name: 'user')
   final Author? author;
 
   @JsonKey(name: 'created_at')
   final String createdAt;
 
-  @JsonKey(name: 'is_liked', defaultValue: false)
+  // Backend returns "isLiked" not "is_liked"
+  @JsonKey(name: 'isLiked', defaultValue: false)
   final bool? isLiked;
+
+  @JsonKey(name: 'likes_count', defaultValue: 0)
+  final int? likesCount;
 
   Comment({
     required this.id,
@@ -24,6 +29,7 @@ class Comment {
     this.author,
     required this.createdAt,
     this.isLiked = false,
+    this.likesCount = 0,
   });
 
   factory Comment.fromJson(Map<String, dynamic> json) =>
