@@ -32,7 +32,7 @@ class OnBoardingScreen extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(25.0),
         child: AppButton(onPressed: (){
-          context.pushNamed(Routes.login);
+          context.pushNamed(Routes.instruments);
         }, text: "Get started", isWhite: false,icon: Icons.arrow_forward,),
       )
       ),

@@ -106,7 +106,7 @@ class _EnterCodeFormFieldState extends State<EnterCodeFormField> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(
+                  borderSide:  BorderSide(
                     color: ColorManager.primaryBlack,
                     width: 2,
                   ),

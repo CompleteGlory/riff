@@ -23,7 +23,7 @@ class LoginBlocListener extends StatelessWidget {
                 context: context,
                 useRootNavigator: true,
                 barrierDismissible: false,
-                builder: (context) => const Center(
+                builder: (context) =>  Center(
                   child: CircularProgressIndicator(
                     color: ColorManager.primaryBlack,
                   ),
@@ -35,7 +35,11 @@ class LoginBlocListener extends StatelessWidget {
               if (Navigator.of(context, rootNavigator: true).canPop()) {
                 Navigator.of(context, rootNavigator: true).pop();
               }
-              Navigator.of(context).pushReplacementNamed(Routes.home);
+              // Clear the navigation stack and go to Home so user cannot go back
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                Routes.home,
+                (route) => false,
+              );
             },
             failure: (error) {
               _setupErrorState(context, error.message.toString());

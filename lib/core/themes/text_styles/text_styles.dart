@@ -4,14 +4,14 @@ import 'package:riff/core/themes/text_styles/font_weight_helper.dart';
 
 class TextStyles {
  
-  static const TextStyle font20SemiBold = TextStyle(
+  static final TextStyle font20SemiBold = TextStyle(
     color: ColorManager.primaryBlack,
     fontFamily: 'GeneralSans',
     fontSize: 20,
     fontWeight: FontWeightHelper.semiBold,
   );
 
-  static const TextStyle font28Bold = TextStyle(
+  static  TextStyle font28Bold = TextStyle(
     color: ColorManager.primaryBlack,
     fontFamily: 'GeneralSans',
     fontSize: 28,
@@ -25,28 +25,28 @@ class TextStyles {
     fontWeight: FontWeightHelper.semiBold,
   );
 
-  static const TextStyle font16Medium = TextStyle(
+  static final TextStyle font16Medium = TextStyle(
    color: ColorManager.primaryBlack,
     fontFamily: 'GeneralSans',
     fontSize: 16,
     fontWeight: FontWeightHelper.medium
   );
 
-  static const TextStyle font15semiBold = TextStyle(
+  static final TextStyle font15semiBold = TextStyle(
    color: ColorManager.primaryBlack,
     fontFamily: 'GeneralSans',
     fontSize: 15,
     fontWeight: FontWeightHelper.semiBold
   );
 
-  static const TextStyle font14regular = TextStyle(
+  static final TextStyle font14regular = TextStyle(
    color: ColorManager.primaryBlack,
     fontFamily: 'GeneralSans',
     fontSize: 14,
     fontWeight: FontWeightHelper.regular
   );
 
-  static const TextStyle font14semiBold = TextStyle(
+  static final TextStyle font14semiBold = TextStyle(
    color: ColorManager.primaryBlack,
     fontFamily: 'GeneralSans',
     fontSize: 14,
@@ -54,7 +54,7 @@ class TextStyles {
   );
 
 
-  static const TextStyle font18Semibold= TextStyle(
+  static final TextStyle font18Semibold= TextStyle(
    color: ColorManager.lightBlack,
     fontFamily: 'GeneralSans',
     fontSize: 18,
