@@ -10,10 +10,12 @@ Author _$AuthorFromJson(Map<String, dynamic> json) => Author(
   id: json['id'] as String,
   fullName: json['full_name'] as String,
   username: json['username'] as String,
+  profileImageUrl: json['profile_image_url'] as String?,
 );
 
 Map<String, dynamic> _$AuthorToJson(Author instance) => <String, dynamic>{
   'id': instance.id,
   'full_name': instance.fullName,
   'username': instance.username,
+  'profile_image_url': instance.profileImageUrl,
 };

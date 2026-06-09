@@ -1,19 +1,19 @@
 class ApiConstants {
-  static const String apiBASEURL = "http://10.180.221.201:3000/api/";
-  static const String signUp = "auth/sign-up";
-  static const String login = "auth/log-in";
-  static const String refreshToken = "auth/refresh";
-  static const String requestOtp = "auth/request-otp";
-  static const String verifyOtp = "auth/verify-otp";
-  static const String resetPassword = "auth/reset-password";
-  static const String googleSignin = "auth/google/mobile";
-  static const String getUser = "users/me";
-  static const String posts = "posts";
-  static const String updateDeletePost = "posts/{id}";
-  static const String likePost = "posts/{id}/like";
-  static const String unlikePost = "posts/{id}/unlike";
-  static const String postComments = "posts/{id}/comments";
-  static const String comments = "comments/{id}";
-  static const String likeComment = "comments/{id}/like";
-  static const String unlikeComment = "comments/{id}/unlike";
+  static const String apiBASEURL = "http://192.168.1.4:3000";
+  static const String signUp = "/api/auth/sign-up";
+  static const String login = "/api/auth/log-in";
+  static const String refreshToken = "/api/auth/refresh";
+  static const String requestOtp = "/api/auth/request-otp";
+  static const String verifyOtp = "/api/auth/verify-otp";
+  static const String resetPassword = "/api/auth/reset-password";
+  static const String googleSignin = "/api/auth/google/mobile";
+  static const String getUser = "/api/users/me";
+  static const String posts = "/api/posts";
+  static const String updateDeletePost = "/api/posts/{id}";
+  static const String likePost = "/api/posts/{id}/like";
+  static const String unlikePost = "/api/posts/{id}/unlike";
+  static const String postComments = "/api/posts/{id}/comments";
+  static const String comments = "/api/comments/{id}";
+  static const String likeComment = "/api/comments/{id}/like";
+  static const String unlikeComment = "/api/comments/{id}/unlike";
 }

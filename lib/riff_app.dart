@@ -15,9 +15,10 @@ class RiffApp extends StatelessWidget {
   });
 
   @override
+  
   Widget build(BuildContext context) {
     return ScreenUtilInit(
-      designSize: const Size(375, 812), // set your design screen size
+      designSize: const Size(375, 812),
       minTextAdapt: true,
       builder: (context, child) {
         return MaterialApp(
@@ -27,13 +28,8 @@ class RiffApp extends StatelessWidget {
             progressIndicatorTheme: ProgressIndicatorThemeData(
               color: ColorManager.primaryBlack,
             ),
-            // refreshIndicatorTheme: RefreshIndicatorThemeData(
-            //   color: ColorManager.primaryBlack,
-            // ),
-            indicatorColor: ColorManager.primaryBlack,
-            
             primaryColor: ColorManager.primaryBlack,
-            primarySwatch: ColorManager.primaryBlack,
+            primarySwatch: ColorManager.primaryBlack, tabBarTheme: TabBarThemeData(indicatorColor: ColorManager.primaryBlack),
           ),
           debugShowCheckedModeBanner: false,
           initialRoute: startAtHome ? Routes.home : Routes.onBoarding,

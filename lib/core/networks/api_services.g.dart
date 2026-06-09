@@ -12,7 +12,7 @@ part of 'api_services.dart';
 
 class _ApiService implements ApiService {
   _ApiService(this._dio, {this.baseUrl, this.errorLogger}) {
-    baseUrl ??= 'http://10.180.221.201:3000/api/';
+    baseUrl ??= 'http://192.168.1.4:3000';
   }
 
   final Dio _dio;
@@ -32,7 +32,7 @@ class _ApiService implements ApiService {
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'auth/log-in',
+            '/api/auth/log-in',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -55,7 +55,7 @@ class _ApiService implements ApiService {
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'auth/sign-up',
+            '/api/auth/sign-up',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -82,7 +82,7 @@ class _ApiService implements ApiService {
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'auth/refresh',
+            '/api/auth/refresh',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -106,7 +106,7 @@ class _ApiService implements ApiService {
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'auth/request-otp',
+            '/api/auth/request-otp',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -130,7 +130,7 @@ class _ApiService implements ApiService {
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'auth/verify-otp',
+            '/api/auth/verify-otp',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -154,7 +154,7 @@ class _ApiService implements ApiService {
       Options(method: 'PATCH', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'auth/reset-password',
+            '/api/auth/reset-password',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -176,7 +176,7 @@ class _ApiService implements ApiService {
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'auth/google/mobile',
+            '/api/auth/google/mobile',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -198,7 +198,7 @@ class _ApiService implements ApiService {
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'users/me',
+            '/api/users/me',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -220,7 +220,7 @@ class _ApiService implements ApiService {
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'posts',
+            '/api/posts',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -248,7 +248,7 @@ class _ApiService implements ApiService {
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'posts',
+            '/api/posts',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -279,7 +279,7 @@ class _ApiService implements ApiService {
       Options(method: 'PATCH', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'posts/${postId}',
+            '/api/posts/${postId}',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -301,7 +301,7 @@ class _ApiService implements ApiService {
       Options(method: 'DELETE', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'posts/${postId}',
+            '/api/posts/${postId}',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -322,7 +322,7 @@ class _ApiService implements ApiService {
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'posts/${postId}/like',
+            '/api/posts/${postId}/like',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -344,7 +344,7 @@ class _ApiService implements ApiService {
       Options(method: 'DELETE', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'posts/${postId}/unlike',
+            '/api/posts/${postId}/unlike',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -366,7 +366,7 @@ class _ApiService implements ApiService {
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'posts/${postId}/comments',
+            '/api/posts/${postId}/comments',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -400,7 +400,7 @@ class _ApiService implements ApiService {
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'posts/${postId}/comments',
+            '/api/posts/${postId}/comments',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -428,7 +428,7 @@ class _ApiService implements ApiService {
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'comments/${commentId}/like',
+            '/api/comments/${commentId}/like',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -450,7 +450,7 @@ class _ApiService implements ApiService {
       Options(method: 'DELETE', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'comments/${commentId}/unlike',
+            '/api/comments/${commentId}/unlike',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -476,7 +476,7 @@ class _ApiService implements ApiService {
       Options(method: 'PATCH', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'comments/${commentId}',
+            '/api/comments/${commentId}',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -498,7 +498,7 @@ class _ApiService implements ApiService {
       Options(method: 'DELETE', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'comments/${commentId}',
+            '/api/comments/${commentId}',
             queryParameters: queryParameters,
             data: _data,
           )

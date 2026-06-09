@@ -11,10 +11,14 @@ class Author {
 
   final String username;
 
+  @JsonKey(name: 'profile_image_url')
+  final String? profileImageUrl;
+
   Author({
     required this.id,
     required this.fullName,
     required this.username,
+    this.profileImageUrl,
   });
 
   factory Author.fromJson(Map<String, dynamic> json) =>

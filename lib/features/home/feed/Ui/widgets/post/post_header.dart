@@ -4,6 +4,7 @@ import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
 import 'package:riff/core/helpers/spacing.dart';
 import 'package:riff/core/helpers/time_ago.dart';
+import 'package:riff/core/networks/api_constants.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
@@ -13,20 +14,20 @@ class PostHeader extends StatelessWidget {
   final Post post;
   final VoidCallback onMoreTapped;
 
-  const PostHeader({
-    super.key,
-    required this.post,
-    required this.onMoreTapped,
-  });
+  const PostHeader({super.key, required this.post, required this.onMoreTapped});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const CircleAvatar(
+        CircleAvatar(
           radius: 22,
           backgroundColor: ColorManager.lighterGrey,
-          child: Icon(Icons.person, color: ColorManager.white),
+          backgroundImage: post.author?.profileImageUrl != null
+              ? NetworkImage(
+                  '${ApiConstants.apiBASEURL}${post.author!.profileImageUrl}',
+                )
+              : null,
         ),
         horizontalSpace(12),
         Column(
@@ -53,11 +54,7 @@ class PostHeader extends StatelessWidget {
             final isMine = post.author?.id == currentUserId;
 
             if (context.mounted) {
-              showPostOptions(
-                isMine: isMine,
-                context: context,
-                post: post,
-              );
+              showPostOptions(isMine: isMine, context: context, post: post);
             }
           },
         ),
