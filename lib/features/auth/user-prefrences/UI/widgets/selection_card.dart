@@ -51,7 +51,7 @@ class SelectionCard extends StatelessWidget {
                   children: [
                     Image.asset(
                       image,
-                      fit: BoxFit.cover,
+                      fit: BoxFit.contain,
                       errorBuilder: (_, __, ___) => Container(
                         color: ColorManager.lighterGrey,
                         child: Icon(
