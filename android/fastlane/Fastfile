@@ -19,8 +19,8 @@ platform :android do
       release_notes: <<~RELEASE_NOTES
         Version 1.0.2 — Release notes
 
-        Date: 2025-11-04
-        Version: 1.0.2
+        Date: 2026-6-10
+        Version: 1.0.3
 
         Highlights (user-facing)
         - Redesigned Home screen: "Discover" left-aligned and pinned; no back button.
