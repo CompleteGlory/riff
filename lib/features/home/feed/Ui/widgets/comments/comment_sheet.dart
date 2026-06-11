@@ -12,6 +12,7 @@ import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/widgets/button.dart';
 import 'package:riff/core/widgets/tff.dart';
+import 'package:riff/core/networks/api_constants.dart';
 import 'package:riff/features/home/feed/data/models/author.dart';
 import 'package:riff/features/home/feed/data/models/comment.dart';
 import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
@@ -43,6 +44,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
   bool _isSending = false;
   String? _errorMessage;
   String? _currentUserId;
+  String? _currentUserImageUrl;
   dynamic _editingCommentId;
 
   @override
@@ -61,6 +63,8 @@ class _CommentsSheetState extends State<CommentsSheet> {
 
   Future<void> _loadCurrentUserId() async {
     _currentUserId = await SharedPrefHelper.getString(SharedPrefKeys.userId);
+    _currentUserImageUrl =
+        await SharedPrefHelper.getString(SharedPrefKeys.userProfileImage);
     setState(() {});
   }
 
@@ -89,6 +93,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
       id: _currentUserId?.isNotEmpty == true ? _currentUserId! : 'me',
       fullName: 'You',
       username: '',
+      profileImageUrl: _currentUserImageUrl,
     );
     final tempComment = Comment(
       id: tempId,
@@ -497,14 +502,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                       return Column(
                         children: [
                           ListTile(
-                            leading: const CircleAvatar(
-                              radius: 16,
-                              backgroundColor: ColorManager.lighterGrey,
-                              child: Icon(
-                                Icons.person,
-                                color: ColorManager.white,
-                              ),
-                            ),
+                            leading: _CommentAvatar(author: c.author),
                             title: Text(
                               c.author!.fullName,
                               style: TextStyles.font14semiBold.copyWith(
@@ -612,6 +610,49 @@ class _CommentsSheetState extends State<CommentsSheet> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Comment avatar — shows profile image or initials fallback
+// ---------------------------------------------------------------------------
+
+class _CommentAvatar extends StatelessWidget {
+  const _CommentAvatar({this.author});
+  final Author? author;
+
+  @override
+  Widget build(BuildContext context) {
+    final rawUrl = author?.profileImageUrl;
+    final imageUrl = rawUrl == null || rawUrl.isEmpty
+        ? null
+        : rawUrl.startsWith('http')
+            ? rawUrl
+            : '${ApiConstants.apiBASEURL}$rawUrl';
+
+    final initials = (author?.fullName ?? '')
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .take(2)
+        .map((w) => w[0].toUpperCase())
+        .join();
+
+    return CircleAvatar(
+      radius: 18,
+      backgroundColor: ColorManager.lighterGrey,
+      backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
+      child: imageUrl == null
+          ? Text(
+              initials.isEmpty ? '?' : initials,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: ColorManager.normalGrey,
+              ),
+            )
+          : null,
     );
   }
 }

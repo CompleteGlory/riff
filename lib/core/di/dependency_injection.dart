@@ -23,6 +23,8 @@ import 'package:riff/features/home/feed/logic/cubit/feed/feed_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/likes/like_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/posts/post_cubit.dart';
+import 'package:riff/features/home/profile/data/repos/profile_repo.dart';
+import 'package:riff/features/home/profile/logic/cubit/profile_cubit.dart';
 
 final getIt = GetIt.instance;
 
@@ -62,6 +64,10 @@ Future<void> setUpGetIt() async {
   
   // post operations
   getIt.registerFactory<PostCubit>(()=>PostCubit(getIt<LikeCubit>(), getIt<FeedCubit>()));
+
+  // profile
+  getIt.registerLazySingleton<ProfileRepo>(() => ProfileRepo(getIt()));
+  getIt.registerFactory<ProfileCubit>(() => ProfileCubit(getIt()));
 
   //create post
   getIt.registerLazySingleton<CreatePostRepo>(()=>CreatePostRepo(getIt()));

@@ -50,7 +50,9 @@ class HomeLayout extends StatelessWidget {
       onWillPop: () => _onWillPop(context),
       child: BlocBuilder<HomeCubit, HomeState>(
         builder: (context, state) => Scaffold(
-          appBar: AppBar(     
+          backgroundColor: const Color(0xFFF7F7F7),
+          appBar: AppBar(
+            backgroundColor: const Color(0xFFF7F7F7),
             title: Text(
               context.read<HomeCubit>().titles[
                   context.read<HomeCubit>().currentIndex],

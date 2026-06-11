@@ -14,54 +14,51 @@ platform :android do
       firebase_cli_token: ENV["FIREBASE_CLI_TOKEN"],
       android_artifact_type: "APK",
       android_artifact_path: "../build/app/outputs/flutter-apk/app-production-release.apk",
-      testers: "fadyalaa441@gmail.com, fadyalaa2112@gmail.com, zakymagd@gmail.com",
+      testers: "fadyalaa441@gmail.com, fadyalaa2112@gmail.com, zakymagd@gmail.com, magddevf@gmail.com" ,
       upload_timeout: 600,
       release_notes: <<~RELEASE_NOTES
-        Version 1.0.2 — Release notes
+        Version 1.0.3 — Release Notes
+        Date: 2026-06-11
 
-        Date: 2026-6-10
-        Version: 1.0.3
+        ──────────────────────────────
+        What's New
+        ──────────────────────────────
 
-        Highlights (user-facing)
-        - Redesigned Home screen: "Discover" left-aligned and pinned; no back button.
-        - Fully functional Feed posts:
-          - Tap an image to view it full-screen.
-          - Working Share button (share system sheet).
-          - Like button with animated feedback.
-          - Comment button opens inline composer.
-        - Bottom navigation visuals: added assets and icons for Feed, Search, Notifications, and Profile.
+        Multi-Image Posts
+        - Create posts with up to 10 photos (gallery multi-select or camera).
+        - Images shown inline in the feed: single full-width, 2-up side-by-side,
+          3-up (tall left + 2 stacked right), 4+ as a 2×2 grid with a "+N" overlay.
+        - Tap any image to open a full-screen swipeable gallery with page indicator.
 
-        Short Play Store blurb
-        - "Discover, browse and share — improved Home + full-screen post images, share, animated likes, comments, and polished bottom navigation."
+        Profile Image Fullscreen
+        - Tap your avatar on the profile screen to view it full-screen.
+        - The camera edit badge still handles photo upload independently.
 
-        Changelog
-        - Add: Full-screen image viewer for feed posts.
-        - Add: Share button for posts (system share sheet).
-        - Add: Like animation and comment composer for feed posts.
-        - UI: Home screen left-align and remove back button.
-        - Add: Bottom-nav assets for Feed, Search, Notifications, Profile.
+        Redesigned Feed UI
+        - Cleaner post cards: lighter shadow, modern rounded corners.
+        - Actions bar is now a compact inline row (♥ count · 💬 count · share).
+        - Post header shows a proper avatar with initials fallback.
 
-        Developer notes
-        - Home screen: removed automatic leading/back button, set `automaticallyImplyLeading:false` and `titleSpacing` for left alignment.
-        - Feed post interactions:
-          - Full-screen image viewer implemented.
-          - Post share integrated with platform share intent.
-          - Like button triggers animation.
-          - Comment button opens inline composer.
-        - Bottom navigation: new icons and state preservation between tabs.
+        Live Comment Avatars
+        - Comment sheet now shows each commenter's real profile photo.
+        - Your own avatar (including optimistic new comments) uses your cached
+          profile image instead of a generic icon.
 
-        QA checklist
-        1. Home
-           - Verify "Discover" left aligned and no back button.
-        2. Feed
-           - Full-screen image, share, like, comment all working.
-        3. Bottom navigation
-           - Switching tabs preserves state.
-        4. Regression
-           - No blank screens, login/signup unchanged, smooth scrolling.
+        ──────────────────────────────
+        Bug Fixes & Improvements
+        ──────────────────────────────
+        - Fixed post images showing broken placeholders (Image.network routing).
+        - Fixed profile image not displaying when URL is relative.
+        - Updated firebase_app_distribution plugin to 1.0.x.
 
-        Fastlane short summary:
-        Home improvements & Feed interaction: left-aligned header, full-screen post images, working share button, animated likes, comment composer, and new bottom-nav icons.
+        ──────────────────────────────
+        QA Checklist
+        ──────────────────────────────
+        1. Create Post — pick 1, 2, 3, 4, and 5+ images; verify grid layouts.
+        2. Feed — tap image opens swipeable fullscreen viewer.
+        3. Profile — tap avatar opens fullscreen; camera badge opens upload sheet.
+        4. Comments — commenter avatars load; your avatar appears on new comment.
+        5. Regression — like, comment, share, login/signup all unaffected.
       RELEASE_NOTES
     )
   end

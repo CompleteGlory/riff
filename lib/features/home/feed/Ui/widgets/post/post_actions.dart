@@ -1,10 +1,7 @@
-// post_actions.dart
 // ignore_for_file: deprecated_member_use
-//
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:riff/core/helpers/spacing.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 
@@ -29,79 +26,81 @@ class PostActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         // Like
-        GestureDetector(
+        _ActionButton(
+          svgAsset: isLiked
+              ? 'assets/svgs/Heart-filled.svg'
+              : 'assets/svgs/Heart.svg',
+          color: isLiked ? ColorManager.red : ColorManager.normalGrey,
+          label: _formatCount(likeCount),
           onTap: onLikeTap,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SvgPicture.asset(
-                isLiked
-                    ? "assets/svgs/Heart-filled.svg"
-                    : "assets/svgs/Heart.svg",
-                width: 24.w,
-                height: 24.h,
-                color: isLiked ? ColorManager.red : ColorManager.primaryBlack,
-              ),
-              verticalSpace(4),
-              Text(
-                '$likeCount ${likeCount == 1 ? 'like' : 'likes'}',
-                style: TextStyles.font12Medium.copyWith(
-                  color: ColorManager.darkGrey,
-                ),
-              ),
-            ],
-          ),
         ),
-
+        SizedBox(width: 20.w),
         // Comment
-        GestureDetector(
+        _ActionButton(
+          svgAsset: 'assets/svgs/Chat.svg',
+          color: ColorManager.normalGrey,
+          label: _formatCount(commentCount),
           onTap: onCommentTap,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SvgPicture.asset(
-                "assets/svgs/Chat.svg",
-                width: 24.w,
-                height: 24.h,
-                color: ColorManager.primaryBlack,
-              ),
-              verticalSpace(4),
-              Text(
-                '$commentCount ${commentCount == 1 ? 'comment' : 'comments'}',
-                style: TextStyles.font12Medium.copyWith(
-                  color: ColorManager.darkGrey,
-                ),
-              ),
-            ],
-          ),
         ),
-
-        // Share (no count)
+        const Spacer(),
+        // Share
         GestureDetector(
           onTap: onShareTap,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SvgPicture.asset(
-                "assets/svgs/share.svg",
-                width: 32.w,
-                height: 32.h,
-                color: ColorManager.primaryBlack,
-              ),
-              verticalSpace(4),
-              Text(
-                'Share',
-                style: TextStyles.font12Medium.copyWith(
-                  color: ColorManager.darkGrey,
-                ),
-              ),
-            ],
+          child: SvgPicture.asset(
+            'assets/svgs/share.svg',
+            width: 22.w,
+            height: 22.h,
+            color: ColorManager.normalGrey,
           ),
         ),
       ],
+    );
+  }
+
+  String _formatCount(int count) {
+    if (count >= 1000000) return '${(count / 1000000).toStringAsFixed(1)}M';
+    if (count >= 1000) return '${(count / 1000).toStringAsFixed(1)}K';
+    return '$count';
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({
+    required this.svgAsset,
+    required this.color,
+    required this.label,
+    required this.onTap,
+  });
+
+  final String svgAsset;
+  final Color color;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SvgPicture.asset(
+            svgAsset,
+            width: 22.w,
+            height: 22.h,
+            color: color,
+          ),
+          SizedBox(width: 5.w),
+          Text(
+            label,
+            style: TextStyles.font12semiBold.copyWith(
+              color: ColorManager.normalGrey,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

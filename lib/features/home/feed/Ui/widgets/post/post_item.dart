@@ -44,7 +44,6 @@ class _PostItemState extends State<PostItem>
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-
     _scaleAnimation = Tween<double>(begin: 0.5, end: 1.5).animate(
       CurvedAnimation(parent: _heartController, curve: Curves.easeOutBack),
     );
@@ -122,9 +121,7 @@ class _PostItemState extends State<PostItem>
 
     result.when(
       success: (comments) {
-        // Sync comment count with actual loaded comments
         setState(() => commentCount = comments.length);
-
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
@@ -153,44 +150,62 @@ class _PostItemState extends State<PostItem>
     );
   }
 
-  void _sharePost() {
-    final postCubit = getIt<PostCubit>();
-    postCubit.sharePost(widget.post);
-  }
+  void _sharePost() => getIt<PostCubit>().sharePost(widget.post);
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      margin: EdgeInsets.symmetric(vertical: 10.h),
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 6.h),
       decoration: BoxDecoration(
         color: ColorManager.white,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(18.r),
         boxShadow: [
           BoxShadow(
-            color: ColorManager.lighterGrey.withOpacity(0.5),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            PostHeader(post: widget.post, onMoreTapped: () {}),
-            verticalSpace(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Padding(
+            padding: EdgeInsets.fromLTRB(14.w, 14.h, 8.w, 10.h),
+            child: PostHeader(post: widget.post, onMoreTapped: () {}),
+          ),
 
-            PostContent(
+          // Content + images (no horizontal padding on images so they go edge to edge)
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14.w),
+            child: PostContent(
               post: widget.post,
               onImageDoubleTap: _toggleLike,
               showHeartAnimation: showHeart,
               heartAnimation: _scaleAnimation,
             ),
-            verticalSpace(10),
+          ),
 
-            PostActions(
+          // Divider
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14.w),
+            child: Column(
+              children: [
+                verticalSpace(12),
+                Divider(
+                  height: 1,
+                  color: ColorManager.lighterGrey,
+                ),
+                verticalSpace(10),
+              ],
+            ),
+          ),
+
+          // Actions
+          Padding(
+            padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 14.h),
+            child: PostActions(
               isLiked: isLiked,
               likeCount: likeCount,
               commentCount: commentCount,
@@ -198,8 +213,8 @@ class _PostItemState extends State<PostItem>
               onCommentTap: () => _openComments(widget.post.id.toString()),
               onShareTap: _sharePost,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

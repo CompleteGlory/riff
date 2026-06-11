@@ -102,4 +102,11 @@ abstract class ApiService {
 
   @DELETE(ApiConstants.comments)
   Future<HttpResponse<void>> deleteComment(@Path("id") String commentId);
+
+  @GET(ApiConstants.userPosts)
+  Future<PostsResponse> getUserPosts(
+    @Path("id") String userId,
+    @Query("page") int page,
+    @Query("limit") int limit,
+  );
 }
