@@ -14,38 +14,41 @@ import 'package:riff/features/auth/user-prefrences/UI/widgets/step_indicator.dar
 import 'package:riff/features/auth/user-prefrences/data/models/genre.dart';
 import 'package:riff/features/auth/user-prefrences/data/models/instrument.dart';
 
-
-
 final List<InstrumentModel> instruments = [
-  InstrumentModel(name: 'Guitar',         image: 'assets/images/electric-guitar.png'),
-  InstrumentModel(name: 'Piano',          image: 'assets/images/piano.png'),
-  InstrumentModel(name: 'Drums',          image: 'assets/images/drum.png'),
-  InstrumentModel(name: 'Oud',            image: 'assets/images/saz.png'),
-  InstrumentModel(name: 'Percussions',    image: 'assets/images/dholak.png'),
-  InstrumentModel(name: 'Bass',           image: 'assets/images/electric-guitar (1).png'),
-  InstrumentModel(name: 'Violin',         image: 'assets/images/violin.png'),
-  InstrumentModel(name: 'Harp',           image: 'assets/images/harp.png'),
-  InstrumentModel(name: 'Hang',           image: 'assets/images/hang.png'),
-  InstrumentModel(name: 'Saxophone',      image: 'assets/images/saxophone.png'),
-  InstrumentModel(name: 'DJ',             image: 'assets/images/saxophone.png'),
-  InstrumentModel(name: 'Sound Engineer', image: 'assets/images/sound-mixer.png'),
-  InstrumentModel(name: 'Singer',         image: 'assets/images/microphone.png'),
-  InstrumentModel(name: 'Listener',       image: 'assets/images/headphones.png'),
+  InstrumentModel(name: 'Guitar', image: 'assets/images/electric-guitar.png'),
+  InstrumentModel(name: 'Piano', image: 'assets/images/piano.png'),
+  InstrumentModel(name: 'Drums', image: 'assets/images/drum.png'),
+  InstrumentModel(name: 'Oud', image: 'assets/images/saz.png'),
+  InstrumentModel(name: 'Percussions', image: 'assets/images/dholak.png'),
+  InstrumentModel(name: 'Bass', image: 'assets/images/electric-guitar (1).png'),
+  InstrumentModel(name: 'Violin', image: 'assets/images/violin.png'),
+  InstrumentModel(name: 'Harp', image: 'assets/images/harp.png'),
+  InstrumentModel(name: 'Hang', image: 'assets/images/hang.png'),
+  InstrumentModel(name: 'Saxophone', image: 'assets/images/saxophone.png'),
+  InstrumentModel(name: 'DJ', image: 'assets/images/saxophone.png'),
+  InstrumentModel(
+    name: 'Sound Engineer',
+    image: 'assets/images/sound-mixer.png',
+  ),
+  InstrumentModel(name: 'Singer', image: 'assets/images/microphone.png'),
+  InstrumentModel(name: 'Listener', image: 'assets/images/headphones.png'),
 ];
 
 final List<GenreModel> genres = [
-  GenreModel(name: 'Rock',       image: 'assets/images/rock-and-roll.png'),
-  GenreModel(name: 'Jazz',       image: 'assets/images/jazz.png'),
-  GenreModel(name: 'Classical',  image: 'assets/images/conductor.png'),
-  GenreModel(name: 'Hip-Hop',    image: 'assets/images/poster.png'),
+  GenreModel(name: 'Rock', image: 'assets/images/rock-and-roll.png'),
+  GenreModel(name: 'Jazz', image: 'assets/images/jazz.png'),
+  GenreModel(name: 'Classical', image: 'assets/images/conductor.png'),
+  GenreModel(name: 'Hip-Hop', image: 'assets/images/poster.png'),
   GenreModel(name: 'Electronic', image: 'assets/images/techno.png'),
-  GenreModel(name: 'Gospel',     image: 'assets/images/choir.png'),
-  GenreModel(name: 'Pop',        image: 'assets/images/kpop.png'),
-  GenreModel(name: 'Metal',      image: 'assets/images/rock.png'),
+  GenreModel(name: 'Gospel', image: 'assets/images/choir.png'),
+  GenreModel(name: 'Pop', image: 'assets/images/kpop.png'),
+  GenreModel(name: 'Metal', image: 'assets/images/rock.png'),
 ];
 
 class GenresScreen extends StatefulWidget {
-  const GenresScreen({super.key});
+  final List<String> instruments;
+
+  const GenresScreen({super.key, required this.instruments});
 
   @override
   State<GenresScreen> createState() => _GenresScreenState();
@@ -55,13 +58,16 @@ class _GenresScreenState extends State<GenresScreen> {
   final Set<int> _selected = {};
 
   void _toggle(int i) => setState(() {
-        _selected.contains(i) ? _selected.remove(i) : _selected.add(i);
-      });
+    _selected.contains(i) ? _selected.remove(i) : _selected.add(i);
+  });
 
   void _finish() {
     if (_selected.isEmpty) return;
-    // TODO: save selections
-    context.pushReplacementNamed(Routes.login);
+    final selectedGenres = _selected.map((i) => genres[i].name).toList();
+    context.pushNamed(
+      Routes.signup,
+      arguments: {'instruments': widget.instruments, 'genres': selectedGenres},
+    );
   }
 
   @override

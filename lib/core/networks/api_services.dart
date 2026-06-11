@@ -25,7 +25,7 @@ abstract class ApiService {
   );
 
   @POST(ApiConstants.signUp)
-  Future<SignupResponse> signUp(@Body() SignupRequestBody signUpRequestBody);
+  Future<void> signUp(@Body() SignupRequestBody signupRequestBody);
 
   @POST(ApiConstants.refreshToken)
   Future<HttpResponse<void>> refreshToken();
@@ -58,7 +58,9 @@ abstract class ApiService {
   );
 
   @POST(ApiConstants.posts)
-  Future<Post> createPost(@Body() CreatePostRequestModel createPostRequestModel);
+  Future<Post> createPost(
+    @Body() CreatePostRequestModel createPostRequestModel,
+  );
 
   @PATCH(ApiConstants.updateDeletePost)
   Future<HttpResponse<dynamic>> updatePost(
@@ -100,5 +102,4 @@ abstract class ApiService {
 
   @DELETE(ApiConstants.comments)
   Future<HttpResponse<void>> deleteComment(@Path("id") String commentId);
-
 }
