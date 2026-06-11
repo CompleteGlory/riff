@@ -12,7 +12,7 @@ part of 'api_services.dart';
 
 class _ApiService implements ApiService {
   _ApiService(this._dio, {this.baseUrl, this.errorLogger}) {
-    baseUrl ??= 'http://192.168.1.4:3000';
+    baseUrl ??= 'http://10.163.234.201:3000';
   }
 
   final Dio _dio;
@@ -45,13 +45,13 @@ class _ApiService implements ApiService {
   }
 
   @override
-  Future<SignupResponse> signUp(SignupRequestBody signUpRequestBody) async {
+  Future<void> signUp(SignupRequestBody signupRequestBody) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
-    _data.addAll(signUpRequestBody.toJson());
-    final _options = _setStreamType<SignupResponse>(
+    _data.addAll(signupRequestBody.toJson());
+    final _options = _setStreamType<void>(
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
@@ -61,15 +61,7 @@ class _ApiService implements ApiService {
           )
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
-    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late SignupResponse _value;
-    try {
-      _value = SignupResponse.fromJson(_result.data!);
-    } on Object catch (e, s) {
-      errorLogger?.logError(e, s, _options);
-      rethrow;
-    }
-    return _value;
+    await _dio.fetch<void>(_options);
   }
 
   @override

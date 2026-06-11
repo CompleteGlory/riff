@@ -36,18 +36,19 @@ class AppRouter {
             child: const HomeLayout(),
           ),
         );
-
       case Routes.signup:
+        final args = settings.arguments as Map<String, dynamic>?;
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
-            create: (context) => getIt<SignupCubit>(),
+            create: (context) => getIt<SignupCubit>()
+              ..selectedInstruments =
+                  (args?['instruments'] as List<String>?) ?? const []
+              ..selectedGenres = (args?['genres'] as List<String>?) ?? const [],
             child: const SignupScreen(),
           ),
         );
       case Routes.instruments:
-        return MaterialPageRoute(
-          builder: (_) => const InstrumentsScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const InstrumentsScreen());
       case Routes.forgotPassword:
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
