@@ -1,14 +1,18 @@
 // ignore_for_file: deprecated_member_use
 
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart'; // Added for Cubit access
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:riff/core/helpers/spacing.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/widgets/button.dart';
 import 'package:riff/features/home/add_post/data/models/create_post_request_model.dart';
 import 'package:riff/features/home/add_post/logic/cubit/create_post_cubit.dart';
+
+const _maxImages = 10;
 
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
@@ -19,7 +23,8 @@ class CreatePostScreen extends StatefulWidget {
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
   final TextEditingController _contentController = TextEditingController();
-  String? _selectedMediaUrl; // Simulated media selection
+  final ImagePicker _picker = ImagePicker();
+  final List<File> _selectedFiles = [];
 
   @override
   void dispose() {
@@ -27,35 +32,114 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     super.dispose();
   }
 
-  void _handlePost() {
-    final content = _contentController.text.trim();
-    if (content.isEmpty) {
+  Future<void> _pickImages(ImageSource source) async {
+    Navigator.pop(context); // close bottom sheet
+
+    if (source == ImageSource.gallery) {
+      final remaining = _maxImages - _selectedFiles.length;
+      final picked = await _picker.pickMultiImage(
+        maxWidth: 1280,
+        imageQuality: 85,
+        limit: remaining,
+      );
+      if (picked.isNotEmpty) {
+        setState(() {
+          for (final xf in picked) {
+            if (_selectedFiles.length < _maxImages) {
+              _selectedFiles.add(File(xf.path));
+            }
+          }
+        });
+      }
+    } else {
+      final picked = await _picker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 1280,
+        imageQuality: 85,
+      );
+      if (picked != null) {
+        setState(() => _selectedFiles.add(File(picked.path)));
+      }
+    }
+  }
+
+  void _showMediaSheet() {
+    if (_selectedFiles.length >= _maxImages) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(backgroundColor: ColorManager.primaryBlack,content: Text('Please enter content before posting.',style: TextStyles.font14Medium.copyWith(color: ColorManager.lighterGrey),)),
+        SnackBar(
+          backgroundColor: ColorManager.primaryBlack,
+          content: Text(
+            'Maximum $_maxImages images allowed.',
+            style: TextStyles.font14Medium.copyWith(color: ColorManager.white),
+          ),
+        ),
       );
       return;
     }
 
-    // 1. Create the Request Model
-    final requestModel = CreatePostRequestModel(
-      content: content,
-      // NOTE: Assuming your media list is a list of URLs or paths
-      media: _selectedMediaUrl != null ? [_selectedMediaUrl!] : null,
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: ColorManager.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 20.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: ColorManager.lighterGrey,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+              verticalSpace(16),
+              _SheetTile(
+                icon: Icons.photo_library_outlined,
+                label: 'Choose from Gallery',
+                onTap: () => _pickImages(ImageSource.gallery),
+              ),
+              _SheetTile(
+                icon: Icons.photo_camera_outlined,
+                label: 'Take a Photo',
+                onTap: () => _pickImages(ImageSource.camera),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
-
-    // 2. Call the Cubit to initiate the post creation process
-    context.read<CreatePostCubit>().createPost(requestModel);
-
-    // 3. REMOVED SIMULATED SUCCESS/POP LOGIC: The AddPostListener now handles
-    // showing the loading indicator, success message, and popping the screen.
   }
 
-  void _selectMedia() {
-    // NOTE: In a real app, this would open the image picker.
-    // We simulate selecting a placeholder image for design purposes.
-    setState(() {
-      _selectedMediaUrl = 'assets/images/placeholder_riff.png';
-    });
+  void _removeImage(int index) {
+    setState(() => _selectedFiles.removeAt(index));
+  }
+
+  void _handlePost() {
+    final content = _contentController.text.trim();
+    if (content.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: ColorManager.primaryBlack,
+          content: Text(
+            'Please enter content before posting.',
+            style: TextStyles.font14Medium.copyWith(
+              color: ColorManager.lighterGrey,
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    context.read<CreatePostCubit>().createPost(
+          CreatePostRequestModel(content: content),
+          mediaFiles: _selectedFiles.isEmpty ? null : List.of(_selectedFiles),
+        );
   }
 
   @override
@@ -67,13 +151,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'What\'s on your mind?',
+              "What's on your mind?",
               style: TextStyles.font28Bold.copyWith(
                 color: ColorManager.primaryBlack,
               ),
             ),
             verticalSpace(20),
-            // Content Input Field
+
+            // Content input
             Container(
               decoration: BoxDecoration(
                 color: ColorManager.white,
@@ -94,10 +179,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 style: TextStyles.font16Medium,
                 decoration: InputDecoration(
                   hintText:
-                      "Share your latest music riff, thoughts, or gear...",
-                  hintStyle: TextStyles.font16Medium.copyWith(
-                    color: ColorManager.normalGrey,
-                  ),
+                      'Share your latest music riff, thoughts, or gear...',
+                  hintStyle: TextStyles.font16Medium
+                      .copyWith(color: ColorManager.normalGrey),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.all(16.w),
                 ),
@@ -106,86 +190,211 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
             verticalSpace(20),
 
-            // Media Preview/Selection Area
-            Text('Attach Media', style: TextStyles.font15semiBold),
+            // Media section header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Attach Media', style: TextStyles.font15semiBold),
+                if (_selectedFiles.isNotEmpty)
+                  Text(
+                    '${_selectedFiles.length}/$_maxImages',
+                    style: TextStyles.font14Medium.copyWith(
+                      color: ColorManager.normalGrey,
+                    ),
+                  ),
+              ],
+            ),
             verticalSpace(10),
 
-            Container(
-              width: double.infinity,
-              height: _selectedMediaUrl == null ? 80.h : 200.h,
-              decoration: BoxDecoration(
-                color: ColorManager.white,
-                borderRadius: BorderRadius.circular(16.r),
-                border: Border.all(color: ColorManager.lighterGrey),
+            // Image grid or placeholder
+            if (_selectedFiles.isEmpty)
+              _MediaPickerPlaceholder(onTap: _showMediaSheet)
+            else
+              _ImageGrid(
+                files: _selectedFiles,
+                onRemove: _removeImage,
+                onAddMore: _selectedFiles.length < _maxImages
+                    ? _showMediaSheet
+                    : null,
               ),
-              child: _selectedMediaUrl != null
-                  ? Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(16.r),
-                          // Use a placeholder network image URL if you don't have local assets
-                          child: Image.network(
-                            'https://placehold.co/600x200/5C6BC0/FFFFFF/png?text=Media+Attached',
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        Positioned(
-                          top: 8.h,
-                          right: 8.w,
-                          child: InkWell(
-                            onTap: () =>
-                                setState(() => _selectedMediaUrl = null),
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: ColorManager.primaryBlack.withOpacity(
-                                  0.5,
-                                ),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.close,
-                                color: ColorManager.white,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  : Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          IconButton(
-                            icon:  Icon(
-                              Icons.add_a_photo_outlined,
-                              color: ColorManager.primaryBlack,
-                            ),
-                            iconSize: 30,
-                            onPressed: _selectMedia,
-                          ),
-                          verticalSpace(4),
-                          Text(
-                            'Tap to add photo or video',
-                            style: TextStyles.font14regular.copyWith(
-                              color: ColorManager.primaryBlack,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-            ),
+
             verticalSpace(50),
-            // Post Button
-            AppButton(onPressed: (){
-              _handlePost(); // Triggers the Cubit
-            }, text: "Post", isWhite: false),
-            // AddPostListener is now in the parent wrapper
+
+            AppButton(
+              onPressed: _handlePost,
+              text: 'Post',
+              isWhite: false,
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Image grid (existing picks + optional add-more cell)
+// ---------------------------------------------------------------------------
+
+class _ImageGrid extends StatelessWidget {
+  const _ImageGrid({
+    required this.files,
+    required this.onRemove,
+    this.onAddMore,
+  });
+
+  final List<File> files;
+  final void Function(int index) onRemove;
+  final VoidCallback? onAddMore;
+
+  @override
+  Widget build(BuildContext context) {
+    final itemCount = files.length + (onAddMore != null ? 1 : 0);
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 8.w,
+        mainAxisSpacing: 8.h,
+        childAspectRatio: 1,
+      ),
+      itemCount: itemCount,
+      itemBuilder: (_, i) {
+        if (i < files.length) {
+          return _ImageCell(file: files[i], onRemove: () => onRemove(i));
+        }
+        // Add-more cell
+        return GestureDetector(
+          onTap: onAddMore,
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: ColorManager.lighterGrey),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.add_photo_alternate_outlined,
+                    size: 28.r, color: ColorManager.normalGrey),
+                verticalSpace(4),
+                Text(
+                  'Add more',
+                  style: TextStyles.font12semiBold.copyWith(
+                    color: ColorManager.normalGrey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ImageCell extends StatelessWidget {
+  const _ImageCell({required this.file, required this.onRemove});
+  final File file;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12.r),
+          child: Image.file(file, fit: BoxFit.cover),
+        ),
+        Positioned(
+          top: 4.h,
+          right: 4.w,
+          child: GestureDetector(
+            onTap: onRemove,
+            child: Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.6),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.close, color: Colors.white, size: 14),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Empty placeholder
+// ---------------------------------------------------------------------------
+
+class _MediaPickerPlaceholder extends StatelessWidget {
+  const _MediaPickerPlaceholder({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        height: 80.h,
+        decoration: BoxDecoration(
+          color: ColorManager.white,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: ColorManager.lighterGrey),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_a_photo_outlined,
+                color: ColorManager.primaryBlack, size: 28.r),
+            verticalSpace(4),
+            Text(
+              'Tap to add photos',
+              style: TextStyles.font14regular
+                  .copyWith(color: ColorManager.primaryBlack),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Bottom sheet tile
+// ---------------------------------------------------------------------------
+
+class _SheetTile extends StatelessWidget {
+  const _SheetTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      onTap: onTap,
+      contentPadding: EdgeInsets.symmetric(horizontal: 4.w),
+      leading: Container(
+        width: 40.r,
+        height: 40.r,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Icon(icon, color: ColorManager.primaryBlack, size: 20.r),
+      ),
+      title: Text(label, style: TextStyles.font15semiBold),
     );
   }
 }

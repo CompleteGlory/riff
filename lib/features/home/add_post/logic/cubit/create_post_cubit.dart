@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:riff/core/networks/api_result.dart';
@@ -10,19 +11,21 @@ class CreatePostCubit extends Cubit<CreatePostState> {
 
   CreatePostCubit(this._createPostRepo) : super(const CreatePostState.initial());
 
-  Future<void> createPost(CreatePostRequestModel createPostRequestModel) async {
+  Future<void> createPost(
+    CreatePostRequestModel requestModel, {
+    List<File>? mediaFiles,
+  }) async {
     emit(const CreatePostState.loading());
 
-    final response = await _createPostRepo.createPost(createPostRequestModel);
+    final response = await _createPostRepo.createPost(
+      requestModel,
+      mediaFiles: mediaFiles,
+    );
 
     response.when(
-      success: (post) {
-        // Post creation successful, emit success state with the returned Post object
-        emit(CreatePostState.success(post));
-      },
+      success: (post) => emit(CreatePostState.success(post)),
       failure: (apiErrorModel) {
-        debugPrint('CreatePostCubit - createPost failure: ${apiErrorModel.errors.toString()}');
-        // Post creation failed, emit failure state with the error model
+        debugPrint('CreatePostCubit - failure: ${apiErrorModel.errors}');
         emit(CreatePostState.failure(apiErrorModel));
       },
     );
