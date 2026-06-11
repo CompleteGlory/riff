@@ -9,12 +9,16 @@ class SignupRequestBody {
   @JsonKey(name: 'full_name')
   final String fullName;
   final String username;
+  final List<String> instruments;
+  final List<String> genres;
 
   const SignupRequestBody({
     required this.email,
     required this.password,
     required this.fullName,
     required this.username,
+    this.instruments = const [],
+    this.genres = const [],
   });
 
   Map<String, dynamic> toJson() => _$SignupRequestBodyToJson(this);

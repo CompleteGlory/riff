@@ -24,21 +24,20 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
       });
 
   void _continue() {
-    if (_selected.isEmpty) return;
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (_, a, __) => const GenresScreen(),
-        transitionsBuilder: (_, anim, __, child) => SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(1, 0),
-            end: Offset.zero,
-          ).animate(CurvedAnimation(parent: anim, curve: Curves.easeInOut)),
-          child: child,
-        ),
+  if (_selected.isEmpty) return;
+  final selectedInstruments = _selected.map((i) => instruments[i].name).toList();
+  Navigator.push(
+    context,
+    PageRouteBuilder(
+      pageBuilder: (_, a, __) => GenresScreen(instruments: selectedInstruments),
+      transitionsBuilder: (_, anim, __, child) => SlideTransition(
+        position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+            .animate(CurvedAnimation(parent: anim, curve: Curves.easeInOut)),
+        child: child,
       ),
-    );
-  }
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
