@@ -28,12 +28,24 @@ jobs:
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: '3.2.2'
-        bundler-cache: true
+        bundler-cache: false
         working-directory: android
 
-    - name: Update fastlane plugins
+    - name: Cache Ruby gems
+      uses: actions/cache@v3
+      id: gem-cache
+      with:
+        path: android/vendor/bundle
+        key: ${{ runner.os }}-gems-${{ hashFiles('android/Gemfile.lock', 'android/fastlane/Pluginfile') }}
+        restore-keys: |
+          ${{ runner.os }}-gems-
+
+    - name: Install gems and update plugins
       working-directory: android
-      run: bundle exec fastlane update_plugins --no-verbose || true
+      run: |
+        bundle config set --local path vendor/bundle
+        bundle install
+        bundle exec fastlane update_plugins --no-verbose
 
     - name: Cache Flutter dependencies
       uses: actions/cache@v3
