@@ -40,12 +40,11 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gems-
 
-    - name: Install gems and update plugins
+    - name: Install gems
       working-directory: android
       run: |
         bundle config set --local path vendor/bundle
         bundle install
-        bundle exec fastlane update_plugins --no-verbose
 
     - name: Cache Flutter dependencies
       uses: actions/cache@v3
