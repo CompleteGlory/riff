@@ -1,5 +1,5 @@
 class ApiConstants {
-  static const String apiBASEURL = "http://10.163.234.201:3000";
+  static const String apiBASEURL = "https://veto-sandy-enlighten.ngrok-free.dev";
   static const String signUp = "/api/auth/sign-up";
   static const String login = "/api/auth/log-in";
   static const String refreshToken = "/api/auth/refresh";
@@ -16,4 +16,5 @@ class ApiConstants {
   static const String comments = "/api/comments/{id}";
   static const String likeComment = "/api/comments/{id}/like";
   static const String unlikeComment = "/api/comments/{id}/unlike";
+  static const String userPosts = "/api/users/{id}/posts";
 }
