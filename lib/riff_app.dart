@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:riff/core/logic/cubit/theme_cubit.dart';
 import 'package:riff/core/routing/app_router.dart';
 import 'package:riff/core/routing/routes.dart';
-import 'package:riff/core/themes/colors/color_manager.dart';
+import 'package:riff/core/themes/app_theme.dart';
 
 class RiffApp extends StatelessWidget {
   final AppRouter appRouter;
@@ -15,27 +17,28 @@ class RiffApp extends StatelessWidget {
   });
 
   @override
-  
   Widget build(BuildContext context) {
-    return ScreenUtilInit(
-      designSize: const Size(375, 812),
-      minTextAdapt: true,
-      builder: (context, child) {
-        return MaterialApp(
-          title: 'Riff App',
-          theme: ThemeData(
-            useMaterial3: true,
-            progressIndicatorTheme: ProgressIndicatorThemeData(
-              color: ColorManager.primaryBlack,
-            ),
-            primaryColor: ColorManager.primaryBlack,
-            primarySwatch: ColorManager.primaryBlack, tabBarTheme: TabBarThemeData(indicatorColor: ColorManager.primaryBlack),
-          ),
-          debugShowCheckedModeBanner: false,
-          initialRoute: startAtHome ? Routes.home : Routes.onBoarding,
-          onGenerateRoute: appRouter.generateRoute,
-        );
-      },
+    return BlocProvider<ThemeCubit>(
+      create: (_) => ThemeCubit()..loadTheme(),
+      child: BlocBuilder<ThemeCubit, ThemeMode>(
+        builder: (context, themeMode) {
+          return ScreenUtilInit(
+            designSize: const Size(375, 812),
+            minTextAdapt: true,
+            builder: (_, __) {
+              return MaterialApp(
+                title: 'Riff',
+                themeMode: themeMode,
+                theme: lightTheme(),
+                darkTheme: darkTheme(),
+                debugShowCheckedModeBanner: false,
+                initialRoute: startAtHome ? Routes.home : Routes.onBoarding,
+                onGenerateRoute: appRouter.generateRoute,
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }

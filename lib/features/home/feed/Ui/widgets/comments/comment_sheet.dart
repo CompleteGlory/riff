@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: unused_field, deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -281,7 +281,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
   void _showCommentOptions(Comment comment) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: ColorManager.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -603,6 +603,12 @@ class _CommentsSheetState extends State<CommentsSheet> {
                         child: SvgPicture.asset(
                           'assets/svgs/send.svg',
                           width: 30.w,
+                          colorFilter: ColorFilter.mode(
+                            Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFFC6FF00)
+                                : const Color(0xFF1A1A1A),
+                            BlendMode.srcIn,
+                          ),
                         ),
                       ),
               ],

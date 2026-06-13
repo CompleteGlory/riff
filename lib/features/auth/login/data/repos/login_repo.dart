@@ -20,7 +20,7 @@ class LoginRepo {
   Future<ApiResult<LoginResponse>> login(LoginRequestBody body) async {
     try {
       final response = await _apiService.login(body);
-      return _handleLoginResponse(response, body.email);
+      return await _handleLoginResponse(response, body.email);
     } catch (e) {
       return ApiResult.failure(ApiErrorHandler.handle(e));
     }
@@ -31,7 +31,7 @@ class LoginRepo {
     try {
       final body = GoogleAuthRequestBody(idToken: idToken);
       final response = await _apiService.googleLogin(body);
-      return _handleLoginResponse(response, "");
+      return await _handleLoginResponse(response, "");
     } catch (e) {
       return ApiResult.failure(ApiErrorHandler.handle(e));
     }

@@ -18,6 +18,7 @@ class DioFactory {
     if (dio == null) {
       dio = Dio();
       dio!
+        ..options.baseUrl = ApiConstants.apiBASEURL
         ..options.connectTimeout = timeOut
         ..options.receiveTimeout = timeOut
         ..options.validateStatus = (status) => status == 200 || status == 201;

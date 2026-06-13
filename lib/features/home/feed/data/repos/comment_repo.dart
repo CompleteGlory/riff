@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_type_check
+
 import 'package:riff/core/helpers/shared_pref_helper.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/networks/api_error_handler.dart';
