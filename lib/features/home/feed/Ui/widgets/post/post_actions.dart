@@ -1,4 +1,3 @@
-// ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -27,30 +26,28 @@ class PostActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final mutedColor = isDark ? const Color(0xFF666666) : ColorManager.normalGrey;
+
     return Row(
       children: [
-        // Like
         _ActionButton(
-          svgAsset: isLiked
-              ? 'assets/svgs/Heart-filled.svg'
-              : 'assets/svgs/Heart.svg',
-          color: isLiked ? ColorManager.red : ColorManager.normalGrey,
+          svgAsset: isLiked ? 'assets/svgs/Heart-filled.svg' : 'assets/svgs/Heart.svg',
+          color: isLiked ? ColorManager.red : mutedColor,
           label: _formatCount(likeCount),
           onTap: onLikeTap,
         ),
         SizedBox(width: 20.w),
-        // Comment
         _ActionButton(
           svgAsset: 'assets/svgs/Chat.svg',
-          color: ColorManager.normalGrey,
+          color: mutedColor,
           label: _formatCount(commentCount),
           onTap: onCommentTap,
         ),
         const Spacer(),
-        // Share (with count)
         _ActionButton(
           svgAsset: 'assets/svgs/share.svg',
-          color: ColorManager.normalGrey,
+          color: mutedColor,
           label: _formatCount(shareCount),
           onTap: onShareTap,
         ),
@@ -82,6 +79,7 @@ class _ActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -89,14 +87,12 @@ class _ActionButton extends StatelessWidget {
             svgAsset,
             width: 22.w,
             height: 22.h,
-            color: color,
+            colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
           ),
           SizedBox(width: 5.w),
           Text(
             label,
-            style: TextStyles.font12semiBold.copyWith(
-              color: ColorManager.normalGrey,
-            ),
+            style: TextStyles.font12semiBold.copyWith(color: color),
           ),
         ],
       ),

@@ -1,30 +1,6 @@
-default_platform(:android)
+RELEASE NOTES
 
-platform :android do
-  desc "Android Firebase App Distribution"
-  lane :firebase_distribution do
-    # Run Flutter commands from project root
-    Dir.chdir("..") do
-      sh "flutter clean"
-      sh "flutter build apk --release --flavor production --target lib/main_production.dart --no-tree-shake-icons"
-    end
-
-    firebase_app_distribution(
-      app: "1:369305642937:android:5cc3706f66335b573d7868",
-      firebase_cli_token: ENV["FIREBASE_CLI_TOKEN"],
-      android_artifact_type: "APK",
-      android_artifact_path: "../build/app/outputs/flutter-apk/app-production-release.apk",
-      testers: "fadyalaa441@gmail.com, fadyalaa2112@gmail.com, zakymagd@gmail.com, magddevf@gmail.com" ,
-      upload_timeout: 600,
-      release_notes: <<~RELEASE_NOTES
-        Version 1.0.5 — Release Notes
-        Date: 2026-06-13
-
-        ──────────────────────────────
-        What's New
-        ──────────────────────────────
-
-        RELEASE NOTES
+RIFF APP
 
 Dark mode fixes
 
@@ -53,8 +29,3 @@ Fixed "Connection failed" on macOS login. The macOS app is sandboxed but was mis
 Allowed the local HTTP dev API. Added an App Transport Security exception so the app can reach the cleartext http:// development server. Development only — tighten before shipping.
 
 Note: these are build-level changes, so a full app restart/rebuild is required for them to take effect.
-
-      RELEASE_NOTES
-    )
-  end
-end

@@ -97,7 +97,7 @@ class _PostItemState extends State<PostItem>
             content: Text(
               error,
               style: TextStyles.font12Medium.copyWith(
-                color: ColorManager.lighterGrey,
+                color: Theme.of(context).dividerColor,
               ),
             ),
           ),
@@ -112,7 +112,7 @@ class _PostItemState extends State<PostItem>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: ColorManager.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -133,7 +133,7 @@ class _PostItemState extends State<PostItem>
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
-          backgroundColor: ColorManager.white,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
@@ -178,16 +178,35 @@ class _PostItemState extends State<PostItem>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final shadowColor = isDark ? Colors.transparent : Colors.black.withOpacity(0.05);
+
     return GestureDetector(
-      onDoubleTap: _toggleLike,
+      // Single tap → open full post detail (like tapping a shared post card)
+      onTap: () {
+        HomeCubit? homeCubit;
+        try { homeCubit = context.read<HomeCubit>(); } catch (_) {}
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => homeCubit != null
+                ? BlocProvider.value(
+                    value: homeCubit,
+                    child: PostDetailScreen(post: widget.post),
+                  )
+                : PostDetailScreen(post: widget.post),
+          ),
+        );
+      },
       child: Container(
       margin: EdgeInsets.symmetric(vertical: 6.h),
       decoration: BoxDecoration(
-        color: ColorManager.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(18.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: shadowColor,
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -251,7 +270,7 @@ class _PostItemState extends State<PostItem>
                 verticalSpace(12),
                 Divider(
                   height: 1,
-                  color: ColorManager.lighterGrey,
+                  color: Theme.of(context).dividerColor,
                 ),
                 verticalSpace(10),
               ],

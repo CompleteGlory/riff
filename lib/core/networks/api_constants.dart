@@ -1,5 +1,5 @@
 class ApiConstants {
-  static const String apiBASEURL = "http://192.168.1.8:3000";
+  static const String apiBASEURL = "http://192.168.1.165:3000";
   static const String signUp = "/api/auth/sign-up";
   static const String login = "/api/auth/log-in";
   static const String refreshToken = "/api/auth/refresh";
@@ -20,4 +20,6 @@ class ApiConstants {
   static const String userPosts = "/api/users/{id}/posts";
   static const String reels = "/api/posts/reels";
   static const String sharePost = "/api/posts/{id}/share";
+  static const String feedAds = "/api/commercial/ads/feed";
+  static const String trackAdView = "/api/commercial/ads/{id}/view";
 }
