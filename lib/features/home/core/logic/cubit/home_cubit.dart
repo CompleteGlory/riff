@@ -7,7 +7,7 @@ import 'package:riff/features/home/add_post/ui/widgets/create_post_wrapper.dart'
 import 'package:riff/features/home/core/data/repos/home_repo.dart';
 import 'package:riff/features/home/core/logic/cubit/home_state.dart';
 import 'package:riff/features/home/feed/Ui/widgets/feed/feed_screen.dart';
-import 'package:riff/features/home/notifications/UI/notifications_screen.dart';
+import 'package:riff/features/home/reels/ui/reels_screen.dart';
 import 'package:riff/features/home/profile/UI/profile_screen.dart';
 import 'package:riff/features/home/search/UI/search_screen.dart';
 
@@ -24,7 +24,7 @@ class HomeCubit extends Cubit<HomeState> {
     'Feed',
     'Search',
     'Create Post',
-    'Notifications',
+    'Reels',
     'Profile',
   ];
 
@@ -32,7 +32,7 @@ class HomeCubit extends Cubit<HomeState> {
     const FeedScreen(),
     const SearchScreen(),
     CreatePostWrapper(),
-    const NotificationsScreen(),
+    const ReelsScreen(),
     const Center(child: CircularProgressIndicator()),
   ];
 

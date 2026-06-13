@@ -9,6 +9,7 @@ class PostActions extends StatelessWidget {
   final bool isLiked;
   final int likeCount;
   final int commentCount;
+  final int shareCount;
   final VoidCallback onLikeTap;
   final VoidCallback onCommentTap;
   final VoidCallback onShareTap;
@@ -18,6 +19,7 @@ class PostActions extends StatelessWidget {
     required this.isLiked,
     required this.likeCount,
     required this.commentCount,
+    required this.shareCount,
     required this.onLikeTap,
     required this.onCommentTap,
     required this.onShareTap,
@@ -45,15 +47,12 @@ class PostActions extends StatelessWidget {
           onTap: onCommentTap,
         ),
         const Spacer(),
-        // Share
-        GestureDetector(
+        // Share (with count)
+        _ActionButton(
+          svgAsset: 'assets/svgs/share.svg',
+          color: ColorManager.normalGrey,
+          label: _formatCount(shareCount),
           onTap: onShareTap,
-          child: SvgPicture.asset(
-            'assets/svgs/share.svg',
-            width: 22.w,
-            height: 22.h,
-            color: ColorManager.normalGrey,
-          ),
         ),
       ],
     );

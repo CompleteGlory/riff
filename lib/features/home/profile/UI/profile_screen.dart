@@ -10,12 +10,13 @@ import 'package:riff/core/networks/api_constants.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/helpers/spacing.dart';
+import 'package:riff/features/home/feed/Ui/post_detail_screen.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/fullscsreen_image.dart';
-import 'package:riff/features/home/feed/Ui/widgets/post/post_item.dart';
+import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/profile/logic/cubit/profile_cubit.dart';
 
 // ---------------------------------------------------------------------------
-// Genre → asset image map
+// Genre assets + accent colors
 // ---------------------------------------------------------------------------
 
 const _genreImages = <String, String>{
@@ -29,8 +30,30 @@ const _genreImages = <String, String>{
   'Metal': 'assets/images/rock.png',
 };
 
+const _genreColors = <String, Color>{
+  'Rock': Color(0xFFFFE5E5),
+  'Jazz': Color(0xFFE5F8F7),
+  'Classical': Color(0xFFE8F4F8),
+  'Hip-Hop': Color(0xFFFFF8E1),
+  'Electronic': Color(0xFFEDE7F6),
+  'Gospel': Color(0xFFE8F5E9),
+  'Pop': Color(0xFFFCE4EC),
+  'Metal': Color(0xFFECEFF1),
+};
+
+const _genreAccents = <String, Color>{
+  'Rock': Color(0xFFFF6B6B),
+  'Jazz': Color(0xFF26A69A),
+  'Classical': Color(0xFF42A5F5),
+  'Hip-Hop': Color(0xFFFFCA28),
+  'Electronic': Color(0xFF7E57C2),
+  'Gospel': Color(0xFF66BB6A),
+  'Pop': Color(0xFFEC407A),
+  'Metal': Color(0xFF78909C),
+};
+
 // ---------------------------------------------------------------------------
-// UserProfile model
+// UserProfile model  (imported by HomeRepo + HomeCubit — keep this class here)
 // ---------------------------------------------------------------------------
 
 class UserProfile {
@@ -39,6 +62,7 @@ class UserProfile {
   final String username;
   final String email;
   final String? provider;
+  final String? bio;
   final List<String>? instruments;
   final List<String>? genres;
   final String? profileImageUrl;
@@ -49,6 +73,7 @@ class UserProfile {
     required this.username,
     required this.email,
     this.provider,
+    this.bio,
     this.instruments,
     this.genres,
     this.profileImageUrl,
@@ -60,6 +85,7 @@ class UserProfile {
         username: json['username'] ?? '',
         email: json['email'] ?? '',
         provider: json['provider'],
+        bio: json['bio'] as String?,
         instruments: (json['instruments'] as List?)?.cast<String>(),
         genres: (json['genres'] as List?)?.cast<String>(),
         profileImageUrl: json['profile_image_url'],
@@ -72,7 +98,6 @@ class UserProfile {
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, required this.profile});
-
   final UserProfile profile;
 
   @override
@@ -168,9 +193,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 backgroundColor: ColorManager.primaryBlack,
                 content: Text(
                   'Profile photo updated',
-                  style: TextStyles.font14Medium.copyWith(
-                    color: ColorManager.white,
-                  ),
+                  style:
+                      TextStyles.font14Medium.copyWith(color: ColorManager.white),
                 ),
               ),
             );
@@ -180,8 +204,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 behavior: SnackBarBehavior.floating,
                 backgroundColor: ColorManager.red,
                 content: Text(state.message,
-                    style: TextStyles.font14Medium.copyWith(
-                        color: ColorManager.white)),
+                    style: TextStyles.font14Medium
+                        .copyWith(color: ColorManager.white)),
               ),
             );
           }
@@ -199,7 +223,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── Header ────────────────────────────────────────────────────────────────
+  // ── Header ──────────────────────────────────────────────────────────────────
 
   Widget _buildHeader() {
     final imageUrl = _effectiveImageUrl;
@@ -218,15 +242,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 28.h),
         child: Column(
           children: [
-            // Avatar + edit badge
+            // ── Avatar + camera badge ───────────────────────────────────────
             BlocBuilder<ProfileCubit, ProfileState>(
               buildWhen: (_, s) =>
-                  s is ProfileImageUploading || s is ProfileImageUploadSuccess || s is ProfileImageUploadFailure,
+                  s is ProfileImageUploading ||
+                  s is ProfileImageUploadSuccess ||
+                  s is ProfileImageUploadFailure,
               builder: (context, state) {
                 final isUploading = state is ProfileImageUploading;
                 return Stack(
                   children: [
-                    // Avatar — tap opens fullscreen (if image exists)
                     GestureDetector(
                       onTap: (!isUploading && imageUrl != null)
                           ? () => Navigator.push(
@@ -244,9 +269,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           shape: BoxShape.circle,
                           color: ColorManager.lighterGrey,
                           border: Border.all(
-                            color: ColorManager.lighterGrey,
-                            width: 3,
-                          ),
+                              color: ColorManager.lighterGrey, width: 3),
                         ),
                         child: ClipOval(
                           child: imageUrl != null
@@ -269,7 +292,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ),
-                    // Camera badge — tap opens upload sheet
                     Positioned(
                       right: 0,
                       bottom: 0,
@@ -283,24 +305,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ? ColorManager.normalGrey
                                 : ColorManager.primaryBlack,
                             shape: BoxShape.circle,
-                            border: Border.all(
-                              color: ColorManager.white,
-                              width: 2,
-                            ),
+                            border:
+                                Border.all(color: ColorManager.white, width: 2),
                           ),
                           child: isUploading
                               ? Padding(
                                   padding: const EdgeInsets.all(6),
                                   child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: ColorManager.white,
-                                  ),
+                                      strokeWidth: 2,
+                                      color: ColorManager.white),
                                 )
-                              : Icon(
-                                  Icons.camera_alt_rounded,
-                                  size: 14.r,
-                                  color: ColorManager.white,
-                                ),
+                              : Icon(Icons.camera_alt_rounded,
+                                  size: 14.r, color: ColorManager.white),
                         ),
                       ),
                     ),
@@ -311,7 +327,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             verticalSpace(16),
 
-            // Name
+            // ── Name ────────────────────────────────────────────────────────
             Text(
               widget.profile.fullName,
               style: TextStyles.font20SemiBold,
@@ -319,33 +335,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             verticalSpace(4),
 
-            // Username
+            // ── Username ─────────────────────────────────────────────────────
             Text(
               '@${widget.profile.username}',
               style: TextStyles.font14Medium.copyWith(
-                color: ColorManager.normalGrey,
-              ),
+                  color: ColorManager.normalGrey),
             ),
 
-            verticalSpace(16),
+            // ── Bio ──────────────────────────────────────────────────────────
+            if (widget.profile.bio != null && widget.profile.bio!.isNotEmpty) ...[
+              verticalSpace(10),
+              Text(
+                widget.profile.bio!,
+                style: TextStyles.font14regular
+                    .copyWith(color: ColorManager.darkGrey),
+                textAlign: TextAlign.center,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
 
-            // Posts count pill
+            verticalSpace(20),
+
+            // ── Counts row ───────────────────────────────────────────────────
             BlocBuilder<ProfileCubit, ProfileState>(
               buildWhen: (_, s) => s is ProfileSuccess,
               builder: (context, state) {
-                final count =
+                final postsCount =
                     state is ProfileSuccess ? state.posts.length : 0;
-                return Container(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                  child: Text(
-                    '$count ${count == 1 ? 'Post' : 'Posts'}',
-                    style: TextStyles.font14semiBold.copyWith(
-                      color: ColorManager.darkGrey,
-                    ),
+                return IntrinsicHeight(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _CountCell(
+                          count: postsCount,
+                          label: postsCount == 1 ? 'Post' : 'Posts'),
+                      _VertDivider(),
+                      _CountCell(count: 0, label: 'Followers'),
+                      _VertDivider(),
+                      _CountCell(count: 0, label: 'Following'),
+                    ],
                   ),
                 );
               },
@@ -356,26 +385,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── Genres ────────────────────────────────────────────────────────────────
+  // ── Genres ──────────────────────────────────────────────────────────────────
 
   Widget _buildGenresSection(List<String> genres) {
     return SliverToBoxAdapter(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionDivider(),
+          _SectionSpacer(),
           Padding(
             padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 14.h),
             child: Text('Genres', style: TextStyles.font18Semibold),
           ),
           SizedBox(
-            height: 110.h,
+            height: 130.h,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
               itemCount: genres.length,
-              separatorBuilder: (_, __) => SizedBox(width: 12.w),
+              separatorBuilder: (_, __) => SizedBox(width: 10.w),
               itemBuilder: (_, i) => _GenreCard(name: genres[i]),
             ),
           ),
@@ -385,7 +414,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── Posts ─────────────────────────────────────────────────────────────────
+  // ── Posts grid ───────────────────────────────────────────────────────────────
 
   Widget _buildPostsSection() {
     return BlocBuilder<ProfileCubit, ProfileState>(
@@ -397,25 +426,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context, state) {
         if (state is ProfileInitial || state is ProfileLoading) {
           return const SliverFillRemaining(
-            child: Center(child: CircularProgressIndicator()),
-          );
+              child: Center(child: CircularProgressIndicator()));
         }
 
         if (state is ProfileFailure) {
           return SliverFillRemaining(
             child: Center(
-              child: Text(
-                state.message,
-                style: TextStyles.font14Medium.copyWith(
-                    color: ColorManager.normalGrey),
-                textAlign: TextAlign.center,
-              ),
+              child: Text(state.message,
+                  style: TextStyles.font14Medium
+                      .copyWith(color: ColorManager.normalGrey),
+                  textAlign: TextAlign.center),
             ),
           );
         }
 
-        final posts =
-            state is ProfileSuccess ? state.posts : _cubit.posts;
+        final posts = state is ProfileSuccess ? state.posts : _cubit.posts;
 
         if (posts.isEmpty) {
           return SliverFillRemaining(
@@ -426,11 +451,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Icon(Icons.music_note_outlined,
                       size: 48.r, color: ColorManager.lighterGrey),
                   verticalSpace(12),
-                  Text(
-                    'No posts yet',
-                    style: TextStyles.font16Medium.copyWith(
-                        color: ColorManager.normalGrey),
-                  ),
+                  Text('No posts yet',
+                      style: TextStyles.font16Medium
+                          .copyWith(color: ColorManager.normalGrey)),
                 ],
               ),
             ),
@@ -442,7 +465,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SectionDivider(),
+                _SectionSpacer(),
                 Padding(
                   padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 4.h),
                   child: Text('Posts', style: TextStyles.font18Semibold),
@@ -451,11 +474,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           SliverPadding(
-            padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 32.h),
-            sliver: SliverList.separated(
-              itemCount: posts.length,
-              separatorBuilder: (_, __) => SizedBox(height: 2.h),
-              itemBuilder: (_, i) => PostItem(post: posts[i]),
+            padding: EdgeInsets.fromLTRB(2.w, 8.h, 2.w, 32.h),
+            sliver: SliverGrid(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 2.w,
+                mainAxisSpacing: 2.h,
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (ctx, i) => _PostThumbnail(
+                  post: posts[i],
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PostDetailScreen(post: posts[i]),
+                    ),
+                  ),
+                ),
+                childCount: posts.length,
+              ),
             ),
           ),
         ]);
@@ -475,15 +512,19 @@ class _GenreCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imagePath = _genreImages[name];
+    final bg = _genreColors[name] ?? const Color(0xFFF5F5F5);
+    final accent = _genreAccents[name] ?? ColorManager.normalGrey;
+
     return Container(
-      width: 80.w,
+      width: 100.w,
       decoration: BoxDecoration(
-        color: ColorManager.white,
-        borderRadius: BorderRadius.circular(16.r),
+        color: bg,
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: accent.withOpacity(0.25), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.07),
-            blurRadius: 12,
+            color: accent.withOpacity(0.12),
+            blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
@@ -491,20 +532,26 @@ class _GenreCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (imagePath != null)
-            Image.asset(imagePath,
-                width: 46.r, height: 46.r, fit: BoxFit.contain)
-          else
-            Icon(Icons.music_note_rounded,
-                size: 40.r, color: ColorManager.normalGrey),
-          verticalSpace(8),
+          Container(
+            width: 52.r,
+            height: 52.r,
+            decoration: BoxDecoration(
+              color: ColorManager.white.withOpacity(0.7),
+              shape: BoxShape.circle,
+            ),
+            child: imagePath != null
+                ? Padding(
+                    padding: EdgeInsets.all(8.r),
+                    child: Image.asset(imagePath, fit: BoxFit.contain),
+                  )
+                : Icon(Icons.music_note_rounded, size: 28.r, color: accent),
+          ),
+          verticalSpace(10),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 6.w),
+            padding: EdgeInsets.symmetric(horizontal: 8.w),
             child: Text(
               name,
-              style: TextStyles.font12semiBold.copyWith(
-                color: ColorManager.primaryBlack,
-              ),
+              style: TextStyles.font12semiBold.copyWith(color: accent),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -517,30 +564,172 @@ class _GenreCard extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Section divider
+// Post thumbnail
 // ---------------------------------------------------------------------------
 
-class _SectionDivider extends StatelessWidget {
+class _PostThumbnail extends StatelessWidget {
+  final Post post;
+  final VoidCallback onTap;
+  const _PostThumbnail({required this.post, required this.onTap});
+
+  bool _isVideo(String url) {
+    final lower = url.toLowerCase();
+    return lower.endsWith('.mp4') ||
+        lower.endsWith('.mov') ||
+        lower.endsWith('.webm') ||
+        lower.endsWith('.avi') ||
+        lower.endsWith('.mkv');
+  }
+
+  String _resolve(String url) =>
+      url.startsWith('http') ? url : '${ApiConstants.apiBASEURL}$url';
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 8.h,
-      color: const Color(0xFFF5F5F5),
+    final media = (post.media ?? []).where((m) => m.isNotEmpty).toList();
+
+    // Shared posts have no own media — fall back to the original post's media
+    // so the thumbnail is never blank.
+    final isShared = post.originalPost != null && media.isEmpty;
+    final effectiveMedia = media.isNotEmpty
+        ? media
+        : (post.originalPost?.media ?? []).where((m) => m.isNotEmpty).toList();
+    final firstMedia = effectiveMedia.isNotEmpty ? effectiveMedia.first : null;
+
+    // Text to show when there is no media at all.
+    final displayText = post.content?.isNotEmpty == true
+        ? post.content!
+        : (post.originalPost?.content ?? '');
+
+    Widget thumbnail;
+    if (firstMedia == null) {
+      thumbnail = Container(
+        color: isShared ? const Color(0xFFE8E8F0) : const Color(0xFFEEEEEE),
+        padding: EdgeInsets.all(8.r),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isShared) ...[
+                Icon(Icons.repeat, size: 16.r, color: ColorManager.normalGrey),
+                SizedBox(height: 4.h),
+              ],
+              Text(
+                displayText,
+                style: TextStyles.font12Medium.copyWith(color: ColorManager.darkGrey),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    } else if (_isVideo(firstMedia)) {
+      thumbnail = Stack(
+        fit: StackFit.expand,
+        children: [
+          Container(color: const Color(0xFF1A1A1A)),
+          Center(
+            child: Icon(Icons.play_circle_outline, color: Colors.white70, size: 32.r),
+          ),
+        ],
+      );
+    } else {
+      thumbnail = Image.network(
+        _resolve(firstMedia),
+        fit: BoxFit.cover,
+        loadingBuilder: (_, child, progress) =>
+            progress == null ? child : Container(color: ColorManager.lighterGrey),
+        errorBuilder: (_, __, ___) => Container(
+          color: ColorManager.lighterGrey,
+          child: Icon(Icons.broken_image_outlined,
+              color: ColorManager.normalGrey, size: 24.r),
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        color: ColorManager.lighterGrey,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            thumbnail,
+            // Small share badge in the top-right corner.
+            if (isShared)
+              Positioned(
+                top: 4.r,
+                right: 4.r,
+                child: Container(
+                  padding: EdgeInsets.all(3.r),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                  child: Icon(Icons.repeat, size: 11.r, color: Colors.white),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
 
 // ---------------------------------------------------------------------------
-// Bottom sheet tile
+// Shared small widgets
 // ---------------------------------------------------------------------------
 
-class _SheetTile extends StatelessWidget {
-  const _SheetTile({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
+class _CountCell extends StatelessWidget {
+  final int count;
+  final String label;
+  const _CountCell({required this.count, required this.label});
 
+  String _fmt(int n) {
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return '$n';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      child: Column(
+        children: [
+          Text(_fmt(count), style: TextStyles.font20SemiBold),
+          verticalSpace(2),
+          Text(label,
+              style: TextStyles.font12Medium
+                  .copyWith(color: ColorManager.normalGrey)),
+        ],
+      ),
+    );
+  }
+}
+
+class _VertDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      color: ColorManager.lighterGrey,
+      margin: EdgeInsets.symmetric(vertical: 4.h),
+    );
+  }
+}
+
+class _SectionSpacer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) =>
+      Container(height: 8.h, color: const Color(0xFFF5F5F5));
+}
+
+class _SheetTile extends StatelessWidget {
+  const _SheetTile(
+      {required this.icon, required this.label, required this.onTap});
   final IconData icon;
   final String label;
   final VoidCallback onTap;

@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously, deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
@@ -13,6 +14,11 @@ import 'package:riff/features/home/feed/Ui/widgets/comments/comment_sheet.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_header.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_content.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_actions.dart';
+import 'package:riff/features/home/feed/Ui/widgets/post/shared_post_card.dart';
+import 'package:riff/features/home/feed/Ui/widgets/post/share_sheet.dart';
+import 'package:riff/features/home/feed/Ui/post_detail_screen.dart';
+import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
+import 'package:riff/features/home/reels/ui/reels_screen.dart';
 import 'package:riff/features/home/feed/logic/cubit/posts/post_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
 
@@ -30,6 +36,7 @@ class _PostItemState extends State<PostItem>
   late bool isLiked;
   late int likeCount;
   late int commentCount;
+  late int shareCount;
   bool showHeart = false;
   late AnimationController _heartController;
   late Animation<double> _scaleAnimation;
@@ -40,6 +47,7 @@ class _PostItemState extends State<PostItem>
     isLiked = widget.post.isLiked ?? false;
     likeCount = int.tryParse(widget.post.likesCount ?? '0') ?? 0;
     commentCount = int.tryParse(widget.post.commentsCount ?? '0') ?? 0;
+    shareCount = widget.post.sharesCount ?? 0;
     _heartController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
@@ -150,11 +158,29 @@ class _PostItemState extends State<PostItem>
     );
   }
 
-  void _sharePost() => getIt<PostCubit>().sharePost(widget.post);
+  void _sharePost() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ShareSheet(
+        post: widget.post,
+        onShare: (caption) async {
+          await getIt<PostCubit>().sharePost(widget.post, caption: caption);
+          if (mounted) {
+            Navigator.pop(context);
+            setState(() => shareCount++);
+          }
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onDoubleTap: _toggleLike,
+      child: Container(
       margin: EdgeInsets.symmetric(vertical: 6.h),
       decoration: BoxDecoration(
         color: ColorManager.white,
@@ -176,6 +202,29 @@ class _PostItemState extends State<PostItem>
             child: PostHeader(post: widget.post, onMoreTapped: () {}),
           ),
 
+          // Shared original post card (only when this post is a share)
+          if (widget.post.originalPost != null)
+            SharedPostCard(
+              originalPost: widget.post.originalPost!,
+              onTap: () {
+                HomeCubit? homeCubit;
+                try {
+                  homeCubit = context.read<HomeCubit>();
+                } catch (_) {}
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => homeCubit != null
+                        ? BlocProvider.value(
+                            value: homeCubit,
+                            child: PostDetailScreen(post: widget.post.originalPost!),
+                          )
+                        : PostDetailScreen(post: widget.post.originalPost!),
+                  ),
+                );
+              },
+            ),
+
           // Content + images (no horizontal padding on images so they go edge to edge)
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 14.w),
@@ -184,6 +233,13 @@ class _PostItemState extends State<PostItem>
               onImageDoubleTap: _toggleLike,
               showHeartAnimation: showHeart,
               heartAnimation: _scaleAnimation,
+              onVideoTap: (_) => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  fullscreenDialog: true,
+                  builder: (_) => ReelsScreen(initialPost: widget.post),
+                ),
+              ),
             ),
           ),
 
@@ -209,12 +265,14 @@ class _PostItemState extends State<PostItem>
               isLiked: isLiked,
               likeCount: likeCount,
               commentCount: commentCount,
+              shareCount: shareCount,
               onLikeTap: _toggleLike,
               onCommentTap: () => _openComments(widget.post.id.toString()),
               onShareTap: _sharePost,
             ),
           ),
         ],
+      ),
       ),
     );
   }

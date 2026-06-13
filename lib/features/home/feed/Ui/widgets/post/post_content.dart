@@ -13,6 +13,7 @@ class PostContent extends StatelessWidget {
   final VoidCallback? onImageDoubleTap;
   final bool showHeartAnimation;
   final Animation<double>? heartAnimation;
+  final void Function(String videoUrl)? onVideoTap;
 
   const PostContent({
     super.key,
@@ -20,18 +21,40 @@ class PostContent extends StatelessWidget {
     this.onImageDoubleTap,
     this.showHeartAnimation = false,
     this.heartAnimation,
+    this.onVideoTap,
   });
 
   String _resolve(String url) =>
       url.startsWith('http') ? url : '${ApiConstants.apiBASEURL}$url';
 
-  void _openGallery(BuildContext context, List<String> images, int index) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => FullScreenImage(images: images, initialIndex: index),
-      ),
-    );
+  bool _isVideo(String url) {
+    final lower = url.toLowerCase();
+    return lower.endsWith('.mp4') ||
+        lower.endsWith('.mov') ||
+        lower.endsWith('.webm') ||
+        lower.endsWith('.avi') ||
+        lower.endsWith('.mkv');
+  }
+
+  void _handleMediaTap(BuildContext context, List<String> allMedia, int index) {
+    if (_isVideo(allMedia[index])) {
+      onVideoTap?.call(_resolve(allMedia[index]));
+    } else {
+      // Build an image-only list for the gallery, keeping the original indices
+      final imageUrls =
+          allMedia.where((m) => !_isVideo(m)).map(_resolve).toList();
+      final imageIndex =
+          allMedia.where((m) => !_isVideo(m)).toList().indexOf(allMedia[index]);
+      if (imageUrls.isNotEmpty && imageIndex >= 0) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                FullScreenImage(images: imageUrls, initialIndex: imageIndex),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -81,14 +104,46 @@ class PostContent extends StatelessWidget {
     }
   }
 
+  /// Returns a video or image tile for the given index.
+  Widget _mediaTile(
+    BuildContext context,
+    List<String> allMedia,
+    int index, {
+    required double height,
+    double? width,
+    bool rightGap = false,
+    bool bottomGap = false,
+  }) {
+    final raw = allMedia[index];
+    final resolved = _resolve(raw);
+    void onTap() => _handleMediaTap(context, allMedia, index);
+
+    if (_isVideo(raw)) {
+      return _VideoCell(
+        height: height,
+        width: width,
+        onTap: onTap,
+        rightGap: rightGap,
+        bottomGap: bottomGap,
+      );
+    }
+    return _NetImg(
+      url: resolved,
+      height: height,
+      width: width,
+      onTap: onTap,
+      rightGap: rightGap,
+      bottomGap: bottomGap,
+    );
+  }
+
   Widget _single(BuildContext context, List<String> images, int index) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(14.r),
-      child: _NetImg(
-        url: _resolve(images[index]),
+      child: _mediaTile(
+        context, images, index,
         width: double.infinity,
         height: 260.h,
-        onTap: () => _openGallery(context, images, index),
       ),
     );
   }
@@ -99,19 +154,10 @@ class PostContent extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: _NetImg(
-              url: _resolve(images[0]),
-              height: 200.h,
-              onTap: () => _openGallery(context, images, 0),
-              rightGap: true,
-            ),
+            child: _mediaTile(context, images, 0, height: 200.h, rightGap: true),
           ),
           Expanded(
-            child: _NetImg(
-              url: _resolve(images[1]),
-              height: 200.h,
-              onTap: () => _openGallery(context, images, 1),
-            ),
+            child: _mediaTile(context, images, 1, height: 200.h),
           ),
         ],
       ),
@@ -125,28 +171,14 @@ class PostContent extends StatelessWidget {
         children: [
           Expanded(
             flex: 3,
-            child: _NetImg(
-              url: _resolve(images[0]),
-              height: 200.h,
-              onTap: () => _openGallery(context, images, 0),
-              rightGap: true,
-            ),
+            child: _mediaTile(context, images, 0, height: 200.h, rightGap: true),
           ),
           Expanded(
             flex: 2,
             child: Column(
               children: [
-                _NetImg(
-                  url: _resolve(images[1]),
-                  height: 99.h,
-                  onTap: () => _openGallery(context, images, 1),
-                  bottomGap: true,
-                ),
-                _NetImg(
-                  url: _resolve(images[2]),
-                  height: 99.h,
-                  onTap: () => _openGallery(context, images, 2),
-                ),
+                _mediaTile(context, images, 1, height: 99.h, bottomGap: true),
+                _mediaTile(context, images, 2, height: 99.h),
               ],
             ),
           ),
@@ -164,47 +196,30 @@ class PostContent extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _NetImg(
-                  url: _resolve(images[0]),
-                  height: 140.h,
-                  onTap: () => _openGallery(context, images, 0),
-                  rightGap: true,
-                  bottomGap: true,
-                ),
+                child: _mediaTile(context, images, 0,
+                    height: 140.h, rightGap: true, bottomGap: true),
               ),
               Expanded(
-                child: _NetImg(
-                  url: _resolve(images[1]),
-                  height: 140.h,
-                  onTap: () => _openGallery(context, images, 1),
-                  bottomGap: true,
-                ),
+                child: _mediaTile(context, images, 1,
+                    height: 140.h, bottomGap: true),
               ),
             ],
           ),
           Row(
             children: [
               Expanded(
-                child: _NetImg(
-                  url: _resolve(images[2]),
-                  height: 140.h,
-                  onTap: () => _openGallery(context, images, 2),
-                  rightGap: true,
-                ),
+                child: _mediaTile(context, images, 2,
+                    height: 140.h, rightGap: true),
               ),
               Expanded(
                 child: extra > 0
                     ? _MoreCell(
                         url: _resolve(images[3]),
                         extra: extra,
-                        onTap: () => _openGallery(context, images, 3),
+                        onTap: () => _handleMediaTap(context, images, 3),
                         height: 140.h,
                       )
-                    : _NetImg(
-                        url: _resolve(images[3]),
-                        height: 140.h,
-                        onTap: () => _openGallery(context, images, 3),
-                      ),
+                    : _mediaTile(context, images, 3, height: 140.h),
               ),
             ],
           ),
@@ -266,6 +281,63 @@ class _NetImg extends StatelessWidget {
               size: 28,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Video thumbnail tile (dark bg + play icon, navigates to Reels)
+// ---------------------------------------------------------------------------
+
+class _VideoCell extends StatelessWidget {
+  const _VideoCell({
+    required this.height,
+    required this.onTap,
+    this.width,
+    this.rightGap = false,
+    this.bottomGap = false,
+  });
+
+  final double height;
+  final double? width;
+  final VoidCallback onTap;
+  final bool rightGap;
+  final bool bottomGap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: width,
+        height: height,
+        margin: EdgeInsets.only(
+          right: rightGap ? 2.w : 0,
+          bottom: bottomGap ? 2.h : 0,
+        ),
+        color: const Color(0xFF1A1A1A),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Icon(Icons.play_circle_outline, color: Colors.white70, size: 40.r),
+            Positioned(
+              bottom: 6.h,
+              left: 8.w,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(4.r),
+                ),
+                child: Text(
+                  'Video',
+                  style: TextStyle(color: Colors.white, fontSize: 10.sp),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

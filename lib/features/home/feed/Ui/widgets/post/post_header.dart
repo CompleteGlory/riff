@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
@@ -9,6 +10,8 @@ import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_options.dart';
+import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
+import 'package:riff/features/home/user_profile/ui/user_profile_screen.dart';
 
 class PostHeader extends StatelessWidget {
   final Post post;
@@ -32,47 +35,69 @@ class PostHeader extends StatelessWidget {
         .map((w) => w.isEmpty ? '' : w[0].toUpperCase())
         .join();
 
+    void navigateToProfile() {
+      final authorId = post.author?.id;
+      if (authorId == null) return;
+      final homeCubit = context.read<HomeCubit>();
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: homeCubit,
+            child: UserProfileScreen(userId: authorId),
+          ),
+        ),
+      );
+    }
+
     return Row(
       children: [
-        // Avatar
-        Container(
-          width: 42.r,
-          height: 42.r,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: ColorManager.lighterGrey,
-          ),
-          child: ClipOval(
-            child: fullUrl != null
-                ? Image.network(
-                    fullUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _Initials(initials),
-                  )
-                : _Initials(initials),
+        // Avatar — tappable
+        GestureDetector(
+          onTap: navigateToProfile,
+          child: Container(
+            width: 42.r,
+            height: 42.r,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: ColorManager.lighterGrey,
+            ),
+            child: ClipOval(
+              child: fullUrl != null
+                  ? Image.network(
+                      fullUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _Initials(initials),
+                    )
+                  : _Initials(initials),
+            ),
           ),
         ),
         horizontalSpace(10),
 
-        // Name + time
+        // Name + time — tappable
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                post.author?.fullName ?? 'Unknown',
-                style: TextStyles.font15semiBold,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              SizedBox(height: 2.h),
-              Text(
-                timeAgo(post.createdAt),
-                style: TextStyles.font12regular.copyWith(
-                  color: ColorManager.normalGrey,
+          child: GestureDetector(
+            onTap: navigateToProfile,
+            behavior: HitTestBehavior.opaque,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  post.author?.fullName ?? 'Unknown',
+                  style: TextStyles.font15semiBold,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+                SizedBox(height: 2.h),
+                Text(
+                  timeAgo(post.createdAt),
+                  style: TextStyles.font12regular.copyWith(
+                    color: ColorManager.normalGrey,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
 
