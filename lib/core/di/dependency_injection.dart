@@ -29,6 +29,7 @@ import 'package:riff/features/home/reels/data/repos/reels_repo.dart';
 import 'package:riff/features/home/reels/logic/cubit/reels_cubit.dart';
 import 'package:riff/features/home/user_profile/data/repos/user_profile_repo.dart';
 import 'package:riff/features/home/user_profile/logic/cubit/user_profile_cubit.dart';
+import 'package:riff/features/commercial/data/repos/ad_repo.dart';
 
 final getIt = GetIt.instance;
 
@@ -80,6 +81,9 @@ Future<void> setUpGetIt() async {
   // reels
   getIt.registerLazySingleton<ReelsRepo>(() => ReelsRepo());
   getIt.registerFactory<ReelsCubit>(() => ReelsCubit(getIt()));
+
+  // ads
+  getIt.registerLazySingleton<AdRepo>(() => AdRepo(dio));
 
   //create post
   getIt.registerLazySingleton<CreatePostRepo>(()=>CreatePostRepo(getIt()));
