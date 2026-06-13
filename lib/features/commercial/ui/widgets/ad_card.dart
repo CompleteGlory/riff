@@ -3,6 +3,7 @@ import 'package:riff/features/commercial/data/models/ad.dart';
 import 'package:riff/features/commercial/data/repos/ad_repo.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:riff/core/networks/api_constants.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
 class AdCard extends StatefulWidget {
@@ -30,6 +31,17 @@ class _AdCardState extends State<AdCard> {
     widget.adRepo.trackView(widget.ad.id);
   }
 
+  Future<void> _openLink() async {
+    var link = widget.ad.link;
+    if (link == null || link.isEmpty) return;
+    if (!link.startsWith('http://') && !link.startsWith('https://')) {
+      link = 'https://$link';
+    }
+    final uri = Uri.tryParse(link);
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
   bool _isVideo(String url) {
     final lower = url.toLowerCase();
     return lower.endsWith('.mp4') ||
@@ -49,7 +61,12 @@ class _AdCardState extends State<AdCard> {
     final storeName = ad.storeManager?.storeName ?? 'Sponsored';
     final logoUrl = ad.storeManager?.storeLogo;
 
-    return Card(
+    final hasLink = ad.link != null && ad.link!.isNotEmpty;
+
+    return GestureDetector(
+      onTap: hasLink ? _openLink : null,
+
+      child: Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       clipBehavior: Clip.antiAlias,
@@ -121,7 +138,7 @@ class _AdCardState extends State<AdCard> {
           const SizedBox(height: 8),
         ],
       ),
-    );
+    ));
   }
 }
 

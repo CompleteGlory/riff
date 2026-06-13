@@ -44,22 +44,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     return BlocProvider.value(
       value: _cubit,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF5F5F5),
         appBar: AppBar(
-          backgroundColor: ColorManager.white,
-          elevation: 0.5,
-          shadowColor: ColorManager.lighterGrey,
           leading: IconButton(
             onPressed: () => Navigator.pop(context),
             icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-            color: ColorManager.primaryBlack,
           ),
-          title: Text(
-            'Profile',
-            style: TextStyles.font16Medium.copyWith(
-              color: ColorManager.primaryBlack,
-            ),
-          ),
+          title: const Text('Profile'),
           centerTitle: false,
         ),
         body: BlocBuilder<UserProfileCubit, UserProfileState>(

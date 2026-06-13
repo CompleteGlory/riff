@@ -120,7 +120,7 @@ class _ReelItemState extends State<ReelItem> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: ColorManager.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -137,7 +137,7 @@ class _ReelItemState extends State<ReelItem> {
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
-          backgroundColor: ColorManager.white,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
@@ -262,7 +262,7 @@ class _ReelItemState extends State<ReelItem> {
                       MaterialPageRoute(
                         builder: (_) => homeCubit != null
                             ? BlocProvider.value(
-                                value: homeCubit!,
+                                value: homeCubit,
                                 child: UserProfileScreen(userId: authorId),
                               )
                             : UserProfileScreen(userId: authorId),

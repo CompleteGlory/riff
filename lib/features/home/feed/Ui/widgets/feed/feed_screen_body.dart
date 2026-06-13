@@ -90,10 +90,11 @@ class _FeedScreenBodyState extends State<FeedScreenBody> {
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<FeedCubit>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return RefreshIndicator(
-      backgroundColor: ColorManager.white,
-      color: ColorManager.primaryBlack,
+      backgroundColor: isDark ? const Color(0xFF252525) : ColorManager.white,
+      color: isDark ? const Color(0xFFC6FF00) : ColorManager.primaryBlack,
       onRefresh: () async {
         await cubit.getPosts(refresh: true);
         await _loadAds();

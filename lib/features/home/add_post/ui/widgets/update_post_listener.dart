@@ -5,7 +5,6 @@ import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/home/add_post/logic/cubit/update_post_cubit.dart';
 import 'package:riff/features/home/add_post/logic/cubit/update_post_state.dart';
-import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/feed/feed_cubit.dart';
 
 

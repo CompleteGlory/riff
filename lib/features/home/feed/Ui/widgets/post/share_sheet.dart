@@ -42,10 +42,11 @@ class _ShareSheetState extends State<ShareSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.of(context).viewInsets.bottom;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       decoration: BoxDecoration(
-        color: ColorManager.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       padding: EdgeInsets.fromLTRB(0, 12.h, 0, bottomPad + 20.h),
@@ -59,7 +60,9 @@ class _ShareSheetState extends State<ShareSheet> {
               width: 40.w,
               height: 4.h,
               decoration: BoxDecoration(
-                color: ColorManager.lighterGrey,
+                color: isDark
+                    ? const Color(0xFF3A3A3A)
+                    : ColorManager.lighterGrey,
                 borderRadius: BorderRadius.circular(2.r),
               ),
             ),
@@ -94,7 +97,9 @@ class _ShareSheetState extends State<ShareSheet> {
                   color: ColorManager.normalGrey,
                 ),
                 filled: true,
-                fillColor: ColorManager.lighterGrey.withValues(alpha: 0.5),
+                fillColor: isDark
+                    ? const Color(0xFF252525)
+                    : ColorManager.lighterGrey.withValues(alpha: 0.5),
                 contentPadding:
                     EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
                 border: OutlineInputBorder(
@@ -116,9 +121,10 @@ class _ShareSheetState extends State<ShareSheet> {
               child: ElevatedButton(
                 onPressed: _loading ? null : _submit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorManager.primaryBlack,
+                  backgroundColor: ColorManager.accent,
                   disabledBackgroundColor:
-                      ColorManager.primaryBlack.withValues(alpha: 0.5),
+                      ColorManager.accent.withValues(alpha: 0.5),
+                  foregroundColor: ColorManager.primaryBlack,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.r),
                   ),
@@ -127,15 +133,15 @@ class _ShareSheetState extends State<ShareSheet> {
                     ? SizedBox(
                         width: 20.w,
                         height: 20.w,
-                        child: const CircularProgressIndicator(
-                          color: Colors.white,
+                        child: CircularProgressIndicator(
+                          color: ColorManager.primaryBlack,
                           strokeWidth: 2,
                         ),
                       )
                     : Text(
                         'Share',
                         style: TextStyles.font16Medium
-                            .copyWith(color: Colors.white),
+                            .copyWith(color: ColorManager.primaryBlack),
                       ),
               ),
             ),

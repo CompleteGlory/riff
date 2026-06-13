@@ -144,7 +144,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     HapticFeedback.lightImpact();
     showModalBottomSheet(
       context: context,
-      backgroundColor: ColorManager.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
@@ -213,8 +213,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         },
         child: RefreshIndicator(
           onRefresh: () => _cubit.loadUserPosts(widget.profile.id),
-          color: ColorManager.primaryBlack,
-          backgroundColor: ColorManager.white,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFFC6FF00)
+              : ColorManager.primaryBlack,
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF252525)
+              : ColorManager.white,
           child: CustomScrollView(
             physics: const BouncingScrollPhysics(
                 parent: AlwaysScrollableScrollPhysics()),
@@ -243,9 +247,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             .map((w) => w[0].toUpperCase())
             .join();
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SliverToBoxAdapter(
       child: Container(
-        color: ColorManager.white,
+        color: isDark ? const Color(0xFF1A1A1A) : ColorManager.white,
         padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 28.h),
         child: Column(
           children: [

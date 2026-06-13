@@ -219,7 +219,9 @@ class _ReelsBodyState extends State<_ReelsBody> {
           body: RefreshIndicator(
             onRefresh: () async {
               // Dispose all cached controllers and reset to page 0.
-              for (final c in _controllers.values) c.dispose();
+              for (final c in _controllers.values) {
+                c.dispose();
+              }
               _controllers.clear();
               _ready.clear();
               setState(() => _currentPage = 0);

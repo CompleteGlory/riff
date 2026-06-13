@@ -27,6 +27,7 @@ class AdStoreManager {
 class Ad {
   final int id;
   final String? caption;
+  final String? link;
   final List<String>? media;
 
   @JsonKey(name: 'view_count')
@@ -47,6 +48,7 @@ class Ad {
     required this.storeManagerId,
     required this.createdAt,
     this.caption,
+    this.link,
     this.media,
     this.storeManager,
   });

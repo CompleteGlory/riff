@@ -26,6 +26,7 @@ Ad _$AdFromJson(Map<String, dynamic> json) => Ad(
   storeManagerId: json['store_manager_id'] as String,
   createdAt: json['created_at'] as String,
   caption: json['caption'] as String?,
+  link: json['link'] as String?,
   media: (json['media'] as List<dynamic>?)?.map((e) => e as String).toList(),
   storeManager: json['storeManager'] == null
       ? null
@@ -35,6 +36,7 @@ Ad _$AdFromJson(Map<String, dynamic> json) => Ad(
 Map<String, dynamic> _$AdToJson(Ad instance) => <String, dynamic>{
   'id': instance.id,
   'caption': instance.caption,
+  'link': instance.link,
   'media': instance.media,
   'view_count': instance.viewCount,
   'store_manager_id': instance.storeManagerId,
