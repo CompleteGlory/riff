@@ -1,101 +1,86 @@
 import 'package:flutter/material.dart';
-import 'package:riff/core/themes/colors/color_manager.dart';
-import 'package:riff/core/themes/text_styles/font_weight_helper.dart';
+import 'font_weight_helper.dart';
 
+/// Colors are intentionally null so widgets inherit the theme's onSurface color.
+/// Dark mode = white text, Light mode = black text — automatically.
+/// Call .copyWith(color: ...) anywhere you need an explicit override.
 class TextStyles {
 
-  static final TextStyle font13SemiBold = TextStyle(
-    color: ColorManager.primaryBlack,
+  static const TextStyle font13SemiBold = TextStyle(
     fontFamily: 'GeneralSans',
     fontSize: 13,
     fontWeight: FontWeightHelper.semiBold,
   );
- 
-  static final TextStyle font20SemiBold = TextStyle(
-    color: ColorManager.primaryBlack,
+
+  static const TextStyle font20SemiBold = TextStyle(
     fontFamily: 'GeneralSans',
     fontSize: 20,
     fontWeight: FontWeightHelper.semiBold,
   );
 
-  static  TextStyle font28Bold = TextStyle(
-    color: ColorManager.primaryBlack,
+  static const TextStyle font28Bold = TextStyle(
     fontFamily: 'GeneralSans',
     fontSize: 28,
     fontWeight: FontWeightHelper.extraBold,
   );
 
-  static final TextStyle font45SemiBold = TextStyle(
-    color: ColorManager.primaryBlack,
-    fontFamily: "GeneralSans",
+  static const TextStyle font45SemiBold = TextStyle(
+    fontFamily: 'GeneralSans',
     fontSize: 45,
     fontWeight: FontWeightHelper.semiBold,
   );
 
-  static final TextStyle font16Medium = TextStyle(
-   color: ColorManager.primaryBlack,
+  static const TextStyle font16Medium = TextStyle(
     fontFamily: 'GeneralSans',
     fontSize: 16,
-    fontWeight: FontWeightHelper.medium
+    fontWeight: FontWeightHelper.medium,
   );
 
-  static final TextStyle font15semiBold = TextStyle(
-   color: ColorManager.primaryBlack,
+  static const TextStyle font15semiBold = TextStyle(
     fontFamily: 'GeneralSans',
     fontSize: 15,
-    fontWeight: FontWeightHelper.semiBold
+    fontWeight: FontWeightHelper.semiBold,
   );
 
-  static final TextStyle font14regular = TextStyle(
-   color: ColorManager.primaryBlack,
+  static const TextStyle font14regular = TextStyle(
     fontFamily: 'GeneralSans',
     fontSize: 14,
-    fontWeight: FontWeightHelper.regular
+    fontWeight: FontWeightHelper.regular,
   );
 
-  static final TextStyle font14semiBold = TextStyle(
-   color: ColorManager.primaryBlack,
+  static const TextStyle font14semiBold = TextStyle(
     fontFamily: 'GeneralSans',
     fontSize: 14,
-    fontWeight: FontWeightHelper.semiBold
+    fontWeight: FontWeightHelper.semiBold,
   );
 
-
-  static final TextStyle font18Semibold= TextStyle(
-   color: ColorManager.lightBlack,
+  static const TextStyle font18Semibold = TextStyle(
     fontFamily: 'GeneralSans',
     fontSize: 18,
-    fontWeight: FontWeightHelper.semiBold
+    fontWeight: FontWeightHelper.semiBold,
   );
 
   static const TextStyle font14Medium = TextStyle(
-   color: ColorManager.lightBlack,
     fontFamily: 'GeneralSans',
     fontSize: 14,
-    fontWeight: FontWeightHelper.medium
-  );
-  
-  static const TextStyle font12Medium = TextStyle(
-   color: ColorManager.lightBlack,
-    fontFamily: 'GeneralSans',
-    fontSize: 12,
-    fontWeight: FontWeightHelper.medium
+    fontWeight: FontWeightHelper.medium,
   );
 
+  static const TextStyle font12Medium = TextStyle(
+    fontFamily: 'GeneralSans',
+    fontSize: 12,
+    fontWeight: FontWeightHelper.medium,
+  );
 
   static const TextStyle font12semiBold = TextStyle(
-   color: ColorManager.lightBlack,
     fontFamily: 'GeneralSans',
     fontSize: 12,
-    fontWeight: FontWeightHelper.semiBold
+    fontWeight: FontWeightHelper.semiBold,
   );
 
-  
   static const TextStyle font12regular = TextStyle(
-   color: ColorManager.lightBlack,
     fontFamily: 'GeneralSans',
     fontSize: 12,
-    fontWeight: FontWeightHelper.regular
+    fontWeight: FontWeightHelper.regular,
   );
-
 }

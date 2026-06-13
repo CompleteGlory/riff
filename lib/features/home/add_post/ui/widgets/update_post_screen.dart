@@ -10,6 +10,7 @@ import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/widgets/button.dart';
 import 'package:riff/features/home/add_post/logic/cubit/update_post_cubit.dart';
+import 'package:riff/features/home/feed/Ui/widgets/post/shared_post_card.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 
 const _maxMedia = 10;
@@ -33,11 +34,20 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
   /// Newly picked files to upload.
   final List<File> _newFiles = [];
 
+  /// True when this post is a share (quotes another post). For shares the user
+  /// can only edit the caption they wrote above the shared post.
+  late bool _isShare;
+
   int get _totalCount => _keepUrls.length + _newFiles.length;
+
+  /// Whether the media picker should be shown. Shares don't carry their own
+  /// media, so we only show it for normal posts.
+  bool get _showMedia => !_isShare;
 
   @override
   void initState() {
     super.initState();
+    _isShare = widget.post.originalPost != null;
     _contentController = TextEditingController(text: widget.post.content ?? '');
     _keepUrls = List<String>.from(widget.post.media ?? []);
   }
@@ -92,9 +102,10 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
       ));
       return;
     }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      backgroundColor: ColorManager.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24.r))),
       builder: (ctx) => SafeArea(
@@ -106,7 +117,9 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
               Container(
                 width: 40.w, height: 4.h,
                 decoration: BoxDecoration(
-                    color: ColorManager.lighterGrey,
+                    color: isDark
+                        ? const Color(0xFF3A3A3A)
+                        : ColorManager.lighterGrey,
                     borderRadius: BorderRadius.circular(99)),
               ),
               verticalSpace(16),
@@ -165,28 +178,35 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF252525) : ColorManager.white;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit Post',
-            style: TextStyles.font28Bold
-                .copyWith(color: ColorManager.primaryBlack)),
+        title: Text('Edit Post', style: TextStyles.font28Bold),
         elevation: 0,
-        backgroundColor: ColorManager.white,
-        iconTheme: IconThemeData(color: ColorManager.primaryBlack),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 20.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Caption / content label for shared posts
+            if (_isShare) ...[
+              Text('Your caption', style: TextStyles.font15semiBold),
+              verticalSpace(8),
+            ],
+
             // Content field
             Container(
               decoration: BoxDecoration(
-                color: ColorManager.white,
+                color: cardColor,
                 borderRadius: BorderRadius.circular(16.r),
                 boxShadow: [
                   BoxShadow(
-                    color: ColorManager.lighterGrey.withOpacity(0.5),
+                    color: isDark
+                        ? Colors.black.withOpacity(0.3)
+                        : ColorManager.lighterGrey.withOpacity(0.5),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
@@ -195,12 +215,13 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
               child: TextField(
                 controller: _contentController,
                 maxLines: 10,
-                minLines: 5,
+                minLines: _isShare ? 3 : 5,
                 keyboardType: TextInputType.multiline,
                 style: TextStyles.font16Medium,
                 decoration: InputDecoration(
-                  hintText:
-                      'Share your latest music riff, thoughts, or gear...',
+                  hintText: _isShare
+                      ? 'Add a caption to your share…'
+                      : 'Share your latest music riff, thoughts, or gear...',
                   hintStyle: TextStyles.font16Medium
                       .copyWith(color: ColorManager.normalGrey),
                   border: InputBorder.none,
@@ -209,31 +230,44 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
               ),
             ),
 
-            verticalSpace(20),
-
-            // Media header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Media', style: TextStyles.font15semiBold),
-                if (_totalCount > 0)
-                  Text('$_totalCount/$_maxMedia',
-                      style: TextStyles.font14Medium
-                          .copyWith(color: ColorManager.normalGrey)),
-              ],
-            ),
-            verticalSpace(10),
-
-            if (_totalCount == 0)
-              _MediaPickerPlaceholder(onTap: _showMediaSheet)
-            else
-              _MediaGrid(
-                keepUrls: _keepUrls,
-                newFiles: _newFiles,
-                onRemoveExisting: _removeExisting,
-                onRemoveNew: _removeNew,
-                onAddMore: _totalCount < _maxMedia ? _showMediaSheet : null,
+            // Shared-post preview (read-only)
+            if (_isShare) ...[
+              verticalSpace(16),
+              Text('Shared post', style: TextStyles.font15semiBold),
+              verticalSpace(4),
+              // SharedPostCard adds its own horizontal margin; cancel it so it
+              // lines up with the rest of the form.
+              Transform.translate(
+                offset: Offset(-14.w, 0),
+                child: SharedPostCard(originalPost: widget.post.originalPost!),
               ),
+            ],
+
+            // Media section (normal posts only)
+            if (_showMedia) ...[
+              verticalSpace(20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Media', style: TextStyles.font15semiBold),
+                  if (_totalCount > 0)
+                    Text('$_totalCount/$_maxMedia',
+                        style: TextStyles.font14Medium
+                            .copyWith(color: ColorManager.normalGrey)),
+                ],
+              ),
+              verticalSpace(10),
+              if (_totalCount == 0)
+                _MediaPickerPlaceholder(onTap: _showMediaSheet)
+              else
+                _MediaGrid(
+                  keepUrls: _keepUrls,
+                  newFiles: _newFiles,
+                  onRemoveExisting: _removeExisting,
+                  onRemoveNew: _removeNew,
+                  onAddMore: _totalCount < _maxMedia ? _showMediaSheet : null,
+                ),
+            ],
 
             verticalSpace(50),
 
@@ -278,6 +312,7 @@ class _MediaGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final totalSlots = keepUrls.length + newFiles.length + (onAddMore != null ? 1 : 0);
 
     return GridView.builder(
@@ -318,9 +353,13 @@ class _MediaGrid extends StatelessWidget {
           onTap: onAddMore,
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
+              color: isDark ? const Color(0xFF252525) : const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: ColorManager.lighterGrey),
+              border: Border.all(
+                color: isDark
+                    ? const Color(0xFF2A2A2A)
+                    : ColorManager.lighterGrey,
+              ),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -445,25 +484,27 @@ class _MediaPickerPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fg = Theme.of(context).colorScheme.onSurface;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
         height: 80.h,
         decoration: BoxDecoration(
-          color: ColorManager.white,
+          color: isDark ? const Color(0xFF252525) : ColorManager.white,
           borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: ColorManager.lighterGrey),
+          border: Border.all(
+            color: isDark ? const Color(0xFF2A2A2A) : ColorManager.lighterGrey,
+          ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add_a_photo_outlined,
-                color: ColorManager.primaryBlack, size: 28.r),
+            Icon(Icons.add_a_photo_outlined, color: fg, size: 28.r),
             verticalSpace(4),
             Text('Tap to add photos or videos',
-                style: TextStyles.font14regular
-                    .copyWith(color: ColorManager.primaryBlack)),
+                style: TextStyles.font14regular.copyWith(color: fg)),
           ],
         ),
       ),
@@ -482,6 +523,8 @@ class _SheetTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fg = Theme.of(context).colorScheme.onSurface;
     return ListTile(
       onTap: onTap,
       contentPadding: EdgeInsets.symmetric(horizontal: 4.w),
@@ -489,10 +532,10 @@ class _SheetTile extends StatelessWidget {
         width: 40.r,
         height: 40.r,
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
+          color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5),
           borderRadius: BorderRadius.circular(12.r),
         ),
-        child: Icon(icon, color: ColorManager.primaryBlack, size: 20.r),
+        child: Icon(icon, color: fg, size: 20.r),
       ),
       title: Text(label, style: TextStyles.font15semiBold),
     );

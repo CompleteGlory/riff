@@ -32,25 +32,26 @@ class AppTextFieldState extends State<AppTextField> {
 
   @override
   Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
-    return SizedBox(
-      width: widget.width ?? size.width * 0.9,
-      child: FormField<String>(
-        validator: (value) {
-          return widget.validator(value);
-        },
-        builder: (FormFieldState<String> field) {
-          // Determine the state
-          bool hasError = field.hasError;
-          bool hasValue = widget.controller.text.isNotEmpty;
-          bool isSuccess = hasValue && !hasError && field.value != null;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor    = isDark ? const Color(0xFF252525) : Colors.white;
+    final hintColor  = isDark ? const Color(0xFF555555) : ColorManager.lightGrey;
+    final idleColor  = isDark ? const Color(0xFF3A3A3A) : ColorManager.lightGrey;
+    final textColor  = isDark ? Colors.white : ColorManager.black;
 
-          // Determine border color
-          Color borderColor = hasError
-              ? Colors.red
+    return SizedBox(
+      width: widget.width ?? MediaQuery.of(context).size.width * 0.9,
+      child: FormField<String>(
+        validator: (v) => widget.validator(v),
+        builder: (FormFieldState<String> field) {
+          final hasError = field.hasError;
+          final hasValue = widget.controller.text.isNotEmpty;
+          final isSuccess = hasValue && !hasError && field.value != null;
+
+          final borderColor = hasError
+              ? ColorManager.red
               : isSuccess
-                  ? Colors.green
-                  : ColorManager.lightGrey;
+                  ? ColorManager.green
+                  : idleColor;
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,28 +59,29 @@ class AppTextFieldState extends State<AppTextField> {
               Container(
                 height: widget.height ?? 55.h,
                 decoration: ShapeDecoration(
-                  color: ColorManager.white,
+                  color: bgColor,
                   shape: RoundedRectangleBorder(
-                    side: BorderSide(width: 1, color: borderColor),
-                    borderRadius: BorderRadius.circular(10),
+                    side: BorderSide(width: 1.5, color: borderColor),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: TextFormField(
                   keyboardType: widget.keyboardType,
                   controller: widget.controller,
                   obscureText: widget.isPassword && !_isPasswordVisible,
-                  onChanged: (value) {
-                    field.didChange(value);
-                  },
-                  minLines: widget.isPassword ? 1 : (widget.height != null ? null : 1),
+                  style: TextStyle(
+                    color: textColor,
+                    fontFamily: 'GeneralSans',
+                    fontSize: 15,
+                  ),
+                  onChanged: (v) => field.didChange(v),
+                  minLines: widget.isPassword ? 1 : 1,
                   maxLines: widget.isPassword ? 1 : (widget.height != null ? null : 5),
                   textAlignVertical: TextAlignVertical.top,
                   decoration: InputDecoration(
                     hintText: widget.hintText,
-                    hintStyle: TextStyles.font15semiBold.copyWith(
-                      color: ColorManager.lightGrey,
-                    ),
-                    suffixIcon: _buildSuffixIcon(isSuccess, hasError),
+                    hintStyle: TextStyles.font15semiBold.copyWith(color: hintColor),
+                    suffixIcon: _buildSuffixIcon(isSuccess, hasError, isDark),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 15,
@@ -94,10 +96,7 @@ class AppTextFieldState extends State<AppTextField> {
                   padding: const EdgeInsets.only(left: 16, top: 8),
                   child: Text(
                     field.errorText!,
-                    style: const TextStyle(
-                      color: Colors.red,
-                      fontSize: 12,
-                    ),
+                    style: const TextStyle(color: ColorManager.red, fontSize: 12),
                   ),
                 ),
             ],
@@ -107,35 +106,20 @@ class AppTextFieldState extends State<AppTextField> {
     );
   }
 
-  Widget? _buildSuffixIcon(bool isSuccess, bool hasError) {
+  Widget? _buildSuffixIcon(bool isSuccess, bool hasError, bool isDark) {
     if (widget.isPassword) {
-      // Password field always shows visibility toggle
       return IconButton(
         icon: Icon(
           _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
-          size: 25,
-          color: ColorManager.lightGrey,
+          size: 22,
+          color: isDark ? const Color(0xFF555555) : ColorManager.lightGrey,
         ),
-        onPressed: () {
-          setState(() {
-            _isPasswordVisible = !_isPasswordVisible;
-          });
-        },
+        onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
       );
     } else if (isSuccess) {
-      // Success state: show green checkmark
-      return const Icon(
-        Icons.check_circle,
-        color: Colors.green,
-        size: 25,
-      );
+      return Icon(Icons.check_circle, color: ColorManager.green, size: 22);
     } else if (hasError) {
-      // Error state: show red error icon (optional)
-      return const Icon(
-        Icons.error,
-        color: Colors.red,
-        size: 25,
-      );
+      return Icon(Icons.error, color: ColorManager.red, size: 22);
     }
     return null;
   }

@@ -17,9 +17,10 @@ void showPostOptions({
   required BuildContext context,
   required Post post,
 }) {
+  final onSurface = Theme.of(context).colorScheme.onSurface;
   showModalBottomSheet(
     context: context,
-    backgroundColor: Colors.white,
+    backgroundColor: Theme.of(context).colorScheme.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
@@ -34,7 +35,7 @@ void showPostOptions({
               width: 50.w,
               height: 5.h,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: Theme.of(sheetCtx).dividerColor,
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
@@ -47,6 +48,7 @@ void showPostOptions({
               _optionTile(
                 picture: 'assets/svgs/edit.svg',
                 text: 'Edit Post',
+                color: onSurface,
                 onTap: () {
                   // Close the bottom sheet first, then push the edit screen.
                   Navigator.pop(sheetCtx);

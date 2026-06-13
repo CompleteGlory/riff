@@ -216,24 +216,45 @@ class _ReelsBodyState extends State<_ReelsBody> {
 
         return Scaffold(
           backgroundColor: Colors.black,
-          body: PageView.builder(
-            controller: _pageController,
-            scrollDirection: Axis.vertical,
-            itemCount: _reels.length,
-            onPageChanged: (index) {
-              setState(() => _currentPage = index);
-              _syncCache(); // play new page, pause others, evict distant ones
-              // Load more when approaching the end.
-              if (index >= _reels.length - 3) {
-                context.read<ReelsCubit>().loadReels();
+          body: RefreshIndicator(
+            onRefresh: () async {
+              // Dispose all cached controllers and reset to page 0.
+              for (final c in _controllers.values) {
+                c.dispose();
+              }
+              _controllers.clear();
+              _ready.clear();
+              setState(() => _currentPage = 0);
+              _pageController.jumpToPage(0);
+              await context.read<ReelsCubit>().loadReels(refresh: true);
+              // Re-seed with initialPost if present so index 0 is preserved.
+              final ip = widget.initialPost;
+              if (ip != null) {
+                _reels = [ip];
+                _initController(0);
               }
             },
-            itemBuilder: (context, index) => ReelItem(
-              key: ValueKey(_reels[index].id),
-              post: _reels[index],
-              isActive: index == _currentPage,
-              controller: _controllers[index],
-              isReady: _ready[index] == true,
+            color: Colors.white,
+            backgroundColor: Colors.black87,
+            child: PageView.builder(
+              controller: _pageController,
+              scrollDirection: Axis.vertical,
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: _reels.length,
+              onPageChanged: (index) {
+                setState(() => _currentPage = index);
+                _syncCache();
+                if (index >= _reels.length - 3) {
+                  context.read<ReelsCubit>().loadReels();
+                }
+              },
+              itemBuilder: (context, index) => ReelItem(
+                key: ValueKey(_reels[index].id),
+                post: _reels[index],
+                isActive: index == _currentPage,
+                controller: _controllers[index],
+                isReady: _ready[index] == true,
+              ),
             ),
           ),
         );

@@ -34,14 +34,18 @@ class SharedPostCard extends StatelessWidget {
         (originalPost.media ?? []).where((m) => m.isNotEmpty).toList();
     final firstMedia = media.isNotEmpty ? media.first : null;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
       margin: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
       decoration: BoxDecoration(
-        border: Border.all(color: ColorManager.lighterGrey),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2A2A2A) : ColorManager.lighterGrey,
+        ),
         borderRadius: BorderRadius.circular(12.r),
-        color: ColorManager.white,
+        color: isDark ? const Color(0xFF252525) : ColorManager.white,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,7 +60,9 @@ class SharedPostCard extends StatelessWidget {
                   backgroundImage: author?.profileImageUrl != null
                       ? NetworkImage(_resolve(author!.profileImageUrl!))
                       : null,
-                  backgroundColor: ColorManager.lighterGrey,
+                  backgroundColor: isDark
+                      ? const Color(0xFF2A2A2A)
+                      : ColorManager.lighterGrey,
                   child: author?.profileImageUrl == null
                       ? Icon(
                           Icons.person,
@@ -138,7 +144,9 @@ class SharedPostCard extends StatelessWidget {
                           ? child
                           : Container(
                               height: 160.h,
-                              color: ColorManager.lighterGrey,
+                              color: isDark
+                                  ? const Color(0xFF2A2A2A)
+                                  : ColorManager.lighterGrey,
                               child: const Center(
                                 child:
                                     CircularProgressIndicator(strokeWidth: 2),
@@ -146,7 +154,9 @@ class SharedPostCard extends StatelessWidget {
                             ),
                       errorBuilder: (_, __, ___) => Container(
                         height: 160.h,
-                        color: ColorManager.lighterGrey,
+                        color: isDark
+                            ? const Color(0xFF2A2A2A)
+                            : ColorManager.lighterGrey,
                         child: Icon(
                           Icons.broken_image_outlined,
                           color: ColorManager.normalGrey,

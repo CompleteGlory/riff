@@ -17,48 +17,43 @@ platform :android do
       testers: "fadyalaa441@gmail.com, fadyalaa2112@gmail.com, zakymagd@gmail.com, magddevf@gmail.com" ,
       upload_timeout: 600,
       release_notes: <<~RELEASE_NOTES
-        Version 1.0.3 — Release Notes
-        Date: 2026-06-11
+        Version 1.0.5 — Release Notes
+        Date: 2026-06-13
 
         ──────────────────────────────
         What's New
         ──────────────────────────────
 
-        Multi-Image Posts
-        - Create posts with up to 10 photos (gallery multi-select or camera).
-        - Images shown inline in the feed: single full-width, 2-up side-by-side,
-          3-up (tall left + 2 stacked right), 4+ as a 2×2 grid with a "+N" overlay.
-        - Tap any image to open a full-screen swipeable gallery with page indicator.
+        RELEASE NOTES
 
-        Profile Image Fullscreen
-        - Tap your avatar on the profile screen to view it full-screen.
-        - The camera edit badge still handles photo upload independently.
+Dark mode fixes
 
-        Redesigned Feed UI
-        - Cleaner post cards: lighter shadow, modern rounded corners.
-        - Actions bar is now a compact inline row (♥ count · 💬 count · share).
-        - Post header shows a proper avatar with initials fallback.
+Action sheets now respect dark mode. The post options sheet, the reels comment sheets, and the share sheet were rendering with a white background in dark mode. They now use the theme surface color, with theme-aware drag handles and text/icon colors.
 
-        Live Comment Avatars
-        - Comment sheet now shows each commenter's real profile photo.
-        - Your own avatar (including optimistic new comments) uses your cached
-          profile image instead of a generic icon.
+The Edit Post screen is fully dark-mode aware. Removed the hardcoded white AppBar (it now follows the theme), and made the content card, media picker sheet, empty-state placeholder, "add more" cell, and sheet tiles adapt to light and dark.
 
-        ──────────────────────────────
-        Bug Fixes & Improvements
-        ──────────────────────────────
-        - Fixed post images showing broken placeholders (Image.network routing).
-        - Fixed profile image not displaying when URL is relative.
-        - Updated firebase_app_distribution plugin to 1.0.x.
+Theme persistence
 
-        ──────────────────────────────
-        QA Checklist
-        ──────────────────────────────
-        1. Create Post — pick 1, 2, 3, 4, and 5+ images; verify grid layouts.
-        2. Feed — tap image opens swipeable fullscreen viewer.
-        3. Profile — tap avatar opens fullscreen; camera badge opens upload sheet.
-        4. Comments — commenter avatars load; your avatar appears on new comment.
-        5. Regression — like, comment, share, login/signup all unaffected.
+Theme choice is remembered between launches. Your light/dark selection is saved and restored the next time you open the app.
+
+First install follows the phone. Before you've made a choice, the app matches your device's system light/dark setting. The drawer toggle now resolves the effective brightness, so it flips correctly even from system mode.
+
+Editing a shared post
+
+Opening Edit on a shared post now shows your caption and a preview of the shared post. You can edit the caption you wrote above the share; the original post is shown as a read-only preview and the media picker is hidden (shares don't carry their own media).
+
+BACKEND (API)
+
+No functional changes shipped. An "unshare" endpoint flag was prototyped during development and then reverted, so PATCH /api/posts/:id is unchanged.
+
+COMMERCIAL DASHBOARD (macOS)
+
+Fixed "Connection failed" on macOS login. The macOS app is sandboxed but was missing the network-client entitlement, so all outbound API calls were blocked. Added com.apple.security.network.client to both the Debug and Release entitlements.
+
+Allowed the local HTTP dev API. Added an App Transport Security exception so the app can reach the cleartext http:// development server. Development only — tighten before shipping.
+
+Note: these are build-level changes, so a full app restart/rebuild is required for them to take effect.
+
       RELEASE_NOTES
     )
   end

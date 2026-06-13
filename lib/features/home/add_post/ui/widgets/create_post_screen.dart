@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: unused_element, deprecated_member_use
 
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -79,7 +79,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: ColorManager.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24.r))),
       builder: (ctx) => SafeArea(
         child: Padding(
@@ -132,6 +132,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(vertical: 35.h, horizontal: 20.w),
@@ -140,18 +141,16 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           children: [
             Text(
               "What's on your mind?",
-              style: TextStyles.font28Bold.copyWith(
-                color: ColorManager.primaryBlack,
-              ),
+              style: TextStyles.font28Bold,
             ),
             verticalSpace(20),
 
             // Content input
             Container(
               decoration: BoxDecoration(
-                color: ColorManager.white,
+                color: isDark ? const Color(0xFF252525) : ColorManager.white,
                 borderRadius: BorderRadius.circular(16.r),
-                boxShadow: [
+                boxShadow: isDark ? [] : [
                   BoxShadow(
                     color: ColorManager.lighterGrey.withOpacity(0.5),
                     blurRadius: 10,
@@ -336,26 +335,29 @@ class _MediaPickerPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
         height: 80.h,
         decoration: BoxDecoration(
-          color: ColorManager.white,
+          color: isDark ? const Color(0xFF252525) : ColorManager.white,
           borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: ColorManager.lighterGrey),
+          border: Border.all(
+            color: isDark ? const Color(0xFF2A2A2A) : ColorManager.lighterGrey,
+          ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.add_a_photo_outlined,
-                color: ColorManager.primaryBlack, size: 28.r),
+                color: isDark ? const Color(0xFFC6FF00) : ColorManager.primaryBlack,
+                size: 28.r),
             verticalSpace(4),
             Text(
               'Tap to add photos or videos',
-              style: TextStyles.font14regular
-                  .copyWith(color: ColorManager.primaryBlack),
+              style: TextStyles.font14regular,
             ),
           ],
         ),

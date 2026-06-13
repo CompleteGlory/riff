@@ -13,6 +13,7 @@ import 'package:riff/core/helpers/spacing.dart';
 import 'package:riff/features/home/feed/Ui/post_detail_screen.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/fullscsreen_image.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
+import 'package:riff/core/widgets/shimmer_loading.dart';
 import 'package:riff/features/home/profile/logic/cubit/profile_cubit.dart';
 
 // ---------------------------------------------------------------------------
@@ -143,7 +144,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     HapticFeedback.lightImpact();
     showModalBottomSheet(
       context: context,
-      backgroundColor: ColorManager.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
@@ -210,14 +211,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
             );
           }
         },
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            _buildHeader(),
-            if (widget.profile.genres?.isNotEmpty ?? false)
-              _buildGenresSection(widget.profile.genres!),
-            _buildPostsSection(),
-          ],
+        child: RefreshIndicator(
+          onRefresh: () => _cubit.loadUserPosts(widget.profile.id),
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFFC6FF00)
+              : ColorManager.primaryBlack,
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF252525)
+              : ColorManager.white,
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics()),
+            slivers: [
+              _buildHeader(),
+              if (widget.profile.genres?.isNotEmpty ?? false)
+                _buildGenresSection(widget.profile.genres!),
+              _buildPostsSection(),
+            ],
+          ),
         ),
       ),
     );
@@ -236,9 +247,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             .map((w) => w[0].toUpperCase())
             .join();
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SliverToBoxAdapter(
       child: Container(
-        color: ColorManager.white,
+        color: isDark ? const Color(0xFF1A1A1A) : ColorManager.white,
         padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 28.h),
         child: Column(
           children: [
@@ -425,8 +437,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           s is ProfileInitial,
       builder: (context, state) {
         if (state is ProfileInitial || state is ProfileLoading) {
-          return const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator()));
+          return const ProfileGridShimmer();
         }
 
         if (state is ProfileFailure) {
