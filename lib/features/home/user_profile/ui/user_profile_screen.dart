@@ -11,6 +11,7 @@ import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/feed/Ui/post_detail_screen.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 import 'package:riff/features/home/user_profile/data/models/user_profile_model.dart';
+import 'package:riff/core/widgets/shimmer_loading.dart';
 import 'package:riff/features/home/user_profile/logic/cubit/user_profile_cubit.dart';
 
 class UserProfileScreen extends StatefulWidget {
@@ -64,7 +65,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         body: BlocBuilder<UserProfileCubit, UserProfileState>(
           builder: (context, state) {
             if (state is UserProfileInitial || state is UserProfileLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return const ProfilePageShimmer();
             }
 
             if (state is UserProfileFailure) {
@@ -97,6 +98,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             return _ProfileBody(
               profile: loaded.profile,
               posts: loaded.posts,
+              onRefresh: () => _cubit.loadProfile(widget.userId),
             );
           },
         ),
@@ -110,8 +112,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 class _ProfileBody extends StatelessWidget {
   final UserProfileModel profile;
   final List<Post> posts;
+  final Future<void> Function() onRefresh;
 
-  const _ProfileBody({required this.profile, required this.posts});
+  const _ProfileBody({
+    required this.profile,
+    required this.posts,
+    required this.onRefresh,
+  });
 
   String? get _avatarUrl {
     final raw = profile.profileImageUrl;
@@ -130,8 +137,13 @@ class _ProfileBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      color: ColorManager.primaryBlack,
+      backgroundColor: ColorManager.white,
+      child: CustomScrollView(
+      physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics()),
       slivers: [
         SliverToBoxAdapter(child: _buildHeader(context)),
         if (posts.isNotEmpty) ...[
@@ -191,6 +203,7 @@ class _ProfileBody extends StatelessWidget {
             ),
           ),
       ],
+      ),
     );
   }
 

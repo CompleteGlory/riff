@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
+import 'package:riff/core/widgets/shimmer_loading.dart';
 import 'package:riff/features/home/feed/Ui/widgets/feed/lottie_loader.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_item.dart';
 import 'package:riff/features/home/feed/logic/cubit/feed/feed_cubit.dart';
@@ -56,7 +57,7 @@ class _FeedScreenBodyState extends State<FeedScreenBody> {
       builder: (context, state) {
         return state.when(
           initial: () => const Center(child: Text("No posts loaded")),
-          loading: () => Center(child: CircularProgressIndicator(color: ColorManager.primaryBlack,)),
+          loading: () => const FeedShimmer(),
           success: (postsResponse) {
             final posts = postsResponse.data;
 
