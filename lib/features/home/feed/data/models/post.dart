@@ -36,6 +36,12 @@ class Post {
   @JsonKey(name: 'comments_count', defaultValue: 0)
   final String? commentsCount;
 
+  @JsonKey(name: 'original_post')
+  final Post? originalPost;
+
+  @JsonKey(name: 'shares_count')
+  final int? sharesCount;
+
   Post({
     required this.id,
     required this.author,
@@ -49,6 +55,8 @@ class Post {
     this.likes,
     this.comments,
     this.commentsCount,
+    this.originalPost,
+    this.sharesCount,
   });
 
   factory Post.fromJson(Map<String, dynamic> json) => _$PostFromJson(json);

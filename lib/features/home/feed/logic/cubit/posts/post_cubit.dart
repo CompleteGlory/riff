@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
+import 'package:riff/features/home/feed/data/repos/feed_repo.dart';
 import 'package:riff/features/home/feed/logic/cubit/posts/post_state.dart';
 import 'package:riff/features/home/feed/logic/cubit/likes/like_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/feed/feed_cubit.dart';
@@ -9,8 +9,10 @@ import 'package:riff/features/home/feed/logic/cubit/feed/feed_cubit.dart';
 class PostCubit extends Cubit<PostState> {
   final LikeCubit _likeCubit;
   final FeedCubit _feedCubit;
+  final FeedRepo _feedRepo;
 
-  PostCubit(this._likeCubit, this._feedCubit) : super(const PostState.initial());
+  PostCubit(this._likeCubit, this._feedCubit, this._feedRepo)
+      : super(const PostState.initial());
 
   /// Toggle like/unlike for a post
   Future<void> toggleLike(
@@ -61,11 +63,14 @@ class PostCubit extends Cubit<PostState> {
     }
   }
 
-  /// Share post with social platforms
-  void sharePost(Post post) {
-    final textToShare =
-        '${post.author?.fullName ?? "Unknown"} on Riff 🎸:\n${post.content ?? ""}\n\n#RiffApp #MusicCommunity';
-    Share.share(textToShare);
-    emit(const PostState.shareSuccess());
+  /// Share a post via the backend API with an optional caption
+  Future<void> sharePost(Post post, {String? caption}) async {
+    final result =
+        await _feedRepo.sharePost(post.id.toString(), caption: caption);
+    result.when(
+      success: (_) => emit(const PostState.shareSuccess()),
+      failure: (error) =>
+          emit(PostState.likeError(error.message ?? 'Failed to share post')),
+    );
   }
 }

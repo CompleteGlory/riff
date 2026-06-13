@@ -1,5 +1,5 @@
 class ApiConstants {
-  static const String apiBASEURL = "https://veto-sandy-enlighten.ngrok-free.dev";
+  static const String apiBASEURL = "http://192.168.1.8:3000";
   static const String signUp = "/api/auth/sign-up";
   static const String login = "/api/auth/log-in";
   static const String refreshToken = "/api/auth/refresh";
@@ -8,6 +8,7 @@ class ApiConstants {
   static const String resetPassword = "/api/auth/reset-password";
   static const String googleSignin = "/api/auth/google/mobile";
   static const String getUser = "/api/users/me";
+  static const String getUserById = "/api/users/{id}";
   static const String posts = "/api/posts";
   static const String updateDeletePost = "/api/posts/{id}";
   static const String likePost = "/api/posts/{id}/like";
@@ -17,4 +18,6 @@ class ApiConstants {
   static const String likeComment = "/api/comments/{id}/like";
   static const String unlikeComment = "/api/comments/{id}/unlike";
   static const String userPosts = "/api/users/{id}/posts";
+  static const String reels = "/api/posts/reels";
+  static const String sharePost = "/api/posts/{id}/share";
 }

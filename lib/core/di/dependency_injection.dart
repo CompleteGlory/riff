@@ -25,6 +25,10 @@ import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart'
 import 'package:riff/features/home/feed/logic/cubit/posts/post_cubit.dart';
 import 'package:riff/features/home/profile/data/repos/profile_repo.dart';
 import 'package:riff/features/home/profile/logic/cubit/profile_cubit.dart';
+import 'package:riff/features/home/reels/data/repos/reels_repo.dart';
+import 'package:riff/features/home/reels/logic/cubit/reels_cubit.dart';
+import 'package:riff/features/home/user_profile/data/repos/user_profile_repo.dart';
+import 'package:riff/features/home/user_profile/logic/cubit/user_profile_cubit.dart';
 
 final getIt = GetIt.instance;
 
@@ -63,11 +67,19 @@ Future<void> setUpGetIt() async {
   getIt.registerFactory<CommentCubit>(()=>CommentCubit(getIt()));
   
   // post operations
-  getIt.registerFactory<PostCubit>(()=>PostCubit(getIt<LikeCubit>(), getIt<FeedCubit>()));
+  getIt.registerFactory<PostCubit>(()=>PostCubit(getIt<LikeCubit>(), getIt<FeedCubit>(), getIt<FeedRepo>()));
 
   // profile
   getIt.registerLazySingleton<ProfileRepo>(() => ProfileRepo(getIt()));
   getIt.registerFactory<ProfileCubit>(() => ProfileCubit(getIt()));
+
+  // user profile (any user)
+  getIt.registerLazySingleton<UserProfileRepo>(() => UserProfileRepo(getIt()));
+  getIt.registerFactory<UserProfileCubit>(() => UserProfileCubit(getIt()));
+
+  // reels
+  getIt.registerLazySingleton<ReelsRepo>(() => ReelsRepo());
+  getIt.registerFactory<ReelsCubit>(() => ReelsCubit(getIt()));
 
   //create post
   getIt.registerLazySingleton<CreatePostRepo>(()=>CreatePostRepo(getIt()));
