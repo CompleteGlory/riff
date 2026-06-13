@@ -32,35 +32,37 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     super.dispose();
   }
 
-  Future<void> _pickImages(ImageSource source) async {
-    Navigator.pop(context); // close bottom sheet
+  bool _isVideoFile(File f) {
+    final ext = f.path.split('.').last.toLowerCase();
+    return ['mp4', 'mov', 'webm', 'avi', 'mkv'].contains(ext);
+  }
 
+  Future<void> _pickImages(ImageSource source) async {
+    Navigator.pop(context);
     if (source == ImageSource.gallery) {
       final remaining = _maxImages - _selectedFiles.length;
       final picked = await _picker.pickMultiImage(
-        maxWidth: 1280,
-        imageQuality: 85,
-        limit: remaining,
+        maxWidth: 1280, imageQuality: 85, limit: remaining,
       );
       if (picked.isNotEmpty) {
         setState(() {
           for (final xf in picked) {
-            if (_selectedFiles.length < _maxImages) {
-              _selectedFiles.add(File(xf.path));
-            }
+            if (_selectedFiles.length < _maxImages) _selectedFiles.add(File(xf.path));
           }
         });
       }
     } else {
       final picked = await _picker.pickImage(
-        source: ImageSource.camera,
-        maxWidth: 1280,
-        imageQuality: 85,
+        source: ImageSource.camera, maxWidth: 1280, imageQuality: 85,
       );
-      if (picked != null) {
-        setState(() => _selectedFiles.add(File(picked.path)));
-      }
+      if (picked != null) setState(() => _selectedFiles.add(File(picked.path)));
     }
+  }
+
+  Future<void> _pickVideo(ImageSource source) async {
+    Navigator.pop(context);
+    final picked = await _picker.pickVideo(source: source, maxDuration: const Duration(minutes: 5));
+    if (picked != null) setState(() => _selectedFiles.add(File(picked.path)));
   }
 
   void _showMediaSheet() {
@@ -68,10 +70,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: ColorManager.primaryBlack,
-          content: Text(
-            'Maximum $_maxImages images allowed.',
-            style: TextStyles.font14Medium.copyWith(color: ColorManager.white),
-          ),
+          content: Text('Maximum $_maxImages files allowed.',
+              style: TextStyles.font14Medium.copyWith(color: ColorManager.white)),
         ),
       );
       return;
@@ -80,9 +80,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: ColorManager.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24.r))),
       builder: (ctx) => SafeArea(
         child: Padding(
           padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 20.h),
@@ -90,24 +88,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 40.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: ColorManager.lighterGrey,
-                  borderRadius: BorderRadius.circular(99),
-                ),
+                width: 40.w, height: 4.h,
+                decoration: BoxDecoration(color: ColorManager.lighterGrey, borderRadius: BorderRadius.circular(99)),
               ),
               verticalSpace(16),
-              _SheetTile(
-                icon: Icons.photo_library_outlined,
-                label: 'Choose from Gallery',
-                onTap: () => _pickImages(ImageSource.gallery),
-              ),
-              _SheetTile(
-                icon: Icons.photo_camera_outlined,
-                label: 'Take a Photo',
-                onTap: () => _pickImages(ImageSource.camera),
-              ),
+              _SheetTile(icon: Icons.photo_library_outlined, label: 'Choose Photos', onTap: () => _pickImages(ImageSource.gallery)),
+              _SheetTile(icon: Icons.photo_camera_outlined, label: 'Take a Photo', onTap: () => _pickImages(ImageSource.camera)),
+              _SheetTile(icon: Icons.video_library_outlined, label: 'Choose Video', onTap: () => _pickVideo(ImageSource.gallery)),
+              _SheetTile(icon: Icons.videocam_outlined, label: 'Record Video', onTap: () => _pickVideo(ImageSource.camera)),
             ],
           ),
         ),
@@ -262,7 +250,9 @@ class _ImageGrid extends StatelessWidget {
       itemCount: itemCount,
       itemBuilder: (_, i) {
         if (i < files.length) {
-          return _ImageCell(file: files[i], onRemove: () => onRemove(i));
+          final ext = files[i].path.split('.').last.toLowerCase();
+          final isVid = ['mp4', 'mov', 'webm', 'avi', 'mkv'].contains(ext);
+          return _ImageCell(file: files[i], onRemove: () => onRemove(i), isVideo: isVid);
         }
         // Add-more cell
         return GestureDetector(
@@ -295,9 +285,10 @@ class _ImageGrid extends StatelessWidget {
 }
 
 class _ImageCell extends StatelessWidget {
-  const _ImageCell({required this.file, required this.onRemove});
+  const _ImageCell({required this.file, required this.onRemove, this.isVideo = false});
   final File file;
   final VoidCallback onRemove;
+  final bool isVideo;
 
   @override
   Widget build(BuildContext context) {
@@ -306,7 +297,14 @@ class _ImageCell extends StatelessWidget {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(12.r),
-          child: Image.file(file, fit: BoxFit.cover),
+          child: isVideo
+              ? Container(
+                  color: Colors.black87,
+                  child: const Center(
+                    child: Icon(Icons.play_circle_outline, color: Colors.white, size: 40),
+                  ),
+                )
+              : Image.file(file, fit: BoxFit.cover),
         ),
         Positioned(
           top: 4.h,
@@ -355,7 +353,7 @@ class _MediaPickerPlaceholder extends StatelessWidget {
                 color: ColorManager.primaryBlack, size: 28.r),
             verticalSpace(4),
             Text(
-              'Tap to add photos',
+              'Tap to add photos or videos',
               style: TextStyles.font14regular
                   .copyWith(color: ColorManager.primaryBlack),
             ),

@@ -7,7 +7,6 @@ import 'package:riff/features/auth/forgot_password/data/models/verify_otp_reques
 import 'package:riff/features/auth/login/data/models/google_auth_request_body.dart';
 import 'package:riff/features/auth/login/data/models/login_request_body.dart';
 import 'package:riff/features/auth/signup/data/models/signup_request_body.dart';
-import 'package:riff/features/auth/signup/data/models/signup_response.dart';
 import 'package:riff/features/home/add_post/data/models/create_post_request_model.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/feed/data/models/create_comment_request_model.dart';
@@ -50,6 +49,9 @@ abstract class ApiService {
 
   @GET(ApiConstants.getUser)
   Future<HttpResponse<dynamic>> getUser();
+
+  @GET(ApiConstants.getUserById)
+  Future<HttpResponse<dynamic>> getUserById(@Path("id") String userId);
 
   @GET(ApiConstants.posts)
   Future<PostsResponse> getPosts(
@@ -108,5 +110,11 @@ abstract class ApiService {
     @Path("id") String userId,
     @Query("page") int page,
     @Query("limit") int limit,
+  );
+
+  @POST(ApiConstants.sharePost)
+  Future<Post> sharePost(
+    @Path("id") String postId,
+    @Body() Map<String, dynamic> body,
   );
 }

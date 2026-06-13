@@ -1,3 +1,5 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riff/core/networks/api_error_model.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';

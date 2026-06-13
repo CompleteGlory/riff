@@ -3,6 +3,13 @@ import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/font_weight_helper.dart';
 
 class TextStyles {
+
+  static final TextStyle font13SemiBold = TextStyle(
+    color: ColorManager.primaryBlack,
+    fontFamily: 'GeneralSans',
+    fontSize: 13,
+    fontWeight: FontWeightHelper.semiBold,
+  );
  
   static final TextStyle font20SemiBold = TextStyle(
     color: ColorManager.primaryBlack,

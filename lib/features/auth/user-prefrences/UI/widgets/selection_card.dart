@@ -32,8 +32,8 @@ class SelectionCard extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: isSelected
-                  ? ColorManager.primaryBlack.withOpacity(0.12)
-                  : Colors.black.withOpacity(0.05),
+                  ? ColorManager.primaryBlack.withValues(alpha: 0.12)
+                  : Colors.black.withValues(alpha: 0.05),
               blurRadius: isSelected ? 20 : 8,
               offset: const Offset(0, 4),
             ),

@@ -51,14 +51,16 @@ class HomeLayout extends StatelessWidget {
       child: BlocBuilder<HomeCubit, HomeState>(
         builder: (context, state) => Scaffold(
           backgroundColor: const Color(0xFFF7F7F7),
-          appBar: AppBar(
-            backgroundColor: const Color(0xFFF7F7F7),
-            title: Text(
-              context.read<HomeCubit>().titles[
-                  context.read<HomeCubit>().currentIndex],
-                  style: TextStyles.font28Bold,
-            ),
-          ),
+          appBar: context.read<HomeCubit>().currentIndex == 3
+              ? null
+              : AppBar(
+                  backgroundColor: const Color(0xFFF7F7F7),
+                  title: Text(
+                    context.read<HomeCubit>().titles[
+                        context.read<HomeCubit>().currentIndex],
+                    style: TextStyles.font28Bold,
+                  ),
+                ),
           drawer: Drawer(
             child: Padding(
               padding: const EdgeInsets.all(15.0),

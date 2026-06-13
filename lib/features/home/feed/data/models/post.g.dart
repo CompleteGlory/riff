@@ -24,7 +24,11 @@ Post _$PostFromJson(Map<String, dynamic> json) => Post(
   comments: (json['comments'] as List<dynamic>?)
       ?.map((e) => Comment.fromJson(e as Map<String, dynamic>))
       .toList(),
-  commentsCount: json['comments_count'] as String? ?? '0',
+  commentsCount: json['comments_count'] as String?,
+  originalPost: json['original_post'] == null
+      ? null
+      : Post.fromJson(json['original_post'] as Map<String, dynamic>),
+  sharesCount: (json['shares_count'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$PostToJson(Post instance) => <String, dynamic>{
@@ -40,4 +44,6 @@ Map<String, dynamic> _$PostToJson(Post instance) => <String, dynamic>{
   'is_liked': instance.isLiked,
   'likes_count': instance.likesCount,
   'comments_count': instance.commentsCount,
+  'original_post': instance.originalPost,
+  'shares_count': instance.sharesCount,
 };

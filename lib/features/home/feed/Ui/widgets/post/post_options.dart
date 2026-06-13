@@ -1,13 +1,15 @@
 // ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:riff/core/di/dependency_injection.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/home/add_post/logic/cubit/update_post_cubit.dart';
 import 'package:riff/features/home/add_post/logic/cubit/delete_post_cubit.dart';
-import 'package:riff/features/home/add_post/ui/update_post_dialog.dart';
 import 'package:riff/features/home/add_post/ui/widgets/delete_post_confirm_dialog.dart';
+import 'package:riff/features/home/add_post/ui/widgets/update_post_listener.dart';
+import 'package:riff/features/home/add_post/ui/widgets/update_post_screen.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 
 void showPostOptions({
@@ -21,7 +23,7 @@ void showPostOptions({
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
-    builder: (context) {
+    builder: (sheetCtx) {
       return Padding(
         padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
         child: Column(
@@ -38,41 +40,41 @@ void showPostOptions({
             ),
             SizedBox(height: 20.h),
 
-            Text(
-              "Post Options",
-              style: TextStyles.font18Semibold,
-            ),
+            Text('Post Options', style: TextStyles.font18Semibold),
             SizedBox(height: 20.h),
 
             if (isMine) ...[
               _optionTile(
-                picture: "assets/svgs/edit.svg",
-                text: "Edit Post",
+                picture: 'assets/svgs/edit.svg',
+                text: 'Edit Post',
                 onTap: () {
-                  Navigator.pop(context);
-                  // Get the cubit from the service locator
-                  final updatePostCubit = getIt<UpdatePostCubit>();
-                  showDialog(
-                    context: context,
-                    builder: (context) => UpdatePostDialog(
-                      post: post,
-                      updatePostCubit: updatePostCubit,
+                  // Close the bottom sheet first, then push the edit screen.
+                  Navigator.pop(sheetCtx);
+                  final cubit = getIt<UpdatePostCubit>();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider.value(
+                        value: cubit,
+                        child: UpdatePostListener(
+                          child: UpdatePostScreen(post: post),
+                        ),
+                      ),
                     ),
                   );
                 },
               ),
               _optionTile(
-                picture: "assets/svgs/delete.svg",
-                text: "Delete Post",
+                picture: 'assets/svgs/delete.svg',
+                text: 'Delete Post',
                 color: Colors.red,
                 onTap: () {
-                  Navigator.pop(context);
-                  // Get the delete cubit from the service locator
+                  Navigator.pop(sheetCtx);
                   final deletePostCubit = getIt<DeletePostCubit>();
-                  final postId = (post.id).toString();
+                  final postId = post.id.toString();
                   showDialog(
                     context: context,
-                    builder: (context) => DeletePostConfirmDialog(
+                    builder: (_) => DeletePostConfirmDialog(
                       postId: postId,
                       deletePostCubit: deletePostCubit,
                     ),
@@ -81,13 +83,12 @@ void showPostOptions({
               ),
             ] else ...[
               _optionTile(
-                picture: "assets/svgs/report.svg",
-                text: "Report Post",
+                picture: 'assets/svgs/report.svg',
+                text: 'Report Post',
                 color: Colors.red,
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.pop(sheetCtx);
                   // TODO: report
-                  print("report post");
                 },
               ),
             ],
@@ -108,10 +109,7 @@ Widget _optionTile({
 }) {
   return ListTile(
     leading: SvgPicture.asset(picture, width: 24.w, height: 24.h, color: color),
-    title: Text(
-      text,
-      style: TextStyles.font16Medium.copyWith(color: color),
-    ),
+    title: Text(text, style: TextStyles.font16Medium.copyWith(color: color)),
     onTap: onTap,
     contentPadding: EdgeInsets.zero,
   );
