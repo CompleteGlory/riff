@@ -1,5 +1,6 @@
 // ignore_for_file: unused_field, deprecated_member_use
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:riff/core/di/dependency_injection.dart';
@@ -13,9 +14,17 @@ import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/widgets/button.dart';
 import 'package:riff/core/widgets/tff.dart';
 import 'package:riff/core/networks/api_constants.dart';
+import 'package:riff/core/routing/animated_page_route.dart';
+import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
+import 'package:riff/features/home/feed/Ui/screens/report_comment_screen.dart';
 import 'package:riff/features/home/feed/data/models/author.dart';
 import 'package:riff/features/home/feed/data/models/comment.dart';
 import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
+import 'package:riff/features/home/user_profile/ui/user_profile_screen.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CommentsSheet — redesigned with animations and full dark-mode support
+// ─────────────────────────────────────────────────────────────────────────────
 
 class CommentsSheet extends StatefulWidget {
   final List<Comment> comments;
@@ -46,6 +55,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
   String? _currentUserId;
   String? _currentUserImageUrl;
   dynamic _editingCommentId;
+  dynamic _heartCommentId; // tracks which comment is showing the double-tap heart
 
   @override
   void initState() {
@@ -65,7 +75,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
     _currentUserId = await SharedPrefHelper.getString(SharedPrefKeys.userId);
     _currentUserImageUrl =
         await SharedPrefHelper.getString(SharedPrefKeys.userProfileImage);
-    setState(() {});
+    if (mounted) setState(() {});
   }
 
   @override
@@ -75,9 +85,8 @@ class _CommentsSheetState extends State<CommentsSheet> {
     super.dispose();
   }
 
-  bool _isCommentMine(Comment comment) {
-    return _currentUserId != null && comment.author?.id == _currentUserId;
-  }
+  bool _isCommentMine(Comment comment) =>
+      _currentUserId != null && comment.author?.id == _currentUserId;
 
   Future<void> _sendComment() async {
     final text = _controller.text.trim();
@@ -134,59 +143,47 @@ class _CommentsSheetState extends State<CommentsSheet> {
           _errorMessage = 'Failed to send comment';
         });
         Future.delayed(const Duration(seconds: 3), () {
-          if (mounted) {
-            setState(() => _errorMessage = null);
-          }
+          if (mounted) setState(() => _errorMessage = null);
         });
       },
     );
   }
 
   Future<void> _likeComment(Comment comment) async {
-    final commentId = comment.id.toString();
     final isCurrentlyLiked = _commentLikes[comment.id] ?? false;
-
-    // Optimistic update
-    setState(() {
-      _commentLikes[comment.id] = !isCurrentlyLiked;
-    });
+    setState(() => _commentLikes[comment.id] = !isCurrentlyLiked);
 
     final commentCubit = getIt<CommentCubit>();
     final res = isCurrentlyLiked
-        ? await commentCubit.unlikeComment(commentId)
-        : await commentCubit.likeComment(commentId);
+        ? await commentCubit.unlikeComment(comment.id.toString())
+        : await commentCubit.likeComment(comment.id.toString());
 
     res.when(
-      success: (_) {
-        // Like/unlike successful, state already updated optimistically
-      },
+      success: (_) {},
       failure: (_) {
-        // Revert optimistic update
-        setState(() {
-          _commentLikes[comment.id] = isCurrentlyLiked;
-        });
+        setState(() => _commentLikes[comment.id] = isCurrentlyLiked);
         _showErrorSnackBar('Failed to update like');
       },
     );
   }
 
   Future<void> _deleteComment(Comment comment) async {
-    final commentId = comment.id.toString();
-
-    // Show confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title:  Text('Delete Comment',style: TextStyles.font28Bold,),
-        content: Text('Are you sure you want to delete this comment?',style: TextStyles.font16Medium,),
+        title: Text('Delete Comment', style: TextStyles.font28Bold),
+        content: Text(
+          'Are you sure you want to delete this comment?',
+          style: TextStyles.font16Medium,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel',style: TextStyles.font14regular,),
+            child: Text('Cancel', style: TextStyles.font14regular),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child:  Text(
+            child: Text(
               'Delete',
               style: TextStyles.font14regular.copyWith(color: ColorManager.red),
             ),
@@ -197,9 +194,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
 
     if (confirmed != true) return;
 
-    final commentCubit = getIt<CommentCubit>();
-    final res = await commentCubit.deleteComment(commentId);
-
+    final res = await getIt<CommentCubit>().deleteComment(comment.id.toString());
     res.when(
       success: (_) {
         setState(() {
@@ -208,9 +203,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
         });
         _showSuccessSnackBar('Comment deleted');
       },
-      failure: (_) {
-        _showErrorSnackBar('Failed to delete comment');
-      },
+      failure: (_) => _showErrorSnackBar('Failed to delete comment'),
     );
   }
 
@@ -218,59 +211,37 @@ class _CommentsSheetState extends State<CommentsSheet> {
     final text = _editController.text.trim();
     if (text.isEmpty) return;
 
-    final commentId = comment.id.toString();
     final previousContent = comment.content;
 
-    // Optimistic update
     setState(() {
       final index = _comments.indexWhere((c) => c.id == comment.id);
       if (index != -1) {
-        final updatedComment = Comment(
+        _comments[index] = Comment(
           id: comment.id,
           content: text,
           author: comment.author,
           createdAt: comment.createdAt,
           isLiked: comment.isLiked,
         );
-        _comments[index] = updatedComment;
       }
       _editingCommentId = null;
       _editController.clear();
     });
 
-    final commentCubit = getIt<CommentCubit>();
-    final res = await commentCubit.updateComment(commentId, text);
-
+    final res = await getIt<CommentCubit>().updateComment(comment.id.toString(), text);
     res.when(
-      success: (updatedComment) {
-        // Update confirmed
+      success: (_) => _showSuccessSnackBar('Comment updated'),
+      failure: (_) {
         setState(() {
           final index = _comments.indexWhere((c) => c.id == comment.id);
           if (index != -1) {
             _comments[index] = Comment(
-              id: comment.id,
-              content: text, createdAt: comment.createdAt,
-              author: comment.author,
-              isLiked: comment.isLiked,
-             
-            );
-          }
-        });
-        _showSuccessSnackBar('Comment updated');
-      },
-      failure: (_) {
-        // Revert optimistic update
-        setState(() {
-          final index = _comments.indexWhere((c) => c.id == comment.id);
-          if (index != -1) {
-            final revertedComment = Comment(
               id: comment.id,
               content: previousContent,
               author: comment.author,
               createdAt: comment.createdAt,
               isLiked: comment.isLiked,
             );
-            _comments[index] = revertedComment;
           }
         });
         _showErrorSnackBar('Failed to update comment');
@@ -278,10 +249,45 @@ class _CommentsSheetState extends State<CommentsSheet> {
     );
   }
 
+  void _onDoubleTapComment(Comment comment) {
+    final isPending = _pendingIds.contains(comment.id) || (comment.id ?? 0) < 0;
+    if (isPending) return;
+    // Like if not already liked (always show the heart burst regardless)
+    if (!(_commentLikes[comment.id] ?? false)) {
+      _likeComment(comment);
+    }
+    setState(() => _heartCommentId = comment.id);
+    Future.delayed(const Duration(milliseconds: 750), () {
+      if (mounted && _heartCommentId == comment.id) {
+        setState(() => _heartCommentId = null);
+      }
+    });
+  }
+
+  void _navigateToProfile(String? userId) {
+    if (userId == null || userId.isEmpty) return;
+    HomeCubit? homeCubit;
+    try {
+      homeCubit = context.read<HomeCubit>();
+    } catch (_) {}
+    Navigator.push(
+      context,
+      FadeSlidePageRoute(
+        page: homeCubit != null
+            ? BlocProvider.value(
+                value: homeCubit,
+                child: UserProfileScreen(userId: userId),
+              )
+            : UserProfileScreen(userId: userId),
+      ),
+    );
+  }
+
   void _showCommentOptions(Comment comment) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -289,10 +295,10 @@ class _CommentsSheetState extends State<CommentsSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            verticalSpace(8),
+            verticalSpace(10),
             Container(
-              width: 50.w,
-              height: 5.h,
+              width: 40.w,
+              height: 4.h,
               decoration: BoxDecoration(
                 color: ColorManager.lighterGrey,
                 borderRadius: BorderRadius.circular(10.r),
@@ -300,34 +306,41 @@ class _CommentsSheetState extends State<CommentsSheet> {
             ),
             verticalSpace(16),
             if (_isCommentMine(comment)) ...[
-              ListTile(
-                leading: const Icon(Icons.edit),
-                title: const Text('Edit'),
+              _OptionTile(
+                icon: Icons.edit_outlined,
+                label: 'Edit',
                 onTap: () {
                   Navigator.pop(context);
                   _showEditDialog(comment);
                 },
               ),
-              ListTile(
-                leading: const Icon(Icons.delete, color: Colors.red),
-                title: const Text(
-                  'Delete',
-                  style: TextStyle(color: Colors.red),
-                ),
+              _OptionTile(
+                icon: Icons.delete_outline,
+                label: 'Delete',
+                color: ColorManager.red,
                 onTap: () {
                   Navigator.pop(context);
                   _deleteComment(comment);
                 },
               ),
             ] else
-              ListTile(
-                leading: const Icon(Icons.flag),
-                title: const Text('Report'),
+              _OptionTile(
+                icon: Icons.flag_outlined,
+                label: 'Report',
                 onTap: () {
                   Navigator.pop(context);
-                  _showErrorSnackBar('Comment reported');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ReportCommentScreen(
+                        commentId: comment.id.toString(),
+                        commentPreview: comment.content ?? '',
+                      ),
+                    ),
+                  );
                 },
               ),
+            verticalSpace(8),
           ],
         ),
       ),
@@ -339,31 +352,27 @@ class _CommentsSheetState extends State<CommentsSheet> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        
-        title:  Text('Edit Comment',style: TextStyles.font28Bold,),
+        title: Text('Edit Comment', style: TextStyles.font28Bold),
         content: SizedBox(
           width: 300.w,
-        //  width: double.maxFinite,
           child: TextField(
-            
             controller: _editController,
             maxLines: 4,
-            decoration:  InputDecoration(
+            decoration: InputDecoration(
               hintText: 'Edit your comment...',
               hintStyle: TextStyles.font14regular.copyWith(
                 color: ColorManager.normalGrey,
               ),
-              enabledBorder: OutlineInputBorder(
+              enabledBorder: const OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(8)),
                 borderSide: BorderSide(color: ColorManager.normalGrey),
               ),
-              focusedBorder: OutlineInputBorder(
+              focusedBorder: const OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(8)),
                 borderSide: BorderSide(color: ColorManager.normalGrey),
               ),
-
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(8)),
+                borderRadius: const BorderRadius.all(Radius.circular(8)),
                 borderSide: BorderSide(color: ColorManager.primaryBlack),
               ),
             ),
@@ -372,17 +381,23 @@ class _CommentsSheetState extends State<CommentsSheet> {
         actions: [
           SizedBox(
             width: 120.w,
-            child: AppButton(onPressed: (){
-              Navigator.pop(context);
-            }, text: "Cancel", isWhite: false),
+            child: AppButton(
+              onPressed: () => Navigator.pop(context),
+              text: 'Cancel',
+              isWhite: false,
+            ),
           ),
           SizedBox(
             width: 120.w,
-            child: AppButton(onPressed: (){
-              Navigator.pop(context);
-              _updateComment(comment);
-            }, text: "Update", isWhite: true),
-          )
+            child: AppButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _updateComment(comment);
+              },
+              text: 'Update',
+              isWhite: true,
+            ),
+          ),
         ],
       ),
     );
@@ -394,9 +409,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
         backgroundColor: ColorManager.primaryBlack,
         content: Text(
           message,
-          style: TextStyles.font12Medium.copyWith(
-            color: ColorManager.lighterGrey,
-          ),
+          style: TextStyles.font12Medium.copyWith(color: ColorManager.white),
         ),
       ),
     );
@@ -408,210 +421,473 @@ class _CommentsSheetState extends State<CommentsSheet> {
         backgroundColor: ColorManager.primaryBlack,
         content: Text(
           message,
-          style: TextStyles.font12Medium.copyWith(
-            color: ColorManager.lighterGrey,
-          ),
+          style: TextStyles.font12Medium.copyWith(color: ColorManager.white),
         ),
       ),
     );
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Build
+  // ─────────────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(maxHeight: 480.h),
-      padding: EdgeInsets.only(top: 8.h),
-      child: Column(
-        children: [
-          Container(
-            width: 50.w,
-            height: 5.h,
-            decoration: BoxDecoration(
-              color: ColorManager.lighterGrey,
-              borderRadius: BorderRadius.circular(10.r),
-            ),
-          ),
-          verticalSpace(12),
-          Text(
-            'Comments (${_comments.length})',
-            style: TextStyles.font18Semibold,
-          ),
-          verticalSpace(8),
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
 
-          /// ERROR BANNER
-          if (_errorMessage != null) ...[
+    return AnimatedPadding(
+      padding: EdgeInsets.only(bottom: keyboardInset),
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+      child: Container(
+        constraints: BoxConstraints(maxHeight: 540.h),
+        padding: EdgeInsets.only(top: 10.h),
+        child: Column(
+          children: [
+            // ── Drag handle ────────────────────────────────────────────────
+            _DragHandle(),
+            verticalSpace(14),
+
+            // ── Header ─────────────────────────────────────────────────────
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: Container(
-                padding: EdgeInsets.all(12.r),
-                decoration: BoxDecoration(
-                  color: ColorManager.primaryBlack,
-                  borderRadius: BorderRadius.circular(8.r),
-                  border: Border.all(color: ColorManager.normalGrey),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      color: ColorManager.white,
-                      size: 18.r,
-                    ),
-                    horizontalSpace(8),
-                    Expanded(
-                      child: Text(
-                        _errorMessage!,
-                        style: TextStyles.font12Medium.copyWith(
-                          color: ColorManager.white,
-                        ),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () => setState(() => _errorMessage = null),
-                      child: Icon(
-                        Icons.close,
-                        color: ColorManager.white,
-                        size: 16.r,
-                      ),
-                    ),
-                  ],
-                ),
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text('Comments', style: TextStyles.font18Semibold),
+                  SizedBox(width: 8.w),
+                  _CountBadge(count: _comments.length),
+                ],
               ),
             ),
-            verticalSpace(8),
-          ],
+            verticalSpace(12),
+            Divider(height: 1, color: Theme.of(context).dividerColor),
 
-          Expanded(
-            child: _comments.isEmpty
-                ? Center(
-                    child: Text(
-                      '💬 No comments yet. Be the first to say something!',
-                      style: TextStyles.font14regular.copyWith(
-                        color: ColorManager.normalGrey,
+            // ── Error banner ───────────────────────────────────────────────
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 280),
+              transitionBuilder: (child, animation) => SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, -1),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: FadeTransition(opacity: animation, child: child),
+              ),
+              child: _errorMessage != null
+                  ? _ErrorBanner(
+                      key: const ValueKey('error'),
+                      message: _errorMessage!,
+                      onDismiss: () => setState(() => _errorMessage = null),
+                    )
+                  : const SizedBox.shrink(key: ValueKey('no-error')),
+            ),
+
+            // ── Comment list / empty state ─────────────────────────────────
+            Expanded(
+              child: _comments.isEmpty
+                  ? _EmptyCommentsState()
+                  : ListView.separated(
+                      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
+                      itemCount: _comments.length,
+                      separatorBuilder: (_, __) => Divider(
+                        height: 1,
+                        color: Theme.of(context).dividerColor.withOpacity(0.5),
                       ),
-                    ),
-                  )
-                : ListView.separated(
-                    itemCount: _comments.length,
-                    separatorBuilder: (_, __) => verticalSpace(8),
-                    itemBuilder: (context, index) {
-                      final c = _comments[index];
-                      final isPending =
-                          _pendingIds.contains(c.id) || c.id! < 0;
-                      final isLiked = _commentLikes[c.id] ?? false;
+                      itemBuilder: (context, index) {
+                        final c = _comments[index];
+                        final isPending =
+                            _pendingIds.contains(c.id) || (c.id ?? 0) < 0;
+                        final isLiked = _commentLikes[c.id] ?? false;
 
-                      return Column(
-                        children: [
-                          ListTile(
-                            leading: _CommentAvatar(author: c.author),
-                            title: Text(
-                              c.author!.fullName,
-                              style: TextStyles.font14semiBold.copyWith(
-                                color: isPending
-                                    ? ColorManager.normalGrey
-                                    : ColorManager.primaryBlack,
-                              ),
-                            ),
-                            subtitle: Text(
-                              c.content!,
-                              style: TextStyles.font14regular.copyWith(
-                                color: isPending
-                                    ? ColorManager.normalGrey
-                                    : ColorManager.darkGrey,
-                              ),
-                            ),
-                            trailing: GestureDetector(
-                              onTap: () => _showCommentOptions(c),
-                              child: Icon(
-                                Icons.more_horiz,
-                                color: ColorManager.normalGrey,
-                              ),
+                        return TweenAnimationBuilder<double>(
+                          key: ValueKey(c.id),
+                          tween: Tween(begin: 0.0, end: 1.0),
+                          duration: const Duration(milliseconds: 350),
+                          curve: Curves.easeOutCubic,
+                          builder: (_, value, child) => Opacity(
+                            opacity: value,
+                            child: Transform.translate(
+                              offset: Offset(0, 16 * (1 - value)),
+                              child: child,
                             ),
                           ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 56.w),
-                            child: Row(
+                          child: GestureDetector(
+                            onDoubleTap: () => _onDoubleTapComment(c),
+                            behavior: HitTestBehavior.opaque,
+                            child: Stack(
+                              alignment: Alignment.center,
                               children: [
-                                Text(
-                                  timeAgo(c.createdAt),
-                                  style: TextStyles.font12regular.copyWith(
-                                    color: ColorManager.normalGrey,
-                                  ),
-                                ),
-                                horizontalSpace(16),
-                                if (!isPending)
-                                  GestureDetector(
-                                    onTap: () => _likeComment(c),
+                                Opacity(
+                                  opacity: isPending ? 0.55 : 1.0,
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 12.h),
                                     child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        SvgPicture.asset(
-                                          isLiked
-                                              ? "assets/svgs/Heart-filled.svg"
-                                              : "assets/svgs/Heart.svg",
-                                          width: 16.w,
-                                          height: 16.h,
-                                          color: isLiked
-                                              ? ColorManager.red
-                                              : ColorManager.normalGrey,
+                                        // Avatar — tappable → navigate to profile
+                                        GestureDetector(
+                                          onTap: () => _navigateToProfile(c.author?.id),
+                                          child: _CommentAvatar(author: c.author),
                                         ),
-                                        horizontalSpace(4),
-                                        Text(
-                                          isLiked ? 'Unlike' : 'Like',
-                                          style: TextStyles.font12regular
-                                              .copyWith(
-                                            color: ColorManager.normalGrey,
+                                        horizontalSpace(10),
+
+                                        // Content column
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              // Name + options
+                                              Row(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                children: [
+                                                  // Name — tappable → navigate to profile
+                                                  Expanded(
+                                                    child: GestureDetector(
+                                                      onTap: () => _navigateToProfile(c.author?.id),
+                                                      behavior: HitTestBehavior.opaque,
+                                                      child: Text(
+                                                        c.author?.fullName ?? '',
+                                                        style: TextStyles.font14semiBold
+                                                            .copyWith(color: onSurface),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  GestureDetector(
+                                                    onTap: () =>
+                                                        _showCommentOptions(c),
+                                                    behavior:
+                                                        HitTestBehavior.opaque,
+                                                    child: Padding(
+                                                      padding: EdgeInsets.only(
+                                                          left: 8.w),
+                                                      child: Icon(
+                                                        Icons.more_horiz,
+                                                        color:
+                                                            ColorManager.normalGrey,
+                                                        size: 18.r,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              verticalSpace(4),
+
+                                              // Comment text
+                                              Text(
+                                                c.content ?? '',
+                                                style: TextStyles.font14regular
+                                                    .copyWith(
+                                                  color: onSurface.withOpacity(0.78),
+                                                ),
+                                              ),
+                                              verticalSpace(6),
+
+                                              // Time + like
+                                              Row(
+                                                children: [
+                                                  Text(
+                                                    timeAgo(c.createdAt),
+                                                    style: TextStyles.font12regular
+                                                        .copyWith(
+                                                      color: ColorManager.normalGrey,
+                                                    ),
+                                                  ),
+                                                  if (!isPending) ...[
+                                                    horizontalSpace(14),
+                                                    _LikeButton(
+                                                      isLiked: isLiked,
+                                                      onTap: () => _likeComment(c),
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
+                                ),
+
+                                // ── Double-tap heart burst overlay ──────────
+                                if (_heartCommentId == c.id)
+                                  IgnorePointer(
+                                    child: _CommentHeartFlash(key: ValueKey('heart_${c.id}')),
+                                  ),
                               ],
                             ),
                           ),
-                        ],
-                      );
-                    },
-                  ),
-          ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 10.h),
-            child: Row(
-              children: [
-                Expanded(
-                  child: AppTextField(
-                    controller: _controller,
-                    keyboardType: TextInputType.text,
-                    isPassword: false,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Comment cannot be empty';
-                      }
-                      return null;
-                    },
+                        );
+                      },
+                    ),
+            ),
+
+            // ── Input area ─────────────────────────────────────────────────
+            Container(
+              padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 14.h),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                border: Border(
+                  top: BorderSide(
+                    color: Theme.of(context).dividerColor,
                   ),
                 ),
-                horizontalSpace(12),
-                _isSending
-                    ? SizedBox(
-                        width: 24.r,
-                        height: 24.r,
-                        child: const CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : GestureDetector(
-                        onTap: _sendComment,
-                        child: SvgPicture.asset(
-                          'assets/svgs/send.svg',
-                          width: 30.w,
-                          colorFilter: ColorFilter.mode(
-                            Theme.of(context).brightness == Brightness.dark
-                                ? const Color(0xFFC6FF00)
-                                : const Color(0xFF1A1A1A),
-                            BlendMode.srcIn,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: AppTextField(
+                      controller: _controller,
+                      keyboardType: TextInputType.text,
+                      isPassword: false,
+                      hintText: 'Add a comment…',
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Comment cannot be empty';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  horizontalSpace(10),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 220),
+                    transitionBuilder: (child, anim) => ScaleTransition(
+                      scale: CurvedAnimation(
+                          parent: anim, curve: Curves.easeOutBack),
+                      child: FadeTransition(opacity: anim, child: child),
+                    ),
+                    child: _isSending
+                        ? Container(
+                            key: const ValueKey('loading'),
+                            width: 40.r,
+                            height: 40.r,
+                            padding: EdgeInsets.all(10.r),
+                            decoration: BoxDecoration(
+                              color: ColorManager.accent.withOpacity(0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: ColorManager.accent,
+                            ),
+                          )
+                        : GestureDetector(
+                            key: const ValueKey('send'),
+                            onTap: _sendComment,
+                            child: Container(
+                              width: 40.r,
+                              height: 40.r,
+                              padding: EdgeInsets.all(9.r),
+                              decoration: const BoxDecoration(
+                                color: ColorManager.accent,
+                                shape: BoxShape.circle,
+                              ),
+                              child: SvgPicture.asset(
+                                'assets/svgs/send.svg',
+                                colorFilter: const ColorFilter.mode(
+                                  Colors.black,
+                                  BlendMode.srcIn,
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-              ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper widgets
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _DragHandle extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        width: 40.w,
+        height: 4.h,
+        decoration: BoxDecoration(
+          color: Theme.of(context).dividerColor,
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+      ),
+    );
+  }
+}
+
+class _CountBadge extends StatelessWidget {
+  final int count;
+  const _CountBadge({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 220),
+      transitionBuilder: (child, anim) =>
+          ScaleTransition(scale: anim, child: child),
+      child: Container(
+        key: ValueKey(count),
+        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+        decoration: BoxDecoration(
+          color: ColorManager.accent.withOpacity(0.18),
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        child: Text(
+          '$count',
+          style: TextStyles.font12semiBold.copyWith(color: ColorManager.accent),
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorBanner extends StatelessWidget {
+  final String message;
+  final VoidCallback onDismiss;
+  const _ErrorBanner(
+      {super.key, required this.message, required this.onDismiss});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16.w, 6.h, 16.w, 0),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+        decoration: BoxDecoration(
+          color: ColorManager.red.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(color: ColorManager.red.withOpacity(0.28)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.error_outline, color: ColorManager.red, size: 18.r),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: Text(
+                message,
+                style:
+                    TextStyles.font12Medium.copyWith(color: ColorManager.red),
+              ),
+            ),
+            GestureDetector(
+              onTap: onDismiss,
+              child:
+                  Icon(Icons.close, color: ColorManager.red, size: 16.r),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyCommentsState extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: const Duration(milliseconds: 700),
+        curve: Curves.elasticOut,
+        builder: (_, value, child) => Transform.scale(
+          scale: value.clamp(0.0, 1.2),
+          child: Opacity(
+            opacity: value.clamp(0.0, 1.0),
+            child: child,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.chat_bubble_outline_rounded,
+              size: 52.r,
+              color: ColorManager.accent,
+            ),
+            SizedBox(height: 14.h),
+            Text(
+              'No comments yet',
+              style: TextStyles.font16Medium.copyWith(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            SizedBox(height: 4.h),
+            Text(
+              'Be the first to say something!',
+              style: TextStyles.font14regular.copyWith(
+                color: ColorManager.normalGrey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Animated like/unlike button with icon swap animation
+class _LikeButton extends StatelessWidget {
+  final bool isLiked;
+  final VoidCallback onTap;
+  const _LikeButton({required this.isLiked, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            transitionBuilder: (child, anim) => ScaleTransition(
+              scale: CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
+              child: child,
+            ),
+            child: SvgPicture.asset(
+              isLiked
+                  ? 'assets/svgs/Heart-filled.svg'
+                  : 'assets/svgs/Heart.svg',
+              key: ValueKey(isLiked),
+              width: 14.w,
+              height: 14.h,
+              colorFilter: ColorFilter.mode(
+                isLiked ? ColorManager.red : ColorManager.normalGrey,
+                BlendMode.srcIn,
+              ),
+            ),
+          ),
+          SizedBox(width: 4.w),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            transitionBuilder: (child, anim) => FadeTransition(
+              opacity: anim,
+              child: child,
+            ),
+            child: Text(
+              isLiked ? 'Unlike' : 'Like',
+              key: ValueKey(isLiked),
+              style: TextStyles.font12regular.copyWith(
+                color: isLiked ? ColorManager.red : ColorManager.normalGrey,
+              ),
             ),
           ),
         ],
@@ -620,9 +896,104 @@ class _CommentsSheetState extends State<CommentsSheet> {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Comment avatar — shows profile image or initials fallback
-// ---------------------------------------------------------------------------
+/// Option row inside the comment options sheet
+class _OptionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color? color;
+  final VoidCallback onTap;
+
+  const _OptionTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? Theme.of(context).colorScheme.onSurface;
+    return ListTile(
+      leading: Icon(icon, color: c, size: 22.r),
+      title: Text(
+        label,
+        style: TextStyles.font14regular.copyWith(color: c),
+      ),
+      onTap: onTap,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Heart burst shown on double-tap — scale up then fade out
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _CommentHeartFlash extends StatefulWidget {
+  const _CommentHeartFlash({super.key});
+
+  @override
+  State<_CommentHeartFlash> createState() => _CommentHeartFlashState();
+}
+
+class _CommentHeartFlashState extends State<_CommentHeartFlash>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+
+    // Scale: pops in then settles
+    _scale = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.2, end: 1.25), weight: 35),
+      TweenSequenceItem(tween: Tween(begin: 1.25, end: 1.0), weight: 20),
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 45),
+    ]).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+
+    // Opacity: fade in quickly, hold, then fade out
+    _opacity = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 15),
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 45),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 40),
+    ]).animate(_ctrl);
+
+    _ctrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, __) => Opacity(
+        opacity: _opacity.value,
+        child: Transform.scale(
+          scale: _scale.value,
+          child: Icon(
+            Icons.favorite,
+            color: ColorManager.red,
+            size: 64.r,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Comment avatar — profile image or initials fallback
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _CommentAvatar extends StatelessWidget {
   const _CommentAvatar({this.author});
@@ -646,14 +1017,14 @@ class _CommentAvatar extends StatelessWidget {
         .join();
 
     return CircleAvatar(
-      radius: 18,
+      radius: 18.r,
       backgroundColor: ColorManager.lighterGrey,
       backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
       child: imageUrl == null
           ? Text(
               initials.isEmpty ? '?' : initials,
-              style: const TextStyle(
-                fontSize: 11,
+              style: TextStyle(
+                fontSize: 11.sp,
                 fontWeight: FontWeight.w600,
                 color: ColorManager.normalGrey,
               ),

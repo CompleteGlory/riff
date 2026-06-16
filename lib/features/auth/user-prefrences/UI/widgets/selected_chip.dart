@@ -13,12 +13,12 @@ class SelectedChip extends StatelessWidget {
       duration: const Duration(milliseconds: 200),
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
       decoration: BoxDecoration(
-        color: ColorManager.primaryBlack,
+        color: ColorManager.accent,
         borderRadius: BorderRadius.circular(20.r),
       ),
       child: Text(
         '$count selected',
-        style: TextStyles.font12Medium.copyWith(color: ColorManager.white),
+        style: TextStyles.font12Medium.copyWith(color: ColorManager.black),
       ),
     );
   }

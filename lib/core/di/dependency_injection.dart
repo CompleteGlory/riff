@@ -23,6 +23,11 @@ import 'package:riff/features/home/feed/logic/cubit/feed/feed_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/likes/like_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/posts/post_cubit.dart';
+import 'package:riff/features/home/follow/data/repos/follow_repo.dart';
+import 'package:riff/features/home/follow/logic/cubit/follow_cubit.dart';
+import 'package:riff/features/home/notifications/data/repos/notifications_repo.dart';
+import 'package:riff/core/networks/socket_service.dart';
+import 'package:riff/features/home/notifications/logic/cubit/notifications_cubit.dart';
 import 'package:riff/features/home/profile/data/repos/profile_repo.dart';
 import 'package:riff/features/home/profile/logic/cubit/profile_cubit.dart';
 import 'package:riff/features/home/reels/data/repos/reels_repo.dart';
@@ -30,53 +35,61 @@ import 'package:riff/features/home/reels/logic/cubit/reels_cubit.dart';
 import 'package:riff/features/home/user_profile/data/repos/user_profile_repo.dart';
 import 'package:riff/features/home/user_profile/logic/cubit/user_profile_cubit.dart';
 import 'package:riff/features/commercial/data/repos/ad_repo.dart';
+import 'package:riff/features/home/search/data/repos/search_repo.dart';
+import 'package:riff/features/home/search/logic/search_cubit.dart';
+import 'package:riff/features/auth/phone_verify/data/repos/phone_verify_repo.dart';
+import 'package:riff/features/auth/phone_verify/logic/cubit/phone_verify_cubit.dart';
+import 'package:riff/features/auth/new_user_onboarding/data/repos/suggested_users_repo.dart';
 
 final getIt = GetIt.instance;
 
 Future<void> setUpGetIt() async {
   Dio dio = await DioFactory.getDio();
 
-  //Dio & ApiService
-  getIt.registerLazySingleton<ApiService>(()=>ApiService(dio));
+  // Dio & ApiService
+  getIt.registerLazySingleton<Dio>(() => dio);
+  getIt.registerLazySingleton<ApiService>(() => ApiService(dio));
 
- //login
-  getIt.registerLazySingleton<LoginRepo>(()=>LoginRepo(getIt()));
-  getIt.registerFactory<LoginCubit>(()=>LoginCubit(getIt()));
+  // login
+  getIt.registerLazySingleton<LoginRepo>(() => LoginRepo(getIt()));
+  getIt.registerFactory<LoginCubit>(() => LoginCubit(getIt()));
 
-  //signup
-  getIt.registerLazySingleton<SignupRepo>(()=>SignupRepo(getIt()));
-  getIt.registerFactory<SignupCubit>(()=>SignupCubit(getIt()));
+  // signup
+  getIt.registerLazySingleton<SignupRepo>(() => SignupRepo(getIt()));
+  getIt.registerFactory<SignupCubit>(() => SignupCubit(getIt(), getIt()));
 
-  //forgot password
-  getIt.registerLazySingleton<ForgotPasswordRepo>(()=>ForgotPasswordRepo(getIt()));
-  getIt.registerFactory<ForgotPasswordCubit>(()=>ForgotPasswordCubit(getIt()));
+  // forgot password
+  getIt.registerLazySingleton<ForgotPasswordRepo>(() => ForgotPasswordRepo(getIt()));
+  getIt.registerFactory<ForgotPasswordCubit>(() => ForgotPasswordCubit(getIt()));
 
-  //home
-  getIt.registerLazySingleton<HomeRepo>(()=>HomeRepo(getIt()));
-  getIt.registerFactory<HomeCubit>(()=>HomeCubit(getIt()));
+  // home
+  getIt.registerLazySingleton<HomeRepo>(() => HomeRepo(getIt()));
+  getIt.registerFactory<HomeCubit>(() => HomeCubit(getIt()));
 
-  //feed
-  getIt.registerLazySingleton<FeedRepo>(()=>FeedRepo(getIt()));
-  getIt.registerFactory<FeedCubit>(()=>FeedCubit(getIt()));
-  
-  // like operations
-  getIt.registerLazySingleton<LikeRepo>(()=>LikeRepo(getIt()));
-  getIt.registerFactory<LikeCubit>(()=>LikeCubit(getIt()));
-  
-  // comment operations
-  getIt.registerLazySingleton<CommentRepo>(()=>CommentRepo(getIt()));
-  getIt.registerFactory<CommentCubit>(()=>CommentCubit(getIt()));
-  
+  // feed
+  getIt.registerLazySingleton<FeedRepo>(() => FeedRepo(getIt()));
+  getIt.registerFactory<FeedCubit>(() => FeedCubit(getIt()));
+
+  // likes
+  getIt.registerLazySingleton<LikeRepo>(() => LikeRepo(getIt()));
+  getIt.registerFactory<LikeCubit>(() => LikeCubit(getIt()));
+
+  // comments
+  getIt.registerLazySingleton<CommentRepo>(() => CommentRepo(getIt()));
+  getIt.registerFactory<CommentCubit>(() => CommentCubit(getIt()));
+
   // post operations
-  getIt.registerFactory<PostCubit>(()=>PostCubit(getIt<LikeCubit>(), getIt<FeedCubit>(), getIt<FeedRepo>()));
+  getIt.registerFactory<PostCubit>(
+      () => PostCubit(getIt<LikeCubit>(), getIt<FeedCubit>(), getIt<FeedRepo>()));
 
-  // profile
+  // profile (own)
   getIt.registerLazySingleton<ProfileRepo>(() => ProfileRepo(getIt()));
   getIt.registerFactory<ProfileCubit>(() => ProfileCubit(getIt()));
 
   // user profile (any user)
   getIt.registerLazySingleton<UserProfileRepo>(() => UserProfileRepo(getIt()));
-  getIt.registerFactory<UserProfileCubit>(() => UserProfileCubit(getIt()));
+  getIt.registerFactory<UserProfileCubit>(
+      () => UserProfileCubit(getIt(), getIt()));
 
   // reels
   getIt.registerLazySingleton<ReelsRepo>(() => ReelsRepo());
@@ -85,15 +98,36 @@ Future<void> setUpGetIt() async {
   // ads
   getIt.registerLazySingleton<AdRepo>(() => AdRepo(dio));
 
-  //create post
-  getIt.registerLazySingleton<CreatePostRepo>(()=>CreatePostRepo(getIt()));
-  getIt.registerFactory<CreatePostCubit>(()=>CreatePostCubit(getIt()));
+  // create post
+  getIt.registerLazySingleton<CreatePostRepo>(() => CreatePostRepo(getIt()));
+  getIt.registerFactory<CreatePostCubit>(() => CreatePostCubit(getIt()));
 
-  //update post
-  getIt.registerLazySingleton<UpdatePostRepo>(()=>UpdatePostRepo(getIt()));
-  getIt.registerFactory<UpdatePostCubit>(()=>UpdatePostCubit(getIt()));
+  // update post
+  getIt.registerLazySingleton<UpdatePostRepo>(() => UpdatePostRepo(getIt()));
+  getIt.registerFactory<UpdatePostCubit>(() => UpdatePostCubit(getIt()));
 
-  //delete post
-  getIt.registerLazySingleton<DeletePostRepo>(()=>DeletePostRepo(getIt()));
-  getIt.registerFactory<DeletePostCubit>(()=>DeletePostCubit(getIt()));
+  // delete post
+  getIt.registerLazySingleton<DeletePostRepo>(() => DeletePostRepo(getIt()));
+  getIt.registerFactory<DeletePostCubit>(() => DeletePostCubit(getIt()));
+
+  // follow
+  getIt.registerLazySingleton<FollowRepo>(() => FollowRepo(dio));
+  getIt.registerFactory<FollowCubit>(() => FollowCubit(getIt()));
+
+  // search
+  getIt.registerLazySingleton<SearchRepo>(() => SearchRepo(dio));
+  getIt.registerFactory<SearchCubit>(() => SearchCubit(getIt()));
+
+  // notifications
+  getIt.registerLazySingleton<NotificationsRepo>(() => NotificationsRepo(dio));
+  getIt.registerLazySingleton<SocketService>(() => SocketService());
+  getIt.registerLazySingleton<NotificationsCubit>(
+      () => NotificationsCubit(getIt(), getIt()));
+
+  // phone verification
+  getIt.registerLazySingleton<PhoneVerifyRepo>(() => PhoneVerifyRepo(dio));
+  getIt.registerFactory<PhoneVerifyCubit>(() => PhoneVerifyCubit(getIt()));
+
+  // onboarding — suggested users
+  getIt.registerLazySingleton<SuggestedUsersRepo>(() => SuggestedUsersRepo(dio));
 }

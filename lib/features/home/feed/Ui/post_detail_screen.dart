@@ -22,7 +22,7 @@ class PostDetailScreen extends StatelessWidget {
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-        child: PostItem(post: post),
+        child: PostItem(post: post, disableTap: true),
       ),
     );
   }

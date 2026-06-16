@@ -7,4 +7,10 @@ class Routes {
   static const String enterCode = '/enterCode';
   static const String resetPassword = '/resetPassword';
   static const String home = '/home';
-  }
+
+  // Phone verification (after signup)
+  static const String phoneVerify = '/phoneVerify';
+
+  // New user onboarding (after phone verify)
+  static const String newUserOnboarding = '/newUserOnboarding';
+}

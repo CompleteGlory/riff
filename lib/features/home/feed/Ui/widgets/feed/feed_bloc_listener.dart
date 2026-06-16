@@ -46,7 +46,9 @@ class FeedBlocListener extends StatelessWidget {
             child: Text(
               'Got it',
               style: TextStyles.font14Medium.copyWith(
-                color: ColorManager.primaryBlack,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? ColorManager.white
+                    : ColorManager.black,
               ),
             ),
           ),

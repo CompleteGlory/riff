@@ -73,7 +73,6 @@ class _GenresScreenState extends State<GenresScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorManager.white,
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
