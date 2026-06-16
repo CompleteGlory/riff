@@ -9,7 +9,7 @@ import 'package:riff/features/commercial/data/repos/ad_repo.dart';
 import 'package:riff/features/commercial/ui/widgets/ad_card.dart';
 import 'package:riff/features/home/feed/Ui/widgets/feed/lottie_loader.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_item.dart';
-import 'package:riff/features/home/feed/UI/widgets/feed/feed_empty_state.dart';
+import 'package:riff/features/home/feed/Ui/widgets/feed/feed_empty_state.dart';
 import 'package:riff/features/home/feed/logic/cubit/feed/feed_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/feed/feed_state.dart';
 
