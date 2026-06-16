@@ -18,10 +18,10 @@ class Post {
   final String? content;
   final List<String>? media;
 
-  @JsonKey(name: 'created_at')
+  @JsonKey(name: 'created_at', defaultValue: '')
   final String createdAt;
 
-  @JsonKey(name: 'updated_at')
+  @JsonKey(name: 'updated_at', defaultValue: '')
   final String updatedAt;
 
   final List<PostLike>? likes;

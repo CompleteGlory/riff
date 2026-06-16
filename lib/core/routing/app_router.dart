@@ -14,6 +14,10 @@ import 'package:riff/features/auth/onboarding/onboarding_screen.dart';
 import 'package:riff/features/auth/signup/UI/signup_screen.dart';
 import 'package:riff/features/auth/signup/logic/cubit/signup_cubit.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
+import 'package:riff/features/home/notifications/logic/cubit/notifications_cubit.dart';
+import 'package:riff/features/auth/phone_verify/UI/phone_verify_screen.dart';
+import 'package:riff/features/auth/phone_verify/logic/cubit/phone_verify_cubit.dart';
+import 'package:riff/features/auth/new_user_onboarding/UI/new_user_onboarding_screen.dart';
 
 class AppRouter {
   Route<dynamic> generateRoute(RouteSettings settings) {
@@ -31,11 +35,17 @@ class AppRouter {
 
       case Routes.home:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (context) => getIt<HomeCubit>(),
+          builder: (_) => MultiBlocProvider(
+            providers: [
+              BlocProvider(create: (_) => getIt<HomeCubit>()),
+              BlocProvider(
+                create: (_) => getIt<NotificationsCubit>()..load(),
+              ),
+            ],
             child: const HomeLayout(),
           ),
         );
+
       case Routes.signup:
         final args = settings.arguments as Map<String, dynamic>?;
         return MaterialPageRoute(
@@ -47,8 +57,10 @@ class AppRouter {
             child: const SignupScreen(),
           ),
         );
+
       case Routes.instruments:
         return MaterialPageRoute(builder: (_) => const InstrumentsScreen());
+
       case Routes.forgotPassword:
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
@@ -74,8 +86,20 @@ class AppRouter {
           ),
         );
 
+      case Routes.phoneVerify:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => getIt<PhoneVerifyCubit>(),
+            child: const PhoneVerifyScreen(),
+          ),
+        );
+
+      case Routes.newUserOnboarding:
+        return MaterialPageRoute(
+          builder: (_) => const NewUserOnboardingScreen(),
+        );
+
       default:
-        // Fallback: redirect to OnBoarding or a 404 page
         return MaterialPageRoute(builder: (_) => const OnBoardingScreen());
     }
   }

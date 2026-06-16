@@ -11,6 +11,7 @@ import 'package:riff/features/home/add_post/ui/widgets/delete_post_confirm_dialo
 import 'package:riff/features/home/add_post/ui/widgets/update_post_listener.dart';
 import 'package:riff/features/home/add_post/ui/widgets/update_post_screen.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
+import 'package:riff/features/home/feed/Ui/screens/report_post_screen.dart';
 
 void showPostOptions({
   required bool isMine,
@@ -90,7 +91,12 @@ void showPostOptions({
                 color: Colors.red,
                 onTap: () {
                   Navigator.pop(sheetCtx);
-                  // TODO: report
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ReportPostScreen(postId: post.id.toString()),
+                    ),
+                  );
                 },
               ),
             ],

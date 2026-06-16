@@ -9,8 +9,69 @@ import 'package:riff/features/commercial/data/repos/ad_repo.dart';
 import 'package:riff/features/commercial/ui/widgets/ad_card.dart';
 import 'package:riff/features/home/feed/Ui/widgets/feed/lottie_loader.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_item.dart';
+import 'package:riff/features/home/feed/UI/widgets/feed/feed_empty_state.dart';
 import 'package:riff/features/home/feed/logic/cubit/feed/feed_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/feed/feed_state.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Fade + slide-up entrance animation for list items with staggered delay
+// ─────────────────────────────────────────────────────────────────────────────
+class _FadeSlideIn extends StatefulWidget {
+  final int index;
+  final Widget child;
+  const _FadeSlideIn({required this.index, required this.child});
+
+  @override
+  State<_FadeSlideIn> createState() => _FadeSlideInState();
+}
+
+class _FadeSlideInState extends State<_FadeSlideIn>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _opacity;
+  late final Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    // Cap stagger at ~300 ms so late items don't wait too long
+    final stagger = Duration(
+      milliseconds: (widget.index * 55).clamp(0, 280),
+    );
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    );
+    _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.08),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+    Future.delayed(stagger, () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: SlideTransition(position: _slide, child: widget.child),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 class FeedScreenBody extends StatefulWidget {
   const FeedScreenBody({super.key});
@@ -108,7 +169,7 @@ class _FeedScreenBodyState extends State<FeedScreenBody> {
               final posts = postsResponse.data;
 
               if (posts.isEmpty) {
-                return const Center(child: Text("No posts yet"));
+                return const FeedEmptyState();
               }
 
               final isLoadingMore = cubit.isLoadingMore;
@@ -124,9 +185,15 @@ class _FeedScreenBodyState extends State<FeedScreenBody> {
                   if (index < mixed.length) {
                     final item = mixed[index];
                     if (item is Ad) {
-                      return AdCard(ad: item, adRepo: _adRepo);
+                      return _FadeSlideIn(
+                        index: index,
+                        child: AdCard(ad: item, adRepo: _adRepo),
+                      );
                     }
-                    return PostItem(post: item);
+                    return _FadeSlideIn(
+                      index: index,
+                      child: PostItem(post: item),
+                    );
                   }
 
                   if (paginationError != null) {

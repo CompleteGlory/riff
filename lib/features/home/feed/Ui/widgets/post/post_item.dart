@@ -17,15 +17,18 @@ import 'package:riff/features/home/feed/Ui/widgets/post/post_actions.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/shared_post_card.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/share_sheet.dart';
 import 'package:riff/features/home/feed/Ui/post_detail_screen.dart';
+import 'package:riff/core/routing/animated_page_route.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
+import 'package:riff/features/home/feed/Ui/widgets/feed/lottie_loader.dart';
 import 'package:riff/features/home/reels/ui/reels_screen.dart';
 import 'package:riff/features/home/feed/logic/cubit/posts/post_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
 
 class PostItem extends StatefulWidget {
   final Post post;
+  final bool disableTap;
 
-  const PostItem({super.key, required this.post});
+  const PostItem({super.key, required this.post, this.disableTap = false});
 
   @override
   State<PostItem> createState() => _PostItemState();
@@ -116,10 +119,26 @@ class _PostItemState extends State<PostItem>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: CircularProgressIndicator(),
+      builder: (_) => SizedBox(
+        height: 220,
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Theme.of(context).dividerColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Comments',
+              style: TextStyles.font18Semibold,
+            ),
+            const Expanded(child: Center(child: LottieLoader())),
+          ],
         ),
       ),
     );
@@ -137,16 +156,13 @@ class _PostItemState extends State<PostItem>
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          builder: (_) => Padding(
-            padding: EdgeInsets.all(16.w),
-            child: CommentsSheet(
-              comments: comments,
-              postId: postId,
-              initialCommentsCount: comments.length,
-              onCommentCreated: (Comment newComment) {
-                setState(() => commentCount++);
-              },
-            ),
+          builder: (_) => CommentsSheet(
+            comments: comments,
+            postId: postId,
+            initialCommentsCount: comments.length,
+            onCommentCreated: (Comment newComment) {
+              setState(() => commentCount++);
+            },
           ),
         );
       },
@@ -184,13 +200,13 @@ class _PostItemState extends State<PostItem>
 
     return GestureDetector(
       // Single tap → open full post detail (like tapping a shared post card)
-      onTap: () {
+      onTap: widget.disableTap ? null : () {
         HomeCubit? homeCubit;
         try { homeCubit = context.read<HomeCubit>(); } catch (_) {}
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => homeCubit != null
+          FadeSlidePageRoute(
+            page: homeCubit != null
                 ? BlocProvider.value(
                     value: homeCubit,
                     child: PostDetailScreen(post: widget.post),
@@ -232,8 +248,8 @@ class _PostItemState extends State<PostItem>
                 } catch (_) {}
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => homeCubit != null
+                  FadeSlidePageRoute(
+                    page: homeCubit != null
                         ? BlocProvider.value(
                             value: homeCubit,
                             child: PostDetailScreen(post: widget.post.originalPost!),

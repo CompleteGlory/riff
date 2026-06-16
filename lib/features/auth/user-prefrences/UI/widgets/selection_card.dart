@@ -9,7 +9,8 @@ class SelectionCard extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  const SelectionCard({super.key, 
+  const SelectionCard({
+    super.key,
     required this.name,
     required this.image,
     required this.isSelected,
@@ -18,6 +19,19 @@ class SelectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final labelBg = isSelected
+        ? ColorManager.accent
+        : (isDark ? const Color(0xFF252525) : Colors.white);
+    final labelText = isSelected
+        ? ColorManager.black
+        : (isDark ? Colors.white : ColorManager.primaryBlack);
+    final borderColor = isSelected
+        ? ColorManager.accent
+        : (isDark ? const Color(0xFF3A3A3A) : ColorManager.lighterGrey);
+    final imageBg = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5);
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -25,15 +39,16 @@ class SelectionCard extends StatelessWidget {
         curve: Curves.easeInOut,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20.r),
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           border: Border.all(
-            color: isSelected ? ColorManager.primaryBlack : ColorManager.lighterGrey,
+            color: borderColor,
             width: isSelected ? 2.5 : 1.5,
           ),
           boxShadow: [
             BoxShadow(
               color: isSelected
-                  ? ColorManager.primaryBlack.withValues(alpha: 0.12)
-                  : Colors.black.withValues(alpha: 0.05),
+                  ? ColorManager.accent.withValues(alpha: 0.18)
+                  : Colors.black.withValues(alpha: isDark ? 0.15 : 0.05),
               blurRadius: isSelected ? 20 : 8,
               offset: const Offset(0, 4),
             ),
@@ -44,25 +59,29 @@ class SelectionCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Image takes most of the card
+              // Image area
               Expanded(
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.asset(
-                      image,
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: ColorManager.lighterGrey,
-                        child: Icon(
-                          Icons.music_note,
-                          size: 36.r,
-                          color: ColorManager.normalGrey,
+                    ColoredBox(
+                      color: imageBg,
+                      child: Padding(
+                        padding: EdgeInsets.all(16.r),
+                        child: Image.asset(
+                          image,
+                          fit: BoxFit.contain,
+                          // White tint in dark mode for contrast
+                          color: isDark ? Colors.white : null,
+                          colorBlendMode: isDark ? BlendMode.srcIn : null,
+                          errorBuilder: (_, __, ___) => Icon(
+                            Icons.music_note,
+                            size: 36.r,
+                            color: isDark ? Colors.white54 : ColorManager.normalGrey,
+                          ),
                         ),
                       ),
                     ),
-
-                    // Selected checkmark overlay
                     if (isSelected)
                       Positioned(
                         top: 10.h,
@@ -70,13 +89,13 @@ class SelectionCard extends StatelessWidget {
                         child: Container(
                           width: 26.r,
                           height: 26.r,
-                          decoration: BoxDecoration(
-                            color: ColorManager.primaryBlack,
+                          decoration: const BoxDecoration(
+                            color: Colors.black,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             Icons.check_rounded,
-                            color: ColorManager.white,
+                            color: ColorManager.accent,
                             size: 15.r,
                           ),
                         ),
@@ -85,27 +104,18 @@ class SelectionCard extends StatelessWidget {
                 ),
               ),
 
-              // Clean white label bar at the bottom
+              // Label bar
               AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
-                color: isSelected
-                    ? ColorManager.primaryBlack
-                    : ColorManager.white,
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12.w,
-                  vertical: 10.h,
-                ),
+                color: labelBg,
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
                       child: Text(
                         name,
-                        style: TextStyles.font14semiBold.copyWith(
-                          color: isSelected
-                              ? ColorManager.white
-                              : ColorManager.primaryBlack,
-                        ),
+                        style: TextStyles.font14semiBold.copyWith(color: labelText),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -114,7 +124,7 @@ class SelectionCard extends StatelessWidget {
                       Icon(
                         Icons.check_circle_rounded,
                         size: 16.r,
-                        color: ColorManager.white,
+                        color: ColorManager.black,
                       ),
                   ],
                 ),

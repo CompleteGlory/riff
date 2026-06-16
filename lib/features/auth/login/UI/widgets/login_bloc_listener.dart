@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:riff/core/routing/routes.dart';
+import 'package:riff/core/services/push_notification_service.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/auth/login/logic/cubit/login_cubit.dart';
@@ -35,6 +36,8 @@ class LoginBlocListener extends StatelessWidget {
               if (Navigator.of(context, rootNavigator: true).canPop()) {
                 Navigator.of(context, rootNavigator: true).pop();
               }
+              // Register FCM token now that the user is authenticated
+              PushNotificationService.instance.init();
               // Clear the navigation stack and go to Home so user cannot go back
               Navigator.of(context).pushNamedAndRemoveUntil(
                 Routes.home,

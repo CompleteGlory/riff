@@ -13,53 +13,101 @@ import 'package:riff/features/auth/login/UI/widgets/or_divider.dart';
 import 'package:riff/features/auth/login/UI/widgets/social_login.dart';
 import 'package:riff/features/auth/login/logic/cubit/login_cubit.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _entranceController;
+  late final Animation<double> _fadeAnim;
+  late final Animation<Offset> _slideAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _fadeAnim = CurvedAnimation(
+      parent: _entranceController,
+      curve: Curves.easeOut,
+    );
+    _slideAnim = Tween<Offset>(
+      begin: const Offset(0, 0.06),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _entranceController, curve: Curves.easeOutCubic),
+    );
+    // Slight delay so the scaffold renders first
+    Future.delayed(const Duration(milliseconds: 80), () {
+      if (mounted) _entranceController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _entranceController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight,
-                ),
-                child: IntrinsicHeight(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("Login To your account", style: TextStyles.font28Bold),
-                        verticalSpace(8),
-                        Text(
-                          "It's great to see you again!",
-                          style: TextStyles.font16Medium.copyWith(color: ColorManager.lightGrey),
+            return FadeTransition(
+              opacity: _fadeAnim,
+              child: SlideTransition(
+                position: _slideAnim,
+                child: SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: IntrinsicHeight(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 24.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Login To your account",
+                                style: TextStyles.font28Bold),
+                            verticalSpace(8),
+                            Text(
+                              "It's great to see you again!",
+                              style: TextStyles.font16Medium
+                                  .copyWith(color: ColorManager.lightGrey),
+                            ),
+                            verticalSpace(32),
+                            LoginFormFields(),
+                            verticalSpace(10),
+                            ForgotPasswordText(),
+                            verticalSpace(20),
+                            AppButton(
+                              onPressed: () => validateAndLogin(context),
+                              text: "Login",
+                              isWhite: false,
+                            ),
+                            verticalSpace(15),
+                            OrDivider(),
+                            verticalSpace(15),
+                            SocialLogin(),
+                            const Spacer(),
+                            Align(
+                              alignment: Alignment.bottomCenter,
+                              child: DonotHaveAnAccountText(),
+                            ),
+                            verticalSpace(10),
+                            const LoginBlocListener(),
+                          ],
                         ),
-                        verticalSpace(32),
-                        LoginFormFields(),
-                        verticalSpace(10),
-                        ForgotPasswordText(),
-                        verticalSpace(20),
-                        AppButton(onPressed: () {
-                          validateAndLogin(context);
-                        }, text: "Login", isWhite: false),
-                        verticalSpace(15),
-                        OrDivider(),
-                        verticalSpace(15),
-                        SocialLogin(),
-                        Spacer(),
-                        Align(
-                          alignment: Alignment.bottomCenter,
-                          child: DonotHaveAnAccountText(),
-                        ),
-                        verticalSpace(10),
-                        const LoginBlocListener(),
-                      ],
+                      ),
                     ),
                   ),
                 ),

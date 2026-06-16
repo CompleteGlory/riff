@@ -108,6 +108,8 @@ class _ReelsBodyState extends State<_ReelsBody> {
         if (!entry.value.value.isPlaying) entry.value.play();
       } else {
         if (entry.value.value.isPlaying) entry.value.pause();
+        // Reset to first frame so thumbnail is visible instead of black.
+        entry.value.seekTo(Duration.zero);
       }
     }
   }
@@ -127,7 +129,12 @@ class _ReelsBodyState extends State<_ReelsBody> {
     // Guard: make sure this is still the current controller for this slot.
     if (mounted && _controllers[index] == c) {
       setState(() => _ready[index] = true);
-      if (_currentPage == index) c.play();
+      if (_currentPage == index) {
+        c.play();
+      } else {
+        // Seek to first frame so the thumbnail is visible instead of black.
+        await c.seekTo(Duration.zero);
+      }
     }
   }
 
@@ -254,6 +261,7 @@ class _ReelsBodyState extends State<_ReelsBody> {
                 isActive: index == _currentPage,
                 controller: _controllers[index],
                 isReady: _ready[index] == true,
+                showBackButton: widget.initialPost != null,
               ),
             ),
           ),
