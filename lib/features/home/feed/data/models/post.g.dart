@@ -12,8 +12,8 @@ Post _$PostFromJson(Map<String, dynamic> json) => Post(
       ? null
       : Author.fromJson(json['author'] as Map<String, dynamic>),
   content: json['content'] as String?,
-  createdAt: json['created_at'] as String,
-  updatedAt: json['updated_at'] as String,
+  createdAt: (json['created_at'] as String?) ?? '',
+  updatedAt: (json['updated_at'] as String?) ?? '',
   isLiked: json['is_liked'] as bool?,
   likesCount: json['likes_count'] as String?,
   authorId: json['author_id'] as String?,

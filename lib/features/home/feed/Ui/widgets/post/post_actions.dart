@@ -32,7 +32,9 @@ class PostActions extends StatelessWidget {
     return Row(
       children: [
         _ActionButton(
-          svgAsset: isLiked ? 'assets/svgs/Heart-filled.svg' : 'assets/svgs/Heart.svg',
+          svgAsset: isLiked
+              ? 'assets/svgs/Heart-filled.svg'
+              : 'assets/svgs/Heart.svg',
           color: isLiked ? ColorManager.red : mutedColor,
           label: _formatCount(likeCount),
           onTap: onLikeTap,
@@ -62,7 +64,11 @@ class PostActions extends StatelessWidget {
   }
 }
 
-class _ActionButton extends StatelessWidget {
+// ─────────────────────────────────────────────────────────────────────────────
+// _ActionButton — animated icon + count with press-scale feedback
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ActionButton extends StatefulWidget {
   const _ActionButton({
     required this.svgAsset,
     required this.color,
@@ -76,25 +82,93 @@ class _ActionButton extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_ActionButton> createState() => _ActionButtonState();
+}
+
+class _ActionButtonState extends State<_ActionButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 110),
+    );
+    _scale = Tween<double>(begin: 1.0, end: 0.82).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onTapDown(TapDownDetails _) => _controller.forward();
+  void _onTapUp(TapUpDetails _) {
+    _controller.reverse();
+    widget.onTap();
+  }
+  void _onTapCancel() => _controller.reverse();
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTapDown: _onTapDown,
+      onTapUp: _onTapUp,
+      onTapCancel: _onTapCancel,
       behavior: HitTestBehavior.opaque,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SvgPicture.asset(
-            svgAsset,
-            width: 22.w,
-            height: 22.h,
-            colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-          ),
-          SizedBox(width: 5.w),
-          Text(
-            label,
-            style: TextStyles.font12semiBold.copyWith(color: color),
-          ),
-        ],
+      child: ScaleTransition(
+        scale: _scale,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Icon — AnimatedSwitcher handles liked ↔ unliked swap
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              transitionBuilder: (child, anim) => ScaleTransition(
+                scale: CurvedAnimation(
+                    parent: anim, curve: Curves.easeOutBack),
+                child: FadeTransition(opacity: anim, child: child),
+              ),
+              child: SvgPicture.asset(
+                widget.svgAsset,
+                key: ValueKey(widget.svgAsset),
+                width: 22.w,
+                height: 22.h,
+                colorFilter:
+                    ColorFilter.mode(widget.color, BlendMode.srcIn),
+              ),
+            ),
+            SizedBox(width: 5.w),
+
+            // Count — slides up when value changes
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              transitionBuilder: (child, anim) => FadeTransition(
+                opacity: anim,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, -0.35),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(parent: anim, curve: Curves.easeOutCubic),
+                  ),
+                  child: child,
+                ),
+              ),
+              child: Text(
+                widget.label,
+                key: ValueKey(widget.label),
+                style: TextStyles.font12semiBold.copyWith(color: widget.color),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

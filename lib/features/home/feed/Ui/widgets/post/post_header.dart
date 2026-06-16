@@ -8,6 +8,7 @@ import 'package:riff/core/helpers/time_ago.dart';
 import 'package:riff/core/networks/api_constants.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
+import 'package:riff/core/routing/animated_page_route.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_options.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
@@ -38,14 +39,17 @@ class PostHeader extends StatelessWidget {
     void navigateToProfile() {
       final authorId = post.author?.id;
       if (authorId == null) return;
-      final homeCubit = context.read<HomeCubit>();
+      HomeCubit? homeCubit;
+      try { homeCubit = context.read<HomeCubit>(); } catch (_) {}
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) => BlocProvider.value(
-            value: homeCubit,
-            child: UserProfileScreen(userId: authorId),
-          ),
+        FadeSlidePageRoute(
+          page: homeCubit != null
+              ? BlocProvider.value(
+                  value: homeCubit,
+                  child: UserProfileScreen(userId: authorId),
+                )
+              : UserProfileScreen(userId: authorId),
         ),
       );
     }

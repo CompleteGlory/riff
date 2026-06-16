@@ -14,11 +14,26 @@ import 'package:riff/features/home/feed/Ui/post_detail_screen.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/fullscsreen_image.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/core/widgets/shimmer_loading.dart';
+import 'package:riff/features/home/follow/UI/follow_list_screen.dart';
 import 'package:riff/features/home/profile/logic/cubit/profile_cubit.dart';
+import 'package:video_player/video_player.dart';
 
 // ---------------------------------------------------------------------------
 // Genre assets + accent colors
 // ---------------------------------------------------------------------------
+
+const _instrumentImages = <String, String>{
+  'Guitar': 'assets/images/electric-guitar.png',
+  'Piano': 'assets/images/piano.png',
+  'Drums': 'assets/images/drum.png',
+  'Oud': 'assets/images/saz.png',
+  'Percussions': 'assets/images/dholak.png',
+  'Bass': 'assets/images/electric-guitar (1).png',
+  'Violin': 'assets/images/violin.png',
+  'Harp': 'assets/images/harp.png',
+  'Hang': 'assets/images/hang.png',
+  'Saxophone': 'assets/images/saxophone.png',
+};
 
 const _genreImages = <String, String>{
   'Rock': 'assets/images/rock-and-roll.png',
@@ -67,6 +82,8 @@ class UserProfile {
   final List<String>? instruments;
   final List<String>? genres;
   final String? profileImageUrl;
+  final int followersCount;
+  final int followingCount;
 
   const UserProfile({
     required this.id,
@@ -78,6 +95,8 @@ class UserProfile {
     this.instruments,
     this.genres,
     this.profileImageUrl,
+    this.followersCount = 0,
+    this.followingCount = 0,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -90,6 +109,8 @@ class UserProfile {
         instruments: (json['instruments'] as List?)?.cast<String>(),
         genres: (json['genres'] as List?)?.cast<String>(),
         profileImageUrl: json['profile_image_url'],
+        followersCount: json['followersCount'] as int? ?? 0,
+        followingCount: json['followingCount'] as int? ?? 0,
       );
 }
 
@@ -226,6 +247,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildHeader(),
               if (widget.profile.genres?.isNotEmpty ?? false)
                 _buildGenresSection(widget.profile.genres!),
+              if (widget.profile.instruments?.isNotEmpty ?? false)
+                _buildInstrumentsSection(widget.profile.instruments!),
               _buildPostsSection(),
             ],
           ),
@@ -383,9 +406,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           count: postsCount,
                           label: postsCount == 1 ? 'Post' : 'Posts'),
                       _VertDivider(),
-                      _CountCell(count: 0, label: 'Followers'),
+                      _CountCell(
+                        count: widget.profile.followersCount,
+                        label: 'Followers',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => FollowListScreen(
+                              userId: widget.profile.id,
+                              type: FollowListType.followers,
+                              profileName: widget.profile.username,
+                            ),
+                          ),
+                        ),
+                      ),
                       _VertDivider(),
-                      _CountCell(count: 0, label: 'Following'),
+                      _CountCell(
+                        count: widget.profile.followingCount,
+                        label: 'Following',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => FollowListScreen(
+                              userId: widget.profile.id,
+                              type: FollowListType.following,
+                              profileName: widget.profile.username,
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -401,28 +450,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildGenresSection(List<String> genres) {
     return SliverToBoxAdapter(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionSpacer(),
-          Padding(
-            padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 14.h),
-            child: Text('Genres', style: TextStyles.font18Semibold),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _SectionSpacer(),
+        Padding(
+          padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 10.h),
+          child: Text('Genres', style: TextStyles.font14semiBold),
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 16.h),
+          child: Wrap(
+            spacing: 8.w,
+            runSpacing: 8.h,
+            children: genres.map((g) => _InfoChip(
+              label: g,
+              imagePath: _genreImages[g],
+              accentColor: _genreAccents[g],
+              bgColor: _genreColors[g],
+            )).toList(),
           ),
-          SizedBox(
-            height: 130.h,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              itemCount: genres.length,
-              separatorBuilder: (_, __) => SizedBox(width: 10.w),
-              itemBuilder: (_, i) => _GenreCard(name: genres[i]),
-            ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _buildInstrumentsSection(List<String> instruments) {
+    return SliverToBoxAdapter(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _SectionSpacer(),
+        Padding(
+          padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 10.h),
+          child: Text('Instruments', style: TextStyles.font14semiBold),
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 16.h),
+          child: Wrap(
+            spacing: 8.w,
+            runSpacing: 8.h,
+            children: instruments.map((ins) => _InfoChip(
+              label: ins,
+              imagePath: _instrumentImages[ins],
+            )).toList(),
           ),
-          verticalSpace(20),
-        ],
-      ),
+        ),
+      ]),
     );
   }
 
@@ -513,63 +583,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 // ---------------------------------------------------------------------------
-// Genre card
+// Unified info chip — icon left, label right
 // ---------------------------------------------------------------------------
 
-class _GenreCard extends StatelessWidget {
-  const _GenreCard({required this.name});
-  final String name;
+class _InfoChip extends StatelessWidget {
+  final String label;
+  final String? imagePath;
+  final Color? accentColor;
+  final Color? bgColor;
+
+  const _InfoChip({
+    required this.label,
+    this.imagePath,
+    this.accentColor,
+    this.bgColor,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final imagePath = _genreImages[name];
-    final bg = _genreColors[name] ?? const Color(0xFFF5F5F5);
-    final accent = _genreAccents[name] ?? ColorManager.normalGrey;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = accentColor ?? (isDark ? const Color(0xFF999999) : const Color(0xFF555555));
+    final bg = isDark
+        ? const Color(0xFF1E1E1E)
+        : (bgColor ?? const Color(0xFFF5F5F5));
+    final border = isDark
+        ? accent.withOpacity(0.2)
+        : accent.withOpacity(0.25);
 
     return Container(
-      width: 100.w,
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 7.h),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: accent.withOpacity(0.25), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: accent.withOpacity(0.12),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: border, width: 1),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 52.r,
-            height: 52.r,
-            decoration: BoxDecoration(
-              color: ColorManager.white.withOpacity(0.7),
-              shape: BoxShape.circle,
-            ),
-            child: imagePath != null
-                ? Padding(
-                    padding: EdgeInsets.all(8.r),
-                    child: Image.asset(imagePath, fit: BoxFit.contain),
-                  )
-                : Icon(Icons.music_note_rounded, size: 28.r, color: accent),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Container(
+          width: 22.r,
+          height: 22.r,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
           ),
-          verticalSpace(10),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.w),
-            child: Text(
-              name,
-              style: TextStyles.font12semiBold.copyWith(color: accent),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+          child: imagePath != null
+              ? Padding(
+                  padding: EdgeInsets.all(3.r),
+                  child: Image.asset(imagePath!, fit: BoxFit.contain),
+                )
+              : Icon(Icons.music_note_rounded, size: 13.r, color: accent),
+        ),
+        SizedBox(width: 7.w),
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'GeneralSans',
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isDark ? const Color(0xFFCCCCCC) : accent,
           ),
-        ],
-      ),
+        ),
+      ]),
     );
   }
 }
@@ -578,10 +651,18 @@ class _GenreCard extends StatelessWidget {
 // Post thumbnail
 // ---------------------------------------------------------------------------
 
-class _PostThumbnail extends StatelessWidget {
+class _PostThumbnail extends StatefulWidget {
   final Post post;
   final VoidCallback onTap;
   const _PostThumbnail({required this.post, required this.onTap});
+
+  @override
+  State<_PostThumbnail> createState() => _PostThumbnailState();
+}
+
+class _PostThumbnailState extends State<_PostThumbnail> {
+  VideoPlayerController? _controller;
+  bool _thumbReady = false;
 
   bool _isVideo(String url) {
     final lower = url.toLowerCase();
@@ -596,21 +677,50 @@ class _PostThumbnail extends StatelessWidget {
       url.startsWith('http') ? url : '${ApiConstants.apiBASEURL}$url';
 
   @override
-  Widget build(BuildContext context) {
-    final media = (post.media ?? []).where((m) => m.isNotEmpty).toList();
-
-    // Shared posts have no own media — fall back to the original post's media
-    // so the thumbnail is never blank.
-    final isShared = post.originalPost != null && media.isEmpty;
+  void initState() {
+    super.initState();
+    final media = (widget.post.media ?? []).where((m) => m.isNotEmpty).toList();
     final effectiveMedia = media.isNotEmpty
         ? media
-        : (post.originalPost?.media ?? []).where((m) => m.isNotEmpty).toList();
+        : (widget.post.originalPost?.media ?? []).where((m) => m.isNotEmpty).toList();
     final firstMedia = effectiveMedia.isNotEmpty ? effectiveMedia.first : null;
+    if (firstMedia != null && _isVideo(firstMedia)) {
+      _loadThumb(_resolve(firstMedia));
+    }
+  }
 
-    // Text to show when there is no media at all.
-    final displayText = post.content?.isNotEmpty == true
-        ? post.content!
-        : (post.originalPost?.content ?? '');
+  Future<void> _loadThumb(String url) async {
+    final c = VideoPlayerController.networkUrl(Uri.parse(url));
+    try {
+      await c.initialize();
+      await c.seekTo(Duration.zero);
+      if (mounted) {
+        setState(() { _controller = c; _thumbReady = true; });
+      } else {
+        c.dispose();
+      }
+    } catch (_) {
+      c.dispose();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final media = (widget.post.media ?? []).where((m) => m.isNotEmpty).toList();
+    final isShared = widget.post.originalPost != null && media.isEmpty;
+    final effectiveMedia = media.isNotEmpty
+        ? media
+        : (widget.post.originalPost?.media ?? []).where((m) => m.isNotEmpty).toList();
+    final firstMedia = effectiveMedia.isNotEmpty ? effectiveMedia.first : null;
+    final displayText = widget.post.content?.isNotEmpty == true
+        ? widget.post.content!
+        : (widget.post.originalPost?.content ?? '');
 
     Widget thumbnail;
     if (firstMedia == null) {
@@ -641,6 +751,16 @@ class _PostThumbnail extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           Container(color: const Color(0xFF1A1A1A)),
+          if (_thumbReady && _controller != null)
+            FittedBox(
+              fit: BoxFit.cover,
+              clipBehavior: Clip.hardEdge,
+              child: SizedBox(
+                width: _controller!.value.size.width,
+                height: _controller!.value.size.height,
+                child: VideoPlayer(_controller!),
+              ),
+            ),
           Center(
             child: Icon(Icons.play_circle_outline, color: Colors.white70, size: 32.r),
           ),
@@ -661,14 +781,13 @@ class _PostThumbnail extends StatelessWidget {
     }
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Container(
         color: ColorManager.lighterGrey,
         child: Stack(
           fit: StackFit.expand,
           children: [
             thumbnail,
-            // Small share badge in the top-right corner.
             if (isShared)
               Positioned(
                 top: 4.r,
@@ -696,7 +815,8 @@ class _PostThumbnail extends StatelessWidget {
 class _CountCell extends StatelessWidget {
   final int count;
   final String label;
-  const _CountCell({required this.count, required this.label});
+  final VoidCallback? onTap;
+  const _CountCell({required this.count, required this.label, this.onTap});
 
   String _fmt(int n) {
     if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
@@ -706,7 +826,7 @@ class _CountCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final content = Padding(
       padding: EdgeInsets.symmetric(horizontal: 20.w),
       child: Column(
         children: [
@@ -717,6 +837,12 @@ class _CountCell extends StatelessWidget {
                   .copyWith(color: ColorManager.normalGrey)),
         ],
       ),
+    );
+    if (onTap == null) return content;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: content,
     );
   }
 }
@@ -734,8 +860,17 @@ class _VertDivider extends StatelessWidget {
 
 class _SectionSpacer extends StatelessWidget {
   @override
-  Widget build(BuildContext context) =>
-      Container(height: 8.h, color: const Color(0xFFF5F5F5));
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      Divider(
+        height: 1,
+        thickness: 0.5,
+        color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE8E8E8),
+      ),
+      SizedBox(height: 8.h),
+    ]);
+  }
 }
 
 class _SheetTile extends StatelessWidget {

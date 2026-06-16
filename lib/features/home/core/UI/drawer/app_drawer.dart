@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:riff/core/helpers/extenstions.dart';
+import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
-import 'package:riff/core/logic/cubit/theme_cubit.dart';
 import 'package:riff/core/routing/routes.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
+import 'package:riff/features/home/settings/UI/settings_screen.dart';
+import 'package:riff/features/home/core/UI/bug_report/bug_report_screen.dart';
+import 'package:riff/features/home/core/UI/feature_request/feature_request_screen.dart';
 
 class AppDrawer extends StatelessWidget {
-  const AppDrawer({super.key});
+  final bool isPrivate;
+  const AppDrawer({super.key, this.isPrivate = false});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg   = isDark ? const Color(0xFF1A1A1A) : ColorManager.white;
+    final bg = isDark ? const Color(0xFF1A1A1A) : ColorManager.white;
     final divider = isDark ? const Color(0xFF2A2A2A) : ColorManager.lighterGrey;
 
     return Drawer(
@@ -20,31 +23,66 @@ class AppDrawer extends StatelessWidget {
       surfaceTintColor: Colors.transparent,
       child: SafeArea(
         child: Column(children: [
-          // ── Brand header ──────────────────────────────────────────────────
           _DrawerHeader(isDark: isDark),
           Divider(height: 1, color: divider),
-
           const SizedBox(height: 8),
 
-          // ── Theme toggle ─────────────────────────────────────────────────
-          BlocBuilder<ThemeCubit, ThemeMode>(
-            builder: (ctx, themeMode) {
-              final cubit = ctx.read<ThemeCubit>();
-              // Resolve the effective brightness so the toggle reflects (and
-              // flips) correctly even while on system mode.
-              final effectiveIsDark =
-                  Theme.of(ctx).brightness == Brightness.dark;
-              return _DrawerToggle(
-                isDark: effectiveIsDark,
-                onToggle: () => cubit.toggleTheme(effectiveIsDark),
+          // Settings
+          _DrawerItem(
+            isDark: isDark,
+            icon: Icons.settings_outlined,
+            iconColor: const Color(0xFF5E5CE6),
+            title: 'Settings',
+            subtitle: 'Privacy, appearance',
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => SettingsScreen(initialIsPrivate: isPrivate),
+                ),
               );
             },
           ),
 
-          Divider(height: 1, color: divider),
+          Divider(height: 1, color: divider, indent: 16, endIndent: 16),
+          const SizedBox(height: 8),
+
+          // Bug Report
+          _DrawerItem(
+            isDark: isDark,
+            icon: Icons.bug_report_outlined,
+            iconColor: const Color(0xFFFF6B35),
+            title: 'Report a Bug',
+            subtitle: 'Help us fix issues',
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const BugReportScreen()),
+              );
+            },
+          ),
+
+          // Feature Request
+          _DrawerItem(
+            isDark: isDark,
+            icon: Icons.lightbulb_outline_rounded,
+            iconColor: ColorManager.accent,
+            title: 'Request a Feature',
+            subtitle: 'Share your ideas',
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const FeatureRequestScreen()),
+              );
+            },
+          ),
+
+          Divider(height: 1, color: divider, indent: 16, endIndent: 16),
           const Spacer(),
 
-          // ── Logout ────────────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             child: _LogoutButton(),
@@ -67,63 +105,42 @@ class _DrawerHeader extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF141414) : ColorManager.black,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Riff wordmark
-          Container(
-            width: 48, height: 48,
-            decoration: BoxDecoration(
-              color: ColorManager.accent,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Center(
-              child: Text('R',
-                style: TextStyle(
-                  fontFamily: 'GeneralSans',
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: ColorManager.black,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text('Riff',
-            style: TextStyle(
-              fontFamily: 'GeneralSans',
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: ColorManager.white,
-            ),
-          ),
-          const SizedBox(height: 2),
-          const Text('Your music social feed',
-            style: TextStyle(
-              fontFamily: 'GeneralSans',
-              fontSize: 13,
-              color: Color(0xFFAAAAAA),
-            ),
-          ),
-        ],
-      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('Riff',
+          style: TextStyle(fontFamily: 'GeneralSans', fontSize: 22,
+              fontWeight: FontWeight.w800, color: ColorManager.white)),
+        const SizedBox(height: 2),
+        const Text('Your music social feed',
+          style: TextStyle(fontFamily: 'GeneralSans', fontSize: 13,
+              color: Color(0xFFAAAAAA))),
+      ]),
     );
   }
 }
 
-class _DrawerToggle extends StatelessWidget {
+class _DrawerItem extends StatelessWidget {
   final bool isDark;
-  final VoidCallback onToggle;
-  const _DrawerToggle({required this.isDark, required this.onToggle});
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _DrawerItem({
+    required this.isDark,
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? ColorManager.white : ColorManager.black;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: GestureDetector(
-        onTap: onToggle,
+        onTap: onTap,
         behavior: HitTestBehavior.opaque,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -135,65 +152,25 @@ class _DrawerToggle extends StatelessWidget {
             Container(
               width: 36, height: 36,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF333333) : ColorManager.lighterGrey,
+                color: iconColor.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                size: 18,
-                color: isDark ? ColorManager.accent : const Color(0xFF666666),
-              ),
+              child: Icon(icon, size: 18, color: iconColor),
             ),
             const SizedBox(width: 14),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(isDark ? 'Dark Mode' : 'Light Mode',
-                    style: TextStyle(
-                      fontFamily: 'GeneralSans',
-                      fontSize: 15,
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(title,
+                  style: TextStyle(fontFamily: 'GeneralSans', fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: textColor,
-                    ),
-                  ),
-                  Text(isDark ? 'Tap to switch to light' : 'Tap to switch to dark',
-                    style: const TextStyle(
-                      fontFamily: 'GeneralSans',
-                      fontSize: 12,
-                      color: Color(0xFF888888),
-                    ),
-                  ),
-                ],
-              ),
+                      color: isDark ? ColorManager.white : ColorManager.black)),
+                Text(subtitle,
+                  style: const TextStyle(fontFamily: 'GeneralSans',
+                      fontSize: 12, color: Color(0xFF888888))),
+              ]),
             ),
-            // Toggle pill
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeInOut,
-              width: 48, height: 28,
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                color: isDark ? ColorManager.accent : const Color(0xFFCCCCCC),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: AnimatedAlign(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeInOut,
-                alignment: isDark ? Alignment.centerRight : Alignment.centerLeft,
-                child: Container(
-                  width: 22, height: 22,
-                  decoration: BoxDecoration(
-                    color: isDark ? ColorManager.black : ColorManager.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.15),
-                          blurRadius: 4, offset: const Offset(0, 1)),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            Icon(Icons.arrow_forward_ios_rounded, size: 14,
+                color: isDark ? const Color(0xFF555555) : const Color(0xFFBBBBBB)),
           ]),
         ),
       ),
@@ -205,44 +182,40 @@ class _LogoutButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return GestureDetector(
-      onTap: () {
-        Navigator.pop(context); // close drawer first
+      onTap: () async {
+        Navigator.pop(context);
         context.pushReplacementNamed(Routes.login);
-        SharedPrefHelper.clearAllData();
+        // Clear user session data but preserve theme preference so the
+        // user's chosen light/dark mode survives logout.
+        await SharedPrefHelper.removeData(SharedPrefKeys.userToken);
+        await SharedPrefHelper.removeData(SharedPrefKeys.refreshToken);
+        await SharedPrefHelper.removeData(SharedPrefKeys.userId);
+        await SharedPrefHelper.removeData(SharedPrefKeys.userProfileImage);
+        await SharedPrefHelper.removeData(SharedPrefKeys.firstName);
+        await SharedPrefHelper.removeData(SharedPrefKeys.lastName);
       },
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: isDark
-              ? const Color(0xFF2A1515)
-              : const Color(0xFFFFF0F0),
+          color: isDark ? const Color(0xFF2A1515) : const Color(0xFFFFF0F0),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: ColorManager.red.withValues(alpha: 0.25),
-          ),
+          border: Border.all(color: ColorManager.red.withValues(alpha: 0.25)),
         ),
         child: Row(children: [
           Container(
             width: 36, height: 36,
             decoration: BoxDecoration(
-              color: ColorManager.red.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
+                color: ColorManager.red.withValues(alpha: 0.12),
+                shape: BoxShape.circle),
             child: const Icon(Icons.logout_rounded,
                 size: 18, color: ColorManager.red),
           ),
           const SizedBox(width: 14),
           const Text('Log out',
-            style: TextStyle(
-              fontFamily: 'GeneralSans',
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: ColorManager.red,
-            ),
-          ),
+            style: TextStyle(fontFamily: 'GeneralSans', fontSize: 15,
+                fontWeight: FontWeight.w600, color: ColorManager.red)),
           const Spacer(),
           Icon(Icons.arrow_forward_ios_rounded,
               size: 14, color: ColorManager.red.withValues(alpha: 0.6)),

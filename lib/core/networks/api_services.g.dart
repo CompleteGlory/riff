@@ -12,7 +12,7 @@ part of 'api_services.dart';
 
 class _ApiService implements ApiService {
   _ApiService(this._dio, {this.baseUrl, this.errorLogger}) {
-    baseUrl ??= 'http://192.168.1.165:3000';
+    baseUrl ??= 'http://192.168.1.4:3000';
   }
 
   final Dio _dio;

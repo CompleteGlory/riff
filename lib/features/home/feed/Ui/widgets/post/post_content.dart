@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/helpers/spacing.dart';
 import 'package:riff/core/networks/api_constants.dart';
@@ -120,6 +121,7 @@ class PostContent extends StatelessWidget {
 
     if (_isVideo(raw)) {
       return _VideoCell(
+        url: resolved,
         height: height,
         width: width,
         onTap: onTap,
@@ -288,11 +290,12 @@ class _NetImg extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Video thumbnail tile (dark bg + play icon, navigates to Reels)
+// Video thumbnail tile — shows first frame of video as background
 // ---------------------------------------------------------------------------
 
-class _VideoCell extends StatelessWidget {
+class _VideoCell extends StatefulWidget {
   const _VideoCell({
+    required this.url,
     required this.height,
     required this.onTap,
     this.width,
@@ -300,6 +303,7 @@ class _VideoCell extends StatelessWidget {
     this.bottomGap = false,
   });
 
+  final String url;
   final double height;
   final double? width;
   final VoidCallback onTap;
@@ -307,34 +311,79 @@ class _VideoCell extends StatelessWidget {
   final bool bottomGap;
 
   @override
+  State<_VideoCell> createState() => _VideoCellState();
+}
+
+class _VideoCellState extends State<_VideoCell> {
+  VideoPlayerController? _controller;
+  bool _thumbReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadThumbnail();
+  }
+
+  Future<void> _loadThumbnail() async {
+    final c = VideoPlayerController.networkUrl(Uri.parse(widget.url));
+    try {
+      await c.initialize();
+      await c.seekTo(Duration.zero); // park on first frame
+      if (mounted) {
+        setState(() {
+          _controller = c;
+          _thumbReady = true;
+        });
+      } else {
+        c.dispose();
+      }
+    } catch (_) {
+      c.dispose();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Container(
-        width: width,
-        height: height,
+        width: widget.width,
+        height: widget.height,
         margin: EdgeInsets.only(
-          right: rightGap ? 2.w : 0,
-          bottom: bottomGap ? 2.h : 0,
+          right: widget.rightGap ? 2.w : 0,
+          bottom: widget.bottomGap ? 2.h : 0,
         ),
         color: const Color(0xFF1A1A1A),
         child: Stack(
-          alignment: Alignment.center,
+          fit: StackFit.expand,
           children: [
-            Icon(Icons.play_circle_outline, color: Colors.white70, size: 40.r),
-            Positioned(
-              bottom: 6.h,
-              left: 8.w,
+            // First-frame thumbnail
+            if (_thumbReady && _controller != null)
+              FittedBox(
+                fit: BoxFit.cover,
+                clipBehavior: Clip.hardEdge,
+                child: SizedBox(
+                  width: _controller!.value.size.width,
+                  height: _controller!.value.size.height,
+                  child: VideoPlayer(_controller!),
+                ),
+              ),
+            // Play icon overlay
+            Center(
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(4.r),
+                decoration: const BoxDecoration(
+                  color: Colors.black38,
+                  shape: BoxShape.circle,
                 ),
-                child: Text(
-                  'Video',
-                  style: TextStyle(color: Colors.white, fontSize: 10.sp),
-                ),
+                padding: EdgeInsets.all(6.r),
+                child: Icon(Icons.play_arrow_rounded,
+                    color: Colors.white, size: 32.r),
               ),
             ),
           ],

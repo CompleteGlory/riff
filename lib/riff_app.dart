@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/logic/cubit/theme_cubit.dart';
 import 'package:riff/core/routing/app_router.dart';
 import 'package:riff/core/routing/routes.dart';
+import 'package:riff/core/services/push_notification_service.dart';
 import 'package:riff/core/themes/app_theme.dart';
 
 class RiffApp extends StatelessWidget {
@@ -28,6 +29,7 @@ class RiffApp extends StatelessWidget {
             builder: (_, __) {
               return MaterialApp(
                 title: 'Riff',
+                navigatorKey: PushNotificationService.navigatorKey,
                 themeMode: themeMode,
                 theme: lightTheme(),
                 darkTheme: darkTheme(),
