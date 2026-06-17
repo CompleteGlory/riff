@@ -20,7 +20,6 @@ import 'package:riff/features/home/feed/data/repos/feed_repo.dart';
 import 'package:riff/features/home/feed/data/repos/like_repo.dart';
 import 'package:riff/features/home/feed/data/repos/comment_repo.dart';
 import 'package:riff/features/home/feed/logic/cubit/feed/feed_cubit.dart';
-import 'package:riff/features/home/feed/logic/cubit/likes/like_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/posts/post_cubit.dart';
 import 'package:riff/features/home/follow/data/repos/follow_repo.dart';
@@ -40,6 +39,8 @@ import 'package:riff/features/home/search/logic/search_cubit.dart';
 import 'package:riff/features/auth/phone_verify/data/repos/phone_verify_repo.dart';
 import 'package:riff/features/auth/phone_verify/logic/cubit/phone_verify_cubit.dart';
 import 'package:riff/features/auth/new_user_onboarding/data/repos/suggested_users_repo.dart';
+import 'package:riff/features/home/core/data/repos/feedback_repo.dart';
+import 'package:riff/features/home/feed/data/repos/report_repo.dart';
 
 final getIt = GetIt.instance;
 
@@ -70,17 +71,18 @@ Future<void> setUpGetIt() async {
   getIt.registerLazySingleton<FeedRepo>(() => FeedRepo(getIt()));
   getIt.registerFactory<FeedCubit>(() => FeedCubit(getIt()));
 
-  // likes
+  // likes (repo only — LikeCubit removed; PostCubit consumes LikeRepo directly)
   getIt.registerLazySingleton<LikeRepo>(() => LikeRepo(getIt()));
-  getIt.registerFactory<LikeCubit>(() => LikeCubit(getIt()));
 
   // comments
   getIt.registerLazySingleton<CommentRepo>(() => CommentRepo(getIt()));
   getIt.registerFactory<CommentCubit>(() => CommentCubit(getIt()));
 
-  // post operations
+  // post operations — uses LikeRepo (singleton) directly; no FeedCubit dependency
+  // so each getIt<PostCubit>() call is independent and doesn't accidentally
+  // operate on a stale factory-created FeedCubit instance.
   getIt.registerFactory<PostCubit>(
-      () => PostCubit(getIt<LikeCubit>(), getIt<FeedCubit>(), getIt<FeedRepo>()));
+      () => PostCubit(getIt<LikeRepo>(), getIt<FeedRepo>()));
 
   // profile (own)
   getIt.registerLazySingleton<ProfileRepo>(() => ProfileRepo(getIt()));
@@ -130,4 +132,10 @@ Future<void> setUpGetIt() async {
 
   // onboarding — suggested users
   getIt.registerLazySingleton<SuggestedUsersRepo>(() => SuggestedUsersRepo(dio));
+
+  // feedback (bug reports + feature requests)
+  getIt.registerLazySingleton<FeedbackRepo>(() => FeedbackRepo(dio));
+
+  // content reporting (posts + comments)
+  getIt.registerLazySingleton<ReportRepo>(() => ReportRepo(dio));
 }

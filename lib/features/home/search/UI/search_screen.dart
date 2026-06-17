@@ -819,10 +819,49 @@ class _PostThumbnailState extends State<_PostThumbnail> {
       );
     }
 
+    final viewsCount = widget.post.viewsCount ?? 0;
+
     return GestureDetector(
       onTap: widget.onTap,
-      child: Stack(fit: StackFit.expand, children: [thumbnail]),
+      child: Stack(fit: StackFit.expand, children: [
+        thumbnail,
+        if (viewsCount > 0)
+          Positioned(
+            left: 4,
+            bottom: 4,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.visibility_outlined,
+                      size: 9, color: Colors.white),
+                  const SizedBox(width: 2),
+                  Text(
+                    _fmtCount(viewsCount),
+                    style: const TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      fontFamily: 'GeneralSans',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ]),
     );
+  }
+
+  String _fmtCount(int n) {
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return '$n';
   }
 }
 

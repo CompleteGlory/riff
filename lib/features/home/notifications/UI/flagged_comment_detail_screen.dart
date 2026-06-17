@@ -1,13 +1,15 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/di/dependency_injection.dart';
 import 'package:riff/core/helpers/time_ago.dart';
 import 'package:riff/core/networks/api_constants.dart';
+import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
+import 'package:riff/features/home/feed/data/repos/feed_repo.dart';
+import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_item.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 
@@ -47,41 +49,40 @@ class _FlaggedCommentDetailScreenState
   }
 
   Future<void> _fetch() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    setState(() { _loading = true; _error = null; });
 
     try {
-      final dio = getIt<Dio>();
-
       if (widget.commentId != null) {
-        // Fetch comment (includes post + post.author via relations)
-        final res = await dio.get('/api/comments/${widget.commentId}');
-        final data = res.data as Map<String, dynamic>;
-        setState(() => _comment = data);
+        // Fetch comment via CommentCubit
+        final commentResult = await getIt<CommentCubit>()
+            .getComment(widget.commentId!);
+        if (!mounted) return;
+        commentResult.when(
+          success: (data) {
+            setState(() => _comment = data);
+            // Extract post from comment response if available
+            final postData = data['post'] as Map<String, dynamic>?;
+            if (postData != null) {
+              setState(() => _post = Post.fromJson(postData));
+            }
+          },
+          failure: (err) => setState(() => _error = err.message ?? 'Failed to load comment'),
+        );
 
-        // Extract post from comment response if available
-        final postData = data['post'] as Map<String, dynamic>?;
-        if (postData != null) {
-          setState(() => _post = Post.fromJson(postData));
-        } else if (widget.postId != null) {
-          // Fallback: fetch post separately
-          final postRes = await dio.get('/api/posts/${widget.postId}');
-          if (postRes.data is Map<String, dynamic>) {
-            setState(() => _post = Post.fromJson(postRes.data));
+        // If post still null, fetch it separately via FeedRepo
+        if (_post == null && widget.postId != null && _error == null) {
+          final postResult =
+              await getIt<FeedRepo>().getPostById(widget.postId!);
+          if (mounted) {
+            postResult.whenOrNull(
+                success: (post) => setState(() => _post = post));
           }
         }
       }
-    } on DioException catch (e) {
-      final msg = (e.response?.data?['message'] as String?) ??
-          e.message ??
-          'Failed to load comment';
-      setState(() => _error = msg);
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = e.toString());
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 

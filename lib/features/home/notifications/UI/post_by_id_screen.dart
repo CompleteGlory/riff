@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,6 +8,7 @@ import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 import 'package:riff/features/home/feed/data/models/comment.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
+import 'package:riff/features/home/feed/data/repos/feed_repo.dart';
 import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
 import 'package:riff/features/home/feed/Ui/widgets/comments/comment_sheet.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_item.dart';
@@ -43,45 +43,24 @@ class _PostByIdScreenState extends State<PostByIdScreen> {
   }
 
   Future<void> _fetchPost() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final dio = getIt<Dio>();
-      final resp = await dio.get('/api/posts/${widget.postId}');
-      final data = resp.data;
-      if (data is Map<String, dynamic>) {
-        setState(() {
-          _post = Post.fromJson(data);
-          _loading = false;
-        });
+    setState(() { _loading = true; _error = null; });
+    final result = await getIt<FeedRepo>().getPostById(widget.postId);
+    if (!mounted) return;
+    result.when(
+      success: (post) {
+        setState(() { _post = post; _loading = false; });
         if (widget.openComments && !_commentsOpened) {
           _commentsOpened = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) _openComments();
           });
         }
-      } else {
-        setState(() {
-          _error = 'Unexpected response format';
-          _loading = false;
-        });
-      }
-    } on DioException catch (e) {
-      final msg = (e.response?.data?['message'] as String?) ??
-          e.message ??
-          'Failed to load post';
-      setState(() {
-        _error = msg;
+      },
+      failure: (err) => setState(() {
+        _error = err.message ?? 'Failed to load post';
         _loading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _loading = false;
-      });
-    }
+      }),
+    );
   }
 
   Future<void> _openComments() async {

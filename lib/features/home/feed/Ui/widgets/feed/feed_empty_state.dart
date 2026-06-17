@@ -9,10 +9,9 @@ import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/auth/new_user_onboarding/data/repos/suggested_users_repo.dart';
-import 'package:riff/features/home/follow/data/repos/follow_repo.dart';
+import 'package:riff/features/home/follow/logic/cubit/follow_cubit.dart';
 import 'package:riff/features/home/search/data/models/search_user.dart';
 import 'package:riff/features/home/user_profile/ui/user_profile_screen.dart';
-import 'package:dio/dio.dart';
 import 'package:video_player/video_player.dart';
 
 class FeedEmptyState extends StatefulWidget {
@@ -25,8 +24,6 @@ class FeedEmptyState extends StatefulWidget {
 class _FeedEmptyStateState extends State<FeedEmptyState>
     with TickerProviderStateMixin {
   final SuggestedUsersRepo _suggestedRepo = getIt<SuggestedUsersRepo>();
-  final FollowRepo _followRepo = getIt<FollowRepo>();
-  final Dio _dio = getIt<Dio>();
 
   List<SearchUser> _suggested = [];
   List<SearchUser> _contacts = [];
@@ -93,13 +90,11 @@ class _FeedEmptyStateState extends State<FeedEmptyState>
     }
 
     try {
-      final resp = await _dio.post(
-        '${ApiConstants.apiBASEURL}${ApiConstants.findContacts}',
-        data: {'phone_numbers': phones},
+      final result = await _suggestedRepo.findContacts(phones);
+      final list = result.when(
+        success: (users) => users,
+        failure: (_) => <SearchUser>[],
       );
-      final list = (resp.data as List? ?? [])
-          .map((e) => SearchUser.fromJson(e as Map<String, dynamic>))
-          .toList();
       setState(() {
         _contacts = list;
         _contactsSynced = true;
@@ -116,14 +111,15 @@ class _FeedEmptyStateState extends State<FeedEmptyState>
   Future<void> _toggleFollow(SearchUser user) async {
     if (_inProgress[user.id] == true) return;
     setState(() => _inProgress[user.id] = true);
+    final followCubit = getIt<FollowCubit>();
     if (_followed.contains(user.id)) {
-      await _followRepo.unfollowUser(user.id);
+      await followCubit.unfollow(user.id);
       _followed.remove(user.id);
     } else {
-      await _followRepo.followUser(user.id);
+      await followCubit.follow(user.id);
       _followed.add(user.id);
     }
-    setState(() => _inProgress[user.id] = false);
+    if (mounted) setState(() => _inProgress[user.id] = false);
   }
 
   String _resolveUrl(String url) =>

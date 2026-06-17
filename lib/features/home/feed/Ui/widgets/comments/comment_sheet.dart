@@ -17,6 +17,8 @@ import 'package:riff/core/networks/api_constants.dart';
 import 'package:riff/core/routing/animated_page_route.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 import 'package:riff/features/home/feed/Ui/screens/report_comment_screen.dart';
+import 'package:riff/features/home/feed/data/repos/report_repo.dart';
+import 'package:riff/features/home/feed/logic/cubit/report/report_cubit.dart';
 import 'package:riff/features/home/feed/data/models/author.dart';
 import 'package:riff/features/home/feed/data/models/comment.dart';
 import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
@@ -332,9 +334,12 @@ class _CommentsSheetState extends State<CommentsSheet> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => ReportCommentScreen(
-                        commentId: comment.id.toString(),
-                        commentPreview: comment.content ?? '',
+                      builder: (_) => BlocProvider(
+                        create: (_) => ReportCubit(getIt<ReportRepo>()),
+                        child: ReportCommentScreen(
+                          commentId: comment.id.toString(),
+                          commentPreview: comment.content ?? '',
+                        ),
                       ),
                     ),
                   );

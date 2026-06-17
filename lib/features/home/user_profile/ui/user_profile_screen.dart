@@ -1098,6 +1098,8 @@ class _PostThumbnailState extends State<_PostThumbnail> {
       );
     }
 
+    final viewsCount = widget.post.viewsCount ?? 0;
+
     return GestureDetector(
       onTap: widget.onTap,
       child: Stack(fit: StackFit.expand, children: [
@@ -1114,7 +1116,42 @@ class _PostThumbnailState extends State<_PostThumbnail> {
               child: Icon(Icons.repeat, size: 10.r, color: Colors.white),
             ),
           ),
+        if (viewsCount > 0)
+          Positioned(
+            left: 4.r,
+            bottom: 4.r,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(4.r),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.visibility_outlined,
+                      size: 9.r, color: Colors.white),
+                  SizedBox(width: 2.w),
+                  Text(
+                    _fmtCount(viewsCount),
+                    style: const TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      fontFamily: 'GeneralSans',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
       ]),
     );
+  }
+
+  String _fmtCount(int n) {
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return '$n';
   }
 }

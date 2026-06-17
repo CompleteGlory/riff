@@ -70,6 +70,9 @@ abstract class ApiService {
     @Body() CreatePostRequestModel updatePostRequestModel,
   );
 
+  @GET(ApiConstants.updateDeletePost)
+  Future<HttpResponse<dynamic>> getPostById(@Path("id") int postId);
+
   @DELETE(ApiConstants.updateDeletePost)
   Future<HttpResponse<void>> deletePost(@Path("id") String postId);
 
@@ -96,6 +99,9 @@ abstract class ApiService {
   @DELETE(ApiConstants.unlikeComment)
   Future<HttpResponse<dynamic>> unlikeComment(@Path("id") String commentId);
 
+  @GET(ApiConstants.comments)
+  Future<HttpResponse<dynamic>> getCommentById(@Path("id") int commentId);
+
   @PATCH(ApiConstants.comments)
   Future<HttpResponse<dynamic>> updateComment(
     @Path("id") String commentId,
@@ -117,4 +123,10 @@ abstract class ApiService {
     @Path("id") String postId,
     @Body() Map<String, dynamic> body,
   );
+
+  @POST(ApiConstants.recordView)
+  Future<HttpResponse<void>> recordView(@Path("id") int postId);
+
+  @GET(ApiConstants.trendingPost)
+  Future<HttpResponse<dynamic>> getTrendingPost();
 }

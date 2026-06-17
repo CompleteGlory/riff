@@ -2,19 +2,20 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/feed/data/repos/feed_repo.dart';
+import 'package:riff/features/home/feed/data/repos/like_repo.dart';
 import 'package:riff/features/home/feed/logic/cubit/posts/post_state.dart';
-import 'package:riff/features/home/feed/logic/cubit/likes/like_cubit.dart';
-import 'package:riff/features/home/feed/logic/cubit/feed/feed_cubit.dart';
 
 class PostCubit extends Cubit<PostState> {
-  final LikeCubit _likeCubit;
-  final FeedCubit _feedCubit;
+  final LikeRepo _likeRepo;
   final FeedRepo _feedRepo;
 
-  PostCubit(this._likeCubit, this._feedCubit, this._feedRepo)
-      : super(const PostState.initial());
+  PostCubit(this._likeRepo, this._feedRepo) : super(const PostState.initial());
 
-  /// Toggle like/unlike for a post
+  /// Toggle like/unlike for a post.
+  ///
+  /// Optimistic update is applied immediately via [onOptimisticUpdate].
+  /// On success the caller's UI state is already correct — no feed-cubit
+  /// cross-talk needed. On failure [onRevert] restores the previous state.
   Future<void> toggleLike(
     Post post, {
     required Function(bool isLiked, int likeCount) onOptimisticUpdate,
@@ -27,22 +28,16 @@ class PostCubit extends Cubit<PostState> {
     final newLikeCount = currentLikeCount + (currentIsLiked ? -1 : 1);
     final newIsLiked = !currentIsLiked;
 
-    // Optimistic update
     onOptimisticUpdate(newIsLiked, newLikeCount);
 
     try {
-      ApiResult<bool> result;
-      if (newIsLiked) {
-        result = await _likeCubit.likePost(postId);
-      } else {
-        result = await _likeCubit.unlikePost(postId);
-      }
+      final ApiResult<bool> result = newIsLiked
+          ? await _likeRepo.likePost(postId)
+          : await _likeRepo.unlikePost(postId);
 
       result.when(
         success: (success) {
           if (success) {
-            // Update feed locally
-            _feedCubit.updatePostLikeLocally(postId, newIsLiked, newLikeCount);
             emit(PostState.likeSuccess(postId, newIsLiked, newLikeCount));
           } else {
             onRevert();

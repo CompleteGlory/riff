@@ -129,7 +129,6 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   late final ProfileCubit _cubit;
   final _picker = ImagePicker();
-  String? _uploadedImageUrl;
 
   @override
   void initState() {
@@ -144,8 +143,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  String? get _effectiveImageUrl {
-    final raw = _uploadedImageUrl ?? widget.profile.profileImageUrl;
+  /// Resolve the effective avatar URL from a cubit state, falling back to
+  /// the profile passed into the widget. No local [setState] needed.
+  String? _effectiveImageUrl(ProfileState state) {
+    final raw = (state is ProfileImageUploadSuccess)
+        ? state.imageUrl
+        : widget.profile.profileImageUrl;
     if (raw == null || raw.isEmpty) return null;
     return raw.startsWith('http') ? raw : '${ApiConstants.apiBASEURL}$raw';
   }
@@ -208,7 +211,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: BlocListener<ProfileCubit, ProfileState>(
         listener: (context, state) {
           if (state is ProfileImageUploadSuccess) {
-            setState(() => _uploadedImageUrl = state.imageUrl);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 behavior: SnackBarBehavior.floating,
@@ -260,7 +262,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ── Header ──────────────────────────────────────────────────────────────────
 
   Widget _buildHeader() {
-    final imageUrl = _effectiveImageUrl;
+    // imageUrl is derived inside the BlocBuilder so it reacts to upload state
     final initials = widget.profile.fullName.trim().isEmpty
         ? '?'
         : widget.profile.fullName
@@ -285,6 +287,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   s is ProfileImageUploadFailure,
               builder: (context, state) {
                 final isUploading = state is ProfileImageUploading;
+                final imageUrl = _effectiveImageUrl(state);
                 return Stack(
                   children: [
                     GestureDetector(
@@ -780,6 +783,8 @@ class _PostThumbnailState extends State<_PostThumbnail> {
       );
     }
 
+    final viewsCount = widget.post.viewsCount ?? 0;
+
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
@@ -801,10 +806,45 @@ class _PostThumbnailState extends State<_PostThumbnail> {
                   child: Icon(Icons.repeat, size: 11.r, color: Colors.white),
                 ),
               ),
+            if (viewsCount > 0)
+              Positioned(
+                left: 4.r,
+                bottom: 4.r,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.visibility_outlined,
+                          size: 9.r, color: Colors.white),
+                      SizedBox(width: 2.w),
+                      Text(
+                        _fmtCount(viewsCount),
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          fontFamily: 'GeneralSans',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
+  }
+
+  String _fmtCount(int n) {
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return '$n';
   }
 }
 

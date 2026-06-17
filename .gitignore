@@ -18,10 +18,8 @@ migrate_working_dir/
 *.iws
 .idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# VS Code
+.vscode/
 
 # Flutter/Dart/Pub related
 **/doc/api/
@@ -43,3 +41,32 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Android local config (contains local SDK paths — not for version control)
+android/local.properties
+android/key.properties
+
+# Android signing keystores
+*.jks
+*.keystore
+
+# iOS ephemeral generated files
+ios/Flutter/ephemeral/
+
+# Test coverage
+coverage/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Dart generated files (only ignore if using build_runner; remove these lines
+# if you manually maintain .g.dart/.freezed.dart files instead)
+*.g.dart
+*.freezed.dart
+
+# Firebase config files (keep commented if you want them tracked for CI,
+# or uncomment to keep them out of version control)
+# **/google-services.json
+# **/GoogleService-Info.plist

@@ -23,6 +23,7 @@ import 'package:riff/features/home/feed/Ui/widgets/feed/lottie_loader.dart';
 import 'package:riff/features/home/reels/ui/reels_screen.dart';
 import 'package:riff/features/home/feed/logic/cubit/posts/post_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
+import 'package:riff/features/home/feed/logic/view_tracker.dart';
 
 class PostItem extends StatefulWidget {
   final Post post;
@@ -40,6 +41,7 @@ class _PostItemState extends State<PostItem>
   late int likeCount;
   late int commentCount;
   late int shareCount;
+  late int viewsCount;
   bool showHeart = false;
   late AnimationController _heartController;
   late Animation<double> _scaleAnimation;
@@ -51,6 +53,9 @@ class _PostItemState extends State<PostItem>
     likeCount = int.tryParse(widget.post.likesCount ?? '0') ?? 0;
     commentCount = int.tryParse(widget.post.commentsCount ?? '0') ?? 0;
     shareCount = widget.post.sharesCount ?? 0;
+    viewsCount = widget.post.viewsCount ?? 0;
+    // Record view when post enters the feed (fire-and-forget, deduplicated)
+    ViewTracker.instance.track(widget.post.id);
     _heartController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
@@ -301,6 +306,7 @@ class _PostItemState extends State<PostItem>
               likeCount: likeCount,
               commentCount: commentCount,
               shareCount: shareCount,
+              viewsCount: viewsCount,
               onLikeTap: _toggleLike,
               onCommentTap: () => _openComments(widget.post.id.toString()),
               onShareTap: _sharePost,
