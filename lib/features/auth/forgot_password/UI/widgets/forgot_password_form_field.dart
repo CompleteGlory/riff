@@ -5,6 +5,7 @@ import 'package:riff/core/helpers/spacing.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/widgets/tff.dart';
 import 'package:riff/features/auth/forgot_password/logic/cubit/forgot_password_cubit.dart';
+import 'package:riff/generated/l10n.dart';
 
 class ForgotPasswordFormField extends StatelessWidget {
   const ForgotPasswordFormField({super.key});
@@ -12,13 +13,14 @@ class ForgotPasswordFormField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final forgotPasswordCubit = context.read<ForgotPasswordCubit>();
+    final s = S.of(context);
 
     return Form(
       key: forgotPasswordCubit.formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Email", style: TextStyles.font15semiBold),
+          Text(s.emailLabel, style: TextStyles.font15semiBold),
           verticalSpace(4),
           AppTextField(
             controller: forgotPasswordCubit.mailController,
@@ -28,10 +30,10 @@ class ForgotPasswordFormField extends StatelessWidget {
               if (value == null ||
                   value.isEmpty ||
                   !AppRegex.isEmailValid(value)) {
-                return 'Please enter a valid email address';
+                return s.pleaseEnterValidEmail;
               }
             },
-            hintText: "Enter your email address",
+            hintText: s.enterYourEmailAddress,
           ),
           
         ],

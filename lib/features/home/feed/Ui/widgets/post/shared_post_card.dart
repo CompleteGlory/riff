@@ -5,6 +5,7 @@ import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/helpers/spacing.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
+import 'package:riff/generated/l10n.dart';
 
 /// Quoted-card widget that renders the original post inside a share post.
 class SharedPostCard extends StatelessWidget {
@@ -29,6 +30,7 @@ class SharedPostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final author = originalPost.author;
     final media =
         (originalPost.media ?? []).where((m) => m.isNotEmpty).toList();
@@ -74,7 +76,7 @@ class SharedPostCard extends StatelessWidget {
                 horizontalSpace(8),
                 Flexible(
                   child: Text(
-                    author?.fullName ?? author?.username ?? 'Unknown',
+                    author?.fullName ?? author?.username ?? s.unknown,
                     style: TextStyles.font13SemiBold,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -126,7 +128,7 @@ class SharedPostCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(4.r),
                               ),
                               child: Text(
-                                'Video',
+                                s.videoLabel,
                                 style: TextStyle(
                                     color: Colors.white, fontSize: 10.sp),
                               ),

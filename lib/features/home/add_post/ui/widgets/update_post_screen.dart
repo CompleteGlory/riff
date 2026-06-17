@@ -12,6 +12,7 @@ import 'package:riff/core/widgets/button.dart';
 import 'package:riff/features/home/add_post/logic/cubit/update_post_cubit.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/shared_post_card.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
+import 'package:riff/generated/l10n.dart';
 
 const _maxMedia = 10;
 
@@ -97,7 +98,7 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
     if (_totalCount >= _maxMedia) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         backgroundColor: ColorManager.primaryBlack,
-        content: Text('Maximum $_maxMedia files allowed.',
+        content: Text(S.of(context).maximumFilesAllowed(_maxMedia),
             style: TextStyles.font14Medium.copyWith(color: ColorManager.white)),
       ));
       return;
@@ -159,7 +160,7 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
     if (content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         backgroundColor: ColorManager.primaryBlack,
-        content: Text('Please enter content before updating.',
+        content: Text(S.of(context).pleaseEnterContentBeforeUpdating,
             style: TextStyles.font14Medium
                 .copyWith(color: ColorManager.lighterGrey)),
       ));
@@ -183,7 +184,7 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit Post', style: TextStyles.font28Bold),
+        title: Text(S.of(context).editPostOption, style: TextStyles.font28Bold),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -193,7 +194,7 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
           children: [
             // Caption / content label for shared posts
             if (_isShare) ...[
-              Text('Your caption', style: TextStyles.font15semiBold),
+              Text(S.of(context).yourCaption, style: TextStyles.font15semiBold),
               verticalSpace(8),
             ],
 
@@ -233,7 +234,7 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
             // Shared-post preview (read-only)
             if (_isShare) ...[
               verticalSpace(16),
-              Text('Shared post', style: TextStyles.font15semiBold),
+              Text(S.of(context).sharedPost, style: TextStyles.font15semiBold),
               verticalSpace(4),
               // SharedPostCard adds its own horizontal margin; cancel it so it
               // lines up with the rest of the form.
@@ -249,7 +250,7 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Media', style: TextStyles.font15semiBold),
+                  Text(S.of(context).mediaLabel, style: TextStyles.font15semiBold),
                   if (_totalCount > 0)
                     Text('$_totalCount/$_maxMedia',
                         style: TextStyles.font14Medium
@@ -273,7 +274,7 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
 
             AppButton(
               onPressed: _handleUpdate,
-              text: 'Save Changes',
+              text: S.of(context).saveChangesBtn,
               isWhite: false,
             ),
           ],
@@ -367,7 +368,7 @@ class _MediaGrid extends StatelessWidget {
                 Icon(Icons.add_photo_alternate_outlined,
                     size: 28.r, color: ColorManager.normalGrey),
                 verticalSpace(4),
-                Text('Add more',
+                Text(S.of(context).addMore,
                     style: TextStyles.font12semiBold
                         .copyWith(color: ColorManager.normalGrey)),
               ],
@@ -503,7 +504,7 @@ class _MediaPickerPlaceholder extends StatelessWidget {
           children: [
             Icon(Icons.add_a_photo_outlined, color: fg, size: 28.r),
             verticalSpace(4),
-            Text('Tap to add photos or videos',
+            Text(S.of(context).tapToAddPhotosOrVideos,
                 style: TextStyles.font14regular.copyWith(color: fg)),
           ],
         ),

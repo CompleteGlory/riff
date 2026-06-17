@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
+import 'package:riff/generated/l10n.dart';
 
 class TermsAndConditionsText extends StatelessWidget {
   const TermsAndConditionsText({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Wrap(
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text(
-          "By signing up you are accepting our",
+          s.bySigningUpAccepting,
           style: TextStyles.font14regular.copyWith(color: ColorManager.lightGrey),
         ),
         TextButton(
@@ -22,7 +24,7 @@ class TermsAndConditionsText extends StatelessWidget {
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
           child: Text(
-            "Terms and conditions.",
+            s.termsAndConditions,
             style: TextStyles.font16Medium.copyWith(
               decoration: TextDecoration.underline,
             ),

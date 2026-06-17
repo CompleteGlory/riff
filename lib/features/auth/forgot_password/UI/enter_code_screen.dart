@@ -9,6 +9,7 @@ import 'package:riff/features/auth/forgot_password/UI/widgets/email_not_recieved
 import 'package:riff/features/auth/forgot_password/UI/widgets/enter_code_form_field.dart';
 import 'package:riff/features/auth/forgot_password/UI/widgets/request_otp_bloc_listener.dart';
 import 'package:riff/features/auth/forgot_password/logic/cubit/forgot_password_cubit.dart';
+import 'package:riff/generated/l10n.dart';
 
 
 class EnterCodeScreen extends StatelessWidget {
@@ -25,6 +26,7 @@ class EnterCodeScreen extends StatelessWidget {
       // also reflect in controller so UI (if any) is in sync
       forgotPasswordCubit.mailController.text = email!;
     }
+    final s = S.of(context);
     return Scaffold(
       body: SafeArea(
         child: LayoutBuilder(
@@ -40,10 +42,10 @@ class EnterCodeScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Enter 6 Digit Code", style: TextStyles.font28Bold),
+                        Text(s.forgotPasswordTitle, style: TextStyles.font28Bold),
                         verticalSpace(8),
                         Text(
-                          "Enter 6 digit code that you've received on your email address.",
+                          s.enterCodeSubtitle,
                           style: TextStyles.font16Medium.copyWith(color: ColorManager.lightGrey),
                         ),
                         verticalSpace(32),
@@ -55,7 +57,7 @@ class EnterCodeScreen extends StatelessWidget {
                         Spacer(),
                         AppButton(onPressed: () {
                           validateAndVerify(context);
-                        }, text: "Continue", isWhite: false),
+                        }, text: s.continueBtn, isWhite: false),
                         verticalSpace(30),
                         const VerifyOTPBlocListener(),
                       ],

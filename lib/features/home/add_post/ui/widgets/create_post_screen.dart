@@ -11,6 +11,7 @@ import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/widgets/button.dart';
 import 'package:riff/features/home/add_post/data/models/create_post_request_model.dart';
 import 'package:riff/features/home/add_post/logic/cubit/create_post_cubit.dart';
+import 'package:riff/generated/l10n.dart';
 
 const _maxImages = 10;
 
@@ -70,7 +71,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: ColorManager.primaryBlack,
-          content: Text('Maximum $_maxImages files allowed.',
+          content: Text(S.of(context).maximumFilesAllowed(_maxImages),
               style: TextStyles.font14Medium.copyWith(color: ColorManager.white)),
         ),
       );
@@ -92,10 +93,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 decoration: BoxDecoration(color: ColorManager.lighterGrey, borderRadius: BorderRadius.circular(99)),
               ),
               verticalSpace(16),
-              _SheetTile(icon: Icons.photo_library_outlined, label: 'Choose Photos', onTap: () => _pickImages(ImageSource.gallery)),
-              _SheetTile(icon: Icons.photo_camera_outlined, label: 'Take a Photo', onTap: () => _pickImages(ImageSource.camera)),
-              _SheetTile(icon: Icons.video_library_outlined, label: 'Choose Video', onTap: () => _pickVideo(ImageSource.gallery)),
-              _SheetTile(icon: Icons.videocam_outlined, label: 'Record Video', onTap: () => _pickVideo(ImageSource.camera)),
+              _SheetTile(icon: Icons.photo_library_outlined, label: S.of(context).choosePhotos, onTap: () => _pickImages(ImageSource.gallery)),
+              _SheetTile(icon: Icons.photo_camera_outlined, label: S.of(context).takeAPhoto, onTap: () => _pickImages(ImageSource.camera)),
+              _SheetTile(icon: Icons.video_library_outlined, label: S.of(context).chooseVideo, onTap: () => _pickVideo(ImageSource.gallery)),
+              _SheetTile(icon: Icons.videocam_outlined, label: S.of(context).recordVideo, onTap: () => _pickVideo(ImageSource.camera)),
             ],
           ),
         ),
@@ -114,7 +115,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         SnackBar(
           backgroundColor: ColorManager.primaryBlack,
           content: Text(
-            'Please enter content before posting.',
+            S.of(context).pleaseEnterContentBeforePosting,
             style: TextStyles.font14Medium.copyWith(
               color: ColorManager.lighterGrey,
             ),
@@ -140,7 +141,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "What's on your mind?",
+              S.of(context).whatsOnYourMind,
               style: TextStyles.font28Bold,
             ),
             verticalSpace(20),
@@ -166,7 +167,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 style: TextStyles.font16Medium,
                 decoration: InputDecoration(
                   hintText:
-                      'Share your latest music riff, thoughts, or gear...',
+                      S.of(context).shareYourMusicRiff,
                   hintStyle: TextStyles.font16Medium
                       .copyWith(color: ColorManager.normalGrey),
                   border: InputBorder.none,
@@ -181,7 +182,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Attach Media', style: TextStyles.font15semiBold),
+                Text(S.of(context).attachMedia, style: TextStyles.font15semiBold),
                 if (_selectedFiles.isNotEmpty)
                   Text(
                     '${_selectedFiles.length}/$_maxImages',
@@ -209,7 +210,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
             AppButton(
               onPressed: _handlePost,
-              text: 'Post',
+              text: S.of(context).postBtn,
               isWhite: false,
             ),
           ],
@@ -269,7 +270,7 @@ class _ImageGrid extends StatelessWidget {
                     size: 28.r, color: ColorManager.normalGrey),
                 verticalSpace(4),
                 Text(
-                  'Add more',
+                  S.of(context).addMore,
                   style: TextStyles.font12semiBold.copyWith(
                     color: ColorManager.normalGrey,
                   ),
@@ -356,7 +357,7 @@ class _MediaPickerPlaceholder extends StatelessWidget {
                 size: 28.r),
             verticalSpace(4),
             Text(
-              'Tap to add photos or videos',
+              S.of(context).tapToAddPhotosOrVideos,
               style: TextStyles.font14regular,
             ),
           ],

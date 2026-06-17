@@ -17,9 +17,9 @@ platform :android do
       testers: "fadyalaa441@gmail.com, fadyalaa2112@gmail.com, zakymagd@gmail.com, magddevf@gmail.com" ,
       upload_timeout: 600,
       release_notes: <<~RELEASE_NOTES
-        Version 1.0.7 — Huge update 
+        Version 1.0.9 — Huge update 
 
-        Date: 2026-06-16
+        Date: 2026-06-17
 
       RELEASE_NOTES
     )

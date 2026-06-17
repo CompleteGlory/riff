@@ -12,6 +12,7 @@ import 'package:riff/features/auth/login/UI/widgets/login_form_fields.dart';
 import 'package:riff/features/auth/login/UI/widgets/or_divider.dart';
 import 'package:riff/features/auth/login/UI/widgets/social_login.dart';
 import 'package:riff/features/auth/login/logic/cubit/login_cubit.dart';
+import 'package:riff/generated/l10n.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -43,7 +44,6 @@ class _LoginScreenState extends State<LoginScreen>
     ).animate(
       CurvedAnimation(parent: _entranceController, curve: Curves.easeOutCubic),
     );
-    // Slight delay so the scaffold renders first
     Future.delayed(const Duration(milliseconds: 80), () {
       if (mounted) _entranceController.forward();
     });
@@ -57,6 +57,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Scaffold(
       body: SafeArea(
         child: LayoutBuilder(
@@ -76,11 +77,10 @@ class _LoginScreenState extends State<LoginScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Login To your account",
-                                style: TextStyles.font28Bold),
+                            Text(s.loginTitle, style: TextStyles.font28Bold),
                             verticalSpace(8),
                             Text(
-                              "It's great to see you again!",
+                              s.itsGreatToSeeYouAgain,
                               style: TextStyles.font16Medium
                                   .copyWith(color: ColorManager.lightGrey),
                             ),
@@ -91,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen>
                             verticalSpace(20),
                             AppButton(
                               onPressed: () => validateAndLogin(context),
-                              text: "Login",
+                              text: s.loginBtn,
                               isWhite: false,
                             ),
                             verticalSpace(15),
@@ -118,6 +118,7 @@ class _LoginScreenState extends State<LoginScreen>
       ),
     );
   }
+
   void validateAndLogin(BuildContext context) {
     if (context.read<LoginCubit>().formKey.currentState!.validate()) {
       context.read<LoginCubit>().emitLoginStates();

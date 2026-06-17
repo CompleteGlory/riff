@@ -5,6 +5,7 @@ import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/features/home/core/logic/feature_request/feature_request_cubit.dart';
 import 'package:riff/features/home/core/logic/feature_request/feature_request_state.dart';
 import 'package:riff/features/home/core/UI/shared/report_widgets.dart';
+import 'package:riff/generated/l10n.dart';
 
 class FeatureRequestScreen extends StatefulWidget {
   const FeatureRequestScreen({super.key});
@@ -29,13 +30,13 @@ class _FeatureRequestScreenState extends State<FeatureRequestScreen> {
   void _submit(FeatureRequestCubit cubit) {
     if (_titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add a title')),
+        SnackBar(content: Text(S.of(context).pleaseAddTitle)),
       );
       return;
     }
     if (_descController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please describe your feature request')),
+        SnackBar(content: Text(S.of(context).pleaseDescribeFeature)),
       );
       return;
     }
@@ -62,8 +63,8 @@ class _FeatureRequestScreenState extends State<FeatureRequestScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               backgroundColor: ColorManager.accent,
-              content: const Text(
-                'Feature request submitted. Thank you!',
+              content: Text(
+                S.of(context).featureRequestSubmitted,
                 style: TextStyle(
                   fontFamily: 'GeneralSans',
                   fontWeight: FontWeight.w600,
@@ -74,7 +75,7 @@ class _FeatureRequestScreenState extends State<FeatureRequestScreen> {
           );
         } else if (state is FeatureRequestFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to submit. Please try again.')),
+            SnackBar(content: Text(S.of(context).failedToSubmit)),
           );
         }
       },
@@ -93,7 +94,7 @@ class _FeatureRequestScreenState extends State<FeatureRequestScreen> {
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
-              'Feature Request',
+              S.of(context).featureRequestTitle,
               style: TextStyle(
                 fontFamily: 'GeneralSans',
                 fontSize: 17.sp,
@@ -139,7 +140,7 @@ class _FeatureRequestScreenState extends State<FeatureRequestScreen> {
                           ),
                         ),
                         SizedBox(height: 20.h),
-                        ReportSectionLabel(text: 'Feature title', color: labelColor),
+                        ReportSectionLabel(text: S.of(context).featureTitleLabel, color: labelColor),
                         SizedBox(height: 6.h),
                         ReportInputCard(
                           cardBg: cardBg,
@@ -156,7 +157,7 @@ class _FeatureRequestScreenState extends State<FeatureRequestScreen> {
                           ),
                         ),
                         SizedBox(height: 16.h),
-                        ReportSectionLabel(text: 'Describe the feature', color: labelColor),
+                        ReportSectionLabel(text: S.of(context).describeTheFeature, color: labelColor),
                         SizedBox(height: 6.h),
                         ReportInputCard(
                           cardBg: cardBg,
@@ -166,7 +167,7 @@ class _FeatureRequestScreenState extends State<FeatureRequestScreen> {
                             maxLength: 1000,
                             style: TextStyle(fontFamily: 'GeneralSans', fontSize: 14.sp, color: onSurface),
                             decoration: InputDecoration(
-                              hintText: 'What should it do? How should it work?',
+                              hintText: S.of(context).whatShouldItDo,
                               hintStyle: TextStyle(fontFamily: 'GeneralSans', fontSize: 14.sp, color: hintColor),
                               border: InputBorder.none,
                               contentPadding: EdgeInsets.all(16.r),
@@ -175,7 +176,7 @@ class _FeatureRequestScreenState extends State<FeatureRequestScreen> {
                           ),
                         ),
                         SizedBox(height: 16.h),
-                        ReportSectionLabel(text: 'Why would this be useful? (optional)', color: labelColor),
+                        ReportSectionLabel(text: S.of(context).whyWouldBeUseful, color: labelColor),
                         SizedBox(height: 6.h),
                         ReportInputCard(
                           cardBg: cardBg,
@@ -184,7 +185,7 @@ class _FeatureRequestScreenState extends State<FeatureRequestScreen> {
                             maxLines: 3,
                             style: TextStyle(fontFamily: 'GeneralSans', fontSize: 14.sp, color: onSurface),
                             decoration: InputDecoration(
-                              hintText: 'Who would benefit and how?',
+                              hintText: S.of(context).whoBenefitAndHow,
                               hintStyle: TextStyle(fontFamily: 'GeneralSans', fontSize: 14.sp, color: hintColor),
                               border: InputBorder.none,
                               contentPadding: EdgeInsets.all(16.r),
@@ -200,7 +201,7 @@ class _FeatureRequestScreenState extends State<FeatureRequestScreen> {
                   padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
                   child: ReportSubmitButton(
                     isSubmitting: isLoading,
-                    label: 'Submit Request',
+                    label: S.of(context).submitRequestBtn,
                     onTap: () => _submit(cubit),
                   ),
                 ),

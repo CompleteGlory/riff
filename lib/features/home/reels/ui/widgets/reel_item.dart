@@ -24,6 +24,7 @@ import 'package:riff/features/home/follow/logic/cubit/follow_cubit.dart';
 import 'package:riff/features/home/feed/logic/view_tracker.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_options.dart';
 import 'package:riff/features/home/feed/Ui/post_detail_screen.dart';
+import 'package:riff/generated/l10n.dart';
 
 /// Full-screen reel card.
 class ReelItem extends StatefulWidget {
@@ -455,7 +456,7 @@ class _ReelItemState extends State<ReelItem> {
                                     color: Colors.white, strokeWidth: 1.5),
                               )
                             : Text(
-                                'Follow',
+                                S.of(context).followBtn,
                                 style: TextStyles.font12semiBold
                                     .copyWith(color: Colors.white),
                               ),

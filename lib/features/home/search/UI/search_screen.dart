@@ -12,6 +12,7 @@ import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/search/data/models/search_user.dart';
 import 'package:riff/features/home/search/logic/search_cubit.dart';
 import 'package:riff/features/home/search/logic/search_state.dart';
+import 'package:riff/generated/l10n.dart';
 
 // ─── Static filter data ──────────────────────────────────────────────────────
 
@@ -203,7 +204,7 @@ class _SearchBar extends StatelessWidget {
                 color: isDark ? Colors.white : ColorManager.black,
               ),
               decoration: InputDecoration(
-                hintText: 'Search people or posts…',
+                hintText: S.of(context).searchHint,
                 hintStyle: TextStyle(
                   fontFamily: 'GeneralSans',
                   fontSize: 15,
@@ -302,14 +303,14 @@ class _DiscoverViewState extends State<_DiscoverView> {
           child: Row(
             children: [
               _TabToggle(
-                label: 'Genres',
+                label: S.of(context).genresFilter,
                 active: !widget.showInstruments,
                 isDark: widget.isDark,
                 onTap: () => widget.onTabChanged(false),
               ),
               const SizedBox(width: 14),
               _TabToggle(
-                label: 'Instruments',
+                label: S.of(context).instrumentsFilter,
                 active: widget.showInstruments,
                 isDark: widget.isDark,
                 onTap: () => widget.onTabChanged(true),
@@ -319,7 +320,7 @@ class _DiscoverViewState extends State<_DiscoverView> {
                 GestureDetector(
                   onTap: () => _applyFilter(),
                   child: Text(
-                    'Clear',
+                    S.of(context).clearFilter,
                     style: TextStyle(
                       fontFamily: 'GeneralSans',
                       fontSize: 13,
@@ -456,7 +457,7 @@ class _ResultsView extends StatelessWidget {
       slivers: [
         if (hasUsers) ...[
           SliverToBoxAdapter(
-            child: _SectionHeader(label: 'People', isDark: isDark),
+            child: _SectionHeader(label: S.of(context).peopleSection, isDark: isDark),
           ),
           SliverList(
             delegate: SliverChildBuilderDelegate(
@@ -477,7 +478,7 @@ class _ResultsView extends StatelessWidget {
         ],
         if (hasPosts) ...[
           SliverToBoxAdapter(
-            child: _SectionHeader(label: 'Posts', isDark: isDark),
+            child: _SectionHeader(label: S.of(context).postsSection, isDark: isDark),
           ),
           SliverGrid(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -899,8 +900,8 @@ class _EmptyDiscover extends StatelessWidget {
           const SizedBox(height: 20),
           Text(
             hasFilter
-                ? 'No posts in "$filterLabel" yet'
-                : 'Nothing to discover yet',
+                ? S.of(context).noPostsInCategory(filterLabel)
+                : S.of(context).nothingToDiscoverYet,
             style: TextStyle(
               fontFamily: 'GeneralSans',
               fontSize: 18,
@@ -914,8 +915,8 @@ class _EmptyDiscover extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 48),
             child: Text(
               hasFilter
-                  ? 'Be the first to post something in this category.'
-                  : 'Follow more people to grow\nyour discovery feed.',
+                  ? S.of(context).beFirstToPostInCategory
+                  : S.of(context).followMorePeople,
               style: TextStyle(
                 fontFamily: 'GeneralSans',
                 fontSize: 14,
@@ -960,7 +961,7 @@ class _EmptySearch extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Text(
-            'No results for "$query"',
+            S.of(context).noResultsForQuery(query),
             style: TextStyle(
               fontFamily: 'GeneralSans',
               fontSize: 18,
@@ -971,7 +972,7 @@ class _EmptySearch extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Try a different name\nor search term.',
+            S.of(context).tryDifferentName,
             style: TextStyle(
               fontFamily: 'GeneralSans',
               fontSize: 14,

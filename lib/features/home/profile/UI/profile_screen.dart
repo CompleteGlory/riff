@@ -17,6 +17,7 @@ import 'package:riff/core/widgets/shimmer_loading.dart';
 import 'package:riff/features/home/follow/UI/follow_list_screen.dart';
 import 'package:riff/features/home/profile/logic/cubit/profile_cubit.dart';
 import 'package:video_player/video_player.dart';
+import 'package:riff/generated/l10n.dart';
 
 // ---------------------------------------------------------------------------
 // Genre assets + accent colors
@@ -189,7 +190,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               verticalSpace(16),
               _SheetTile(
                 icon: Icons.photo_library_outlined,
-                label: 'Choose from Gallery',
+                label: S.of(context).chooseFromGalleryProfile,
                 onTap: () => _pickAndUpload(ImageSource.gallery),
               ),
               _SheetTile(
@@ -216,7 +217,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 behavior: SnackBarBehavior.floating,
                 backgroundColor: ColorManager.primaryBlack,
                 content: Text(
-                  'Profile photo updated',
+                  S.of(context).profilePhotoUpdated,
                   style:
                       TextStyles.font14Medium.copyWith(color: ColorManager.white),
                 ),
@@ -407,11 +408,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       _CountCell(
                           count: postsCount,
-                          label: postsCount == 1 ? 'Post' : 'Posts'),
+                          label: postsCount == 1 ? S.of(context).postLabel : S.of(context).postsLabel),
                       _VertDivider(),
                       _CountCell(
                         count: widget.profile.followersCount,
-                        label: 'Followers',
+                        label: S.of(context).followersLabel,
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -426,7 +427,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _VertDivider(),
                       _CountCell(
                         count: widget.profile.followingCount,
-                        label: 'Following',
+                        label: S.of(context).followingLabel,
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -457,7 +458,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _SectionSpacer(),
         Padding(
           padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 10.h),
-          child: Text('Genres', style: TextStyles.font14semiBold),
+          child: Text(S.of(context).genresSection, style: TextStyles.font14semiBold),
         ),
         Padding(
           padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 16.h),
@@ -482,7 +483,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _SectionSpacer(),
         Padding(
           padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 10.h),
-          child: Text('Instruments', style: TextStyles.font14semiBold),
+          child: Text(S.of(context).instrumentsSection, style: TextStyles.font14semiBold),
         ),
         Padding(
           padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 16.h),
@@ -535,7 +536,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Icon(Icons.music_note_outlined,
                       size: 48.r, color: ColorManager.lighterGrey),
                   verticalSpace(12),
-                  Text('No posts yet',
+                  Text(S.of(context).noPostsYet,
                       style: TextStyles.font16Medium
                           .copyWith(color: ColorManager.normalGrey)),
                 ],
@@ -552,7 +553,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _SectionSpacer(),
                 Padding(
                   padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 4.h),
-                  child: Text('Posts', style: TextStyles.font18Semibold),
+                  child: Text(S.of(context).postsLabel, style: TextStyles.font18Semibold),
                 ),
               ],
             ),

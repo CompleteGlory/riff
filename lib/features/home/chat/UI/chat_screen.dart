@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/networks/api_constants.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
+import 'package:riff/generated/l10n.dart';
 
 class ChatScreen extends StatelessWidget {
   final String userId;
@@ -25,6 +26,7 @@ class ChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    S.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? const Color(0xFF0F0F0F) : Colors.white;
     final divider =
@@ -106,6 +108,7 @@ class _ComingSoonBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Column(
@@ -131,7 +134,7 @@ class _ComingSoonBody extends StatelessWidget {
           ),
           SizedBox(height: 20.h),
           Text(
-            'Messages coming soon',
+            s.messagesComingSoon,
             style: TextStyle(
               fontFamily: 'GeneralSans',
               fontSize: 18,
@@ -141,7 +144,7 @@ class _ComingSoonBody extends StatelessWidget {
           ),
           SizedBox(height: 8.h),
           Text(
-            'Direct messaging is being built.\nCheck back in the next update.',
+            s.directMessagingBeingBuilt,
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontFamily: 'GeneralSans',
@@ -162,6 +165,7 @@ class _InputBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    S.of(context);
     return Container(
       padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 24.h),
       decoration: BoxDecoration(
@@ -226,6 +230,7 @@ class _InitialIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    S.of(context);
     final initials = name.trim().split(RegExp(r'\s+')).take(2)
         .map((w) => w.isEmpty ? '' : w[0].toUpperCase()).join();
     return Center(

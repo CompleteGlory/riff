@@ -6,6 +6,7 @@ import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/home/add_post/logic/cubit/update_post_cubit.dart';
 import 'package:riff/features/home/add_post/logic/cubit/update_post_state.dart';
 import 'package:riff/features/home/feed/logic/cubit/feed/feed_cubit.dart';
+import 'package:riff/generated/l10n.dart';
 
 
 class UpdatePostListener extends StatelessWidget {
@@ -43,7 +44,7 @@ class UpdatePostListener extends StatelessWidget {
             
             // 2. Show a success message
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(backgroundColor: ColorManager.primaryBlack,content: Text('Post updated successfully !',style: TextStyles.font12Medium.copyWith(color: ColorManager.lighterGrey),),),
+              SnackBar(backgroundColor: ColorManager.primaryBlack,content: Text(S.of(context).postUpdatedSuccessfully,style: TextStyles.font12Medium.copyWith(color: ColorManager.lighterGrey),),),
             );
             
             // 3. Pop the update screen
@@ -62,7 +63,7 @@ class UpdatePostListener extends StatelessWidget {
             Navigator.pop(context); 
 
             // 2. Show an error message
-            final errorMessage = error.errors?[0].message ?? "Failed to update post.";
+            final errorMessage = error.errors?[0].message ?? S.of(context).failedToUpdatePost;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(backgroundColor: ColorManager.primaryBlack,content: Text(errorMessage,style: TextStyles.font12Medium.copyWith(color: ColorManager.lighterGrey),)),
             );

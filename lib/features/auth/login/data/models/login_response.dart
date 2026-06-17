@@ -5,9 +5,12 @@ part 'login_response.g.dart';
 @JsonSerializable()
 class LoginResponse {
   final User user;
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final bool isNewUser;
 
   LoginResponse({
     required this.user,
+    this.isNewUser = false,
   });
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) =>

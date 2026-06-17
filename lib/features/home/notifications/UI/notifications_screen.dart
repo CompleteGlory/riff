@@ -18,6 +18,7 @@ import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 import 'package:riff/features/auth/user-prefrences/instruments_screen.dart';
 import 'package:riff/features/home/notifications/UI/post_by_id_screen.dart';
 import 'package:riff/features/home/notifications/UI/flagged_comment_detail_screen.dart';
+import 'package:riff/generated/l10n.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
@@ -37,7 +38,7 @@ class _NotificationsBody extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text(S.of(context).notificationsTitle),
         centerTitle: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
@@ -46,7 +47,7 @@ class _NotificationsBody extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => context.read<NotificationsCubit>().markAllRead(),
-            child: Text('Mark all read',
+            child: Text(S.of(context).markAllRead,
                 style: TextStyles.font12Medium.copyWith(
                     color: isDark ? Colors.white70 : ColorManager.primaryBlack)),
           ),
@@ -66,7 +67,7 @@ class _NotificationsBody extends StatelessWidget {
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () => ctx.read<NotificationsCubit>().load(),
-                  child: const Text('Retry'),
+                  child: Text(S.of(context).retryBtn),
                 ),
               ]),
             );
@@ -78,7 +79,7 @@ class _NotificationsBody extends StatelessWidget {
                   Icon(Icons.notifications_none_outlined,
                       size: 64.r, color: ColorManager.lighterGrey),
                   const SizedBox(height: 16),
-                  Text('No notifications yet',
+                  Text(S.of(context).noNotificationsYet,
                       style: TextStyles.font16Medium.copyWith(
                           color: ColorManager.normalGrey)),
                 ]),
@@ -141,17 +142,23 @@ class _NotificationTile extends StatelessWidget {
     return raw.startsWith('http') ? raw : '${ApiConstants.apiBASEURL}$raw';
   }
 
-  String get _message {
+  String _message(BuildContext context) {
     switch (notification.type) {
-      case 'follow':            return 'started following you.';
-      case 'follow_request':    return 'requested to follow you.';
-      case 'follow_accepted':   return 'accepted your follow request.';
-      case 'complete_profile':  return 'Complete your profile to get discovered!';
+      case 'follow':
+        return S.of(context).startedFollowingYou;
+      case 'follow_request':
+        return S.of(context).requestedToFollowYou;
+      case 'follow_accepted':
+        return S.of(context).acceptedYourFollowRequest;
+      case 'complete_profile':
+        return S.of(context).completeYourProfile;
       case 'like':
         final hasComment = notification.metadata?['comment_id'] != null;
-        return hasComment ? 'liked your comment.' : 'liked your post.';
-      case 'comment':           return 'commented on your post.';
-      default:                  return '';
+        return hasComment ? S.of(context).likedYourComment : S.of(context).likedYourPost;
+      case 'comment':
+        return S.of(context).commentedOnYourPost;
+      default:
+        return '';
     }
   }
 
@@ -195,8 +202,8 @@ class _NotificationTile extends StatelessWidget {
     if (commentId != null) {
       // Show a brief loading indicator while we resolve the post.
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Loading post…'),
+        SnackBar(
+          content: Text(S.of(context).loadingPost),
           duration: Duration(seconds: 5),
           behavior: SnackBarBehavior.floating,
         ),
@@ -679,11 +686,11 @@ class _NotificationTile extends StatelessWidget {
           SizedBox(width: 12.w),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Complete your profile',
+              Text(S.of(context).completeYourProfile,
                   style: TextStyles.font14semiBold.copyWith(
                       color: Theme.of(context).textTheme.bodyLarge?.color)),
               SizedBox(height: 2.h),
-              Text('Add genres & instruments to get discovered by other musicians.',
+              Text(S.of(context).addGenresInstruments,
                   style: TextStyles.font12Medium.copyWith(
                       color: ColorManager.normalGrey)),
               SizedBox(height: 3.h),
@@ -869,7 +876,7 @@ class _NotificationTile extends StatelessWidget {
                       color: Theme.of(context).textTheme.bodyLarge?.color),
                 ),
                 TextSpan(
-                  text: _message,
+                  text: ' ${_message(context)}',
                   style: TextStyles.font14Medium.copyWith(
                       color: ColorManager.normalGrey),
                 ),
@@ -981,7 +988,7 @@ class _AcceptDeclineButtonsState extends State<_AcceptDeclineButtons> {
       );
     }
     if (_done == 'declined') {
-      return Text('Declined',
+      return Text(S.of(context).declined,
           style: TextStyles.font12Medium.copyWith(color: ColorManager.normalGrey));
     }
     if (_loading) {
@@ -992,7 +999,7 @@ class _AcceptDeclineButtonsState extends State<_AcceptDeclineButtons> {
     return Row(mainAxisSize: MainAxisSize.min, children: [
       _PillBtn(label: 'Confirm', filled: true, onTap: () => _act(true)),
       SizedBox(width: 8.w),
-      _PillBtn(label: 'Delete', filled: false, onTap: () => _act(false)),
+      _PillBtn(label: S.of(context).deleteBtn, filled: false, onTap: () => _act(false)),
     ]);
   }
 }
@@ -1110,7 +1117,7 @@ class _FollowBackButtonState extends State<_FollowBackButton> {
                 Icon(Icons.person_remove_outlined,
                     color: ColorManager.red, size: 18.r),
                 SizedBox(width: 8.w),
-                Text('Unfollow',
+                Text(S.of(context).unfollowBtn,
                     style: TextStyles.font14semiBold.copyWith(
                         color: ColorManager.red)),
               ]),
@@ -1128,7 +1135,7 @@ class _FollowBackButtonState extends State<_FollowBackButton> {
                     : const Color(0xFFF5F5F5),
                 borderRadius: BorderRadius.circular(12.r),
               ),
-              child: Text('Cancel',
+              child: Text(S.of(context).cancelBtn,
                   textAlign: TextAlign.center,
                   style: TextStyles.font14semiBold),
             ),
@@ -1149,7 +1156,7 @@ class _FollowBackButtonState extends State<_FollowBackButton> {
     switch (_status) {
       case 'following':
         return _PillBtn(
-          label: 'Following',
+          label: S.of(context).followingStatus,
           filled: true,
           showChevron: true,
           onTap: _showUnfollowSheet,

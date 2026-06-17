@@ -1,9 +1,12 @@
+// ignore_for_file: duplicate_ignore, use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/features/auth/login/logic/cubit/login_cubit.dart';
 import 'google_sign_in_helper.dart';
+import 'package:riff/generated/l10n.dart';
 
 class SocialLogin extends StatefulWidget {
   const SocialLogin({super.key});
@@ -45,6 +48,15 @@ class _SocialLoginState extends State<SocialLogin>
       final token = await GoogleSignInHelper.signInAndGetIdToken();
       if (token == null) {
         debugPrint('Google: Failed to get ID token');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(S.of(context).googleSignInFailed),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
         return;
       }
       if (mounted) {
@@ -61,6 +73,7 @@ class _SocialLoginState extends State<SocialLogin>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = S.of(context);
     final bg = isDark ? const Color(0xFF252525) : Colors.white;
     final border = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFDDDDDD);
     final textColor = isDark ? Colors.white : const Color(0xFF1A1A1A);
@@ -121,7 +134,7 @@ class _SocialLoginState extends State<SocialLogin>
                           ),
                           const SizedBox(width: 12),
                           Text(
-                            'Signing in…',
+                            s.signingIn,
                             style: TextStyle(
                               fontFamily: 'GeneralSans',
                               fontSize: 15,
@@ -138,7 +151,7 @@ class _SocialLoginState extends State<SocialLogin>
                           SvgPicture.string(_googleGSvg, width: 20, height: 20),
                           const SizedBox(width: 10),
                           Text(
-                            'Continue with Google',
+                            s.continueWithGoogle,
                             style: TextStyle(
                               fontFamily: 'GeneralSans',
                               fontSize: 15,

@@ -16,6 +16,7 @@ class SignupCubit extends Cubit<SignupState> {
   TextEditingController passwordController = TextEditingController();
   TextEditingController fullNameController = TextEditingController();
   TextEditingController usernameController = TextEditingController();
+  TextEditingController confirmPasswordController = TextEditingController();
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
   List<String> selectedInstruments = [];
   List<String> selectedGenres = [];

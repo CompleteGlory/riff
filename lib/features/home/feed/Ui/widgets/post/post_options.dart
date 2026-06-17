@@ -14,6 +14,7 @@ import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/feed/Ui/screens/report_post_screen.dart';
 import 'package:riff/features/home/feed/data/repos/report_repo.dart';
 import 'package:riff/features/home/feed/logic/cubit/report/report_cubit.dart';
+import 'package:riff/generated/l10n.dart';
 
 void showPostOptions({
   required bool isMine,
@@ -44,13 +45,13 @@ void showPostOptions({
             ),
             SizedBox(height: 20.h),
 
-            Text('Post Options', style: TextStyles.font18Semibold),
+            Text(S.of(context).postScreenTitle, style: TextStyles.font18Semibold),
             SizedBox(height: 20.h),
 
             if (isMine) ...[
               _optionTile(
                 picture: 'assets/svgs/edit.svg',
-                text: 'Edit Post',
+                text: S.of(context).editPostOption,
                 color: onSurface,
                 onTap: () {
                   // Close the bottom sheet first, then push the edit screen.
@@ -71,7 +72,7 @@ void showPostOptions({
               ),
               _optionTile(
                 picture: 'assets/svgs/delete.svg',
-                text: 'Delete Post',
+                text: S.of(context).deletePostOption,
                 color: Colors.red,
                 onTap: () {
                   Navigator.pop(sheetCtx);
@@ -89,7 +90,7 @@ void showPostOptions({
             ] else ...[
               _optionTile(
                 picture: 'assets/svgs/report.svg',
-                text: 'Report Post',
+                text: S.of(context).reportPostOption,
                 color: Colors.red,
                 onTap: () {
                   Navigator.pop(sheetCtx);
