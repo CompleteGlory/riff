@@ -23,6 +23,7 @@ import 'package:riff/features/home/feed/data/models/author.dart';
 import 'package:riff/features/home/feed/data/models/comment.dart';
 import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
 import 'package:riff/features/home/user_profile/ui/user_profile_screen.dart';
+import 'package:riff/generated/l10n.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CommentsSheet — redesigned with animations and full dark-mode support
@@ -102,7 +103,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
     final tempId = -DateTime.now().millisecondsSinceEpoch;
     final tempAuthor = Author(
       id: _currentUserId?.isNotEmpty == true ? _currentUserId! : 'me',
-      fullName: 'You',
+      fullName: S.of(context).youLabel,
       username: '',
       profileImageUrl: _currentUserImageUrl,
     );
@@ -142,7 +143,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
           _comments.removeWhere((c) => c.id == tempId);
           _pendingIds.remove(tempId);
           _commentLikes.remove(tempId);
-          _errorMessage = 'Failed to send comment';
+          _errorMessage = S.of(context).failedToSendComment;
         });
         Future.delayed(const Duration(seconds: 3), () {
           if (mounted) setState(() => _errorMessage = null);
@@ -164,7 +165,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
       success: (_) {},
       failure: (_) {
         setState(() => _commentLikes[comment.id] = isCurrentlyLiked);
-        _showErrorSnackBar('Failed to update like');
+        _showErrorSnackBar(S.of(context).failedToUpdateLike);
       },
     );
   }
@@ -173,15 +174,15 @@ class _CommentsSheetState extends State<CommentsSheet> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete Comment', style: TextStyles.font28Bold),
+        title: Text(S.of(context).deleteCommentTitle, style: TextStyles.font28Bold),
         content: Text(
-          'Are you sure you want to delete this comment?',
+          S.of(context).areYouSureDeleteComment,
           style: TextStyles.font16Medium,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: TextStyles.font14regular),
+            child: Text(S.of(context).cancelBtn, style: TextStyles.font14regular),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
@@ -203,9 +204,9 @@ class _CommentsSheetState extends State<CommentsSheet> {
           _comments.removeWhere((c) => c.id == comment.id);
           _commentLikes.remove(comment.id);
         });
-        _showSuccessSnackBar('Comment deleted');
+        _showSuccessSnackBar(S.of(context).commentDeleted);
       },
-      failure: (_) => _showErrorSnackBar('Failed to delete comment'),
+      failure: (_) => _showErrorSnackBar(S.of(context).failedToDeleteComment),
     );
   }
 
@@ -232,7 +233,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
 
     final res = await getIt<CommentCubit>().updateComment(comment.id.toString(), text);
     res.when(
-      success: (_) => _showSuccessSnackBar('Comment updated'),
+      success: (_) => _showSuccessSnackBar(S.of(context).commentUpdated),
       failure: (_) {
         setState(() {
           final index = _comments.indexWhere((c) => c.id == comment.id);
@@ -246,7 +247,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
             );
           }
         });
-        _showErrorSnackBar('Failed to update comment');
+        _showErrorSnackBar(S.of(context).failedToUpdateComment);
       },
     );
   }
@@ -310,7 +311,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
             if (_isCommentMine(comment)) ...[
               _OptionTile(
                 icon: Icons.edit_outlined,
-                label: 'Edit',
+                label: S.of(context).editLabel,
                 onTap: () {
                   Navigator.pop(context);
                   _showEditDialog(comment);
@@ -318,7 +319,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
               ),
               _OptionTile(
                 icon: Icons.delete_outline,
-                label: 'Delete',
+                label: S.of(context).deleteBtn,
                 color: ColorManager.red,
                 onTap: () {
                   Navigator.pop(context);
@@ -328,7 +329,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
             ] else
               _OptionTile(
                 icon: Icons.flag_outlined,
-                label: 'Report',
+                label: S.of(context).reportLabel,
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
@@ -357,14 +358,14 @@ class _CommentsSheetState extends State<CommentsSheet> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Edit Comment', style: TextStyles.font28Bold),
+        title: Text(S.of(context).editCommentTitle, style: TextStyles.font28Bold),
         content: SizedBox(
           width: 300.w,
           child: TextField(
             controller: _editController,
             maxLines: 4,
             decoration: InputDecoration(
-              hintText: 'Edit your comment...',
+              hintText: S.of(context).editYourComment,
               hintStyle: TextStyles.font14regular.copyWith(
                 color: ColorManager.normalGrey,
               ),
@@ -388,7 +389,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
             width: 120.w,
             child: AppButton(
               onPressed: () => Navigator.pop(context),
-              text: 'Cancel',
+              text: S.of(context).cancelBtn,
               isWhite: false,
             ),
           ),
@@ -399,7 +400,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                 Navigator.pop(context);
                 _updateComment(comment);
               },
-              text: 'Update',
+              text: S.of(context).updateBtn,
               isWhite: true,
             ),
           ),
@@ -460,7 +461,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text('Comments', style: TextStyles.font18Semibold),
+                  Text(S.of(context).commentsLabel, style: TextStyles.font18Semibold),
                   SizedBox(width: 8.w),
                   _CountBadge(count: _comments.length),
                 ],
@@ -654,10 +655,10 @@ class _CommentsSheetState extends State<CommentsSheet> {
                       controller: _controller,
                       keyboardType: TextInputType.text,
                       isPassword: false,
-                      hintText: 'Add a comment…',
+                      hintText: S.of(context).addAComment,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Comment cannot be empty';
+                          return S.of(context).commentCannotBeEmpty;
                         }
                         return null;
                       },
@@ -828,14 +829,14 @@ class _EmptyCommentsState extends StatelessWidget {
             ),
             SizedBox(height: 14.h),
             Text(
-              'No comments yet',
+              S.of(context).noCommentsYet,
               style: TextStyles.font16Medium.copyWith(
                 color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             SizedBox(height: 4.h),
             Text(
-              'Be the first to say something!',
+              S.of(context).beFirstToSaySomething,
               style: TextStyles.font14regular.copyWith(
                 color: ColorManager.normalGrey,
               ),
@@ -888,7 +889,7 @@ class _LikeButton extends StatelessWidget {
               child: child,
             ),
             child: Text(
-              isLiked ? 'Unlike' : 'Like',
+              isLiked ? S.of(context).unlike : S.of(context).likeBtn,
               key: ValueKey(isLiked),
               style: TextStyles.font12regular.copyWith(
                 color: isLiked ? ColorManager.red : ColorManager.normalGrey,

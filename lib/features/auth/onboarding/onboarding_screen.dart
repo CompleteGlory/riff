@@ -4,24 +4,24 @@ import 'package:riff/core/helpers/extenstions.dart';
 import 'package:riff/core/routing/routes.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/widgets/button.dart';
+import 'package:riff/generated/l10n.dart';
 
 class OnBoardingScreen extends StatelessWidget {
   const OnBoardingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background image — fills the whole screen
           Image.asset(
             'assets/images/onboarding_background.png',
             fit: BoxFit.cover,
           ),
-          // Dark scrim so text is always readable
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -34,7 +34,6 @@ class OnBoardingScreen extends StatelessWidget {
               ),
             ),
           ),
-          // Text — anchored to top-left with safe area padding
           SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
@@ -43,7 +42,7 @@ class OnBoardingScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
-                    'Define Yourself\nin Your Unique Way.',
+                    s.defineYourself,
                     style: TextStyles.font45SemiBold.copyWith(
                       color: Colors.white,
                       height: 1.15,
@@ -58,7 +57,7 @@ class OnBoardingScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 12.h),
                   Text(
-                    'Share your sound. Find your people.',
+                    s.shareYourSound,
                     style: TextStyles.font16Medium.copyWith(
                       color: Colors.white.withValues(alpha: 0.85),
                       shadows: [
@@ -82,7 +81,7 @@ class OnBoardingScreen extends StatelessWidget {
         padding: const EdgeInsets.all(25.0),
         child: AppButton(
           onPressed: () => context.pushNamed(Routes.instruments),
-          text: 'Get Started',
+          text: s.getStarted,
           isWhite: false,
           icon: Icons.arrow_forward,
         ),

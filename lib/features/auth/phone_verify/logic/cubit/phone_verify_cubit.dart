@@ -21,8 +21,12 @@ class PhoneVerifyCubit extends Cubit<PhoneVerifyState> {
     final result = await _repo.sendOtp(normalizedPhoneNumber);
     result.when(
       success: (_) => emit(PhoneVerifyOtpSent(normalizedPhoneNumber)),
-      failure: (err) =>
-          emit(PhoneVerifyError(err.message ?? 'Failed to send OTP')),
+      failure: (err) {
+        final isAlreadyTaken = err.statusCode == 409;
+        emit(PhoneVerifyError(
+          isAlreadyTaken ? 'PHONE_ALREADY_TAKEN' : (err.message ?? 'Failed to send OTP'),
+        ));
+      },
     );
   }
 

@@ -5,6 +5,7 @@ import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/auth/signup/logic/cubit/signup_cubit.dart';
 import 'package:riff/features/auth/signup/logic/cubit/signup_state.dart';
+import 'package:riff/generated/l10n.dart';
 
 class SignupBlocListener extends StatelessWidget {
   const SignupBlocListener({super.key});
@@ -67,7 +68,7 @@ class SignupBlocListener extends StatelessWidget {
               Navigator.of(context).pop();
             },
             child: Text(
-              'Got it',
+              S.of(context).gotItBtn,
               style: TextStyles.font14Medium.copyWith(
                 color: ColorManager.primaryBlack,
               ),

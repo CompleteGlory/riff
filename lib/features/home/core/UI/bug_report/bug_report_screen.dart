@@ -5,6 +5,7 @@ import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/features/home/core/logic/bug_report/bug_report_cubit.dart';
 import 'package:riff/features/home/core/logic/bug_report/bug_report_state.dart';
 import 'package:riff/features/home/core/UI/shared/report_widgets.dart';
+import 'package:riff/generated/l10n.dart';
 
 class BugReportScreen extends StatefulWidget {
   const BugReportScreen({super.key});
@@ -30,13 +31,13 @@ class _BugReportScreenState extends State<BugReportScreen> {
   void _submit(BugReportCubit cubit) {
     if (_titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add a title')),
+        SnackBar(content: Text(S.of(context).pleaseAddTitle)),
       );
       return;
     }
     if (_descController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please describe the bug')),
+        SnackBar(content: Text(S.of(context).pleaseDescribeBug)),
       );
       return;
     }
@@ -64,8 +65,8 @@ class _BugReportScreenState extends State<BugReportScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               backgroundColor: ColorManager.accent,
-              content: const Text(
-                'Bug report submitted. Thank you!',
+              content: Text(
+                S.of(context).bugReportSubmitted,
                 style: TextStyle(
                   fontFamily: 'GeneralSans',
                   fontWeight: FontWeight.w600,
@@ -76,7 +77,7 @@ class _BugReportScreenState extends State<BugReportScreen> {
           );
         } else if (state is BugReportFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to submit. Please try again.')),
+            SnackBar(content: Text(S.of(context).failedToSubmit)),
           );
         }
       },
@@ -95,7 +96,7 @@ class _BugReportScreenState extends State<BugReportScreen> {
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
-              'Report a Bug',
+              S.of(context).reportABugTitle,
               style: TextStyle(
                 fontFamily: 'GeneralSans',
                 fontSize: 17.sp,
@@ -114,7 +115,7 @@ class _BugReportScreenState extends State<BugReportScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ReportSectionLabel(text: 'Title', color: labelColor),
+                        ReportSectionLabel(text: S.of(context).bugTitleLabel, color: labelColor),
                         SizedBox(height: 6.h),
                         ReportInputCard(
                           cardBg: cardBg,
@@ -131,7 +132,7 @@ class _BugReportScreenState extends State<BugReportScreen> {
                           ),
                         ),
                         SizedBox(height: 16.h),
-                        ReportSectionLabel(text: 'What happened?', color: labelColor),
+                        ReportSectionLabel(text: S.of(context).whatHappened, color: labelColor),
                         SizedBox(height: 6.h),
                         ReportInputCard(
                           cardBg: cardBg,
@@ -141,7 +142,7 @@ class _BugReportScreenState extends State<BugReportScreen> {
                             maxLength: 1000,
                             style: TextStyle(fontFamily: 'GeneralSans', fontSize: 14.sp, color: onSurface),
                             decoration: InputDecoration(
-                              hintText: 'Describe the bug in detail...',
+                              hintText: S.of(context).describeBugInDetail,
                               hintStyle: TextStyle(fontFamily: 'GeneralSans', fontSize: 14.sp, color: hintColor),
                               border: InputBorder.none,
                               contentPadding: EdgeInsets.all(16.r),
@@ -150,7 +151,7 @@ class _BugReportScreenState extends State<BugReportScreen> {
                           ),
                         ),
                         SizedBox(height: 16.h),
-                        ReportSectionLabel(text: 'Steps to reproduce (optional)', color: labelColor),
+                        ReportSectionLabel(text: S.of(context).stepsToReproduce, color: labelColor),
                         SizedBox(height: 6.h),
                         ReportInputCard(
                           cardBg: cardBg,
@@ -223,7 +224,7 @@ class _BugReportScreenState extends State<BugReportScreen> {
                   padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
                   child: ReportSubmitButton(
                     isSubmitting: isLoading,
-                    label: 'Submit Bug Report',
+                    label: S.of(context).submitBugReportBtn,
                     onTap: () => _submit(cubit),
                   ),
                 ),

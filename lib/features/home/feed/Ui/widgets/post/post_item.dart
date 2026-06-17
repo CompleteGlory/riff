@@ -24,6 +24,7 @@ import 'package:riff/features/home/reels/ui/reels_screen.dart';
 import 'package:riff/features/home/feed/logic/cubit/posts/post_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
 import 'package:riff/features/home/feed/logic/view_tracker.dart';
+import 'package:riff/generated/l10n.dart';
 
 class PostItem extends StatefulWidget {
   final Post post;
@@ -139,7 +140,7 @@ class _PostItemState extends State<PostItem>
             ),
             const SizedBox(height: 14),
             Text(
-              'Comments',
+              S.of(context).commentsLabel,
               style: TextStyles.font18Semibold,
             ),
             const Expanded(child: Center(child: LottieLoader())),
@@ -173,7 +174,7 @@ class _PostItemState extends State<PostItem>
       },
       failure: (_) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to load comments')),
+          SnackBar(content: Text(S.of(context).failedToLoadComments)),
         );
       },
     );

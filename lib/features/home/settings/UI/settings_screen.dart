@@ -7,9 +7,10 @@ import 'package:riff/core/logic/cubit/theme_cubit.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/home/follow/logic/cubit/follow_cubit.dart';
+import 'package:riff/features/home/settings/logic/cubit/language_cubit.dart';
+import 'package:riff/generated/l10n.dart';
 
 class SettingsScreen extends StatefulWidget {
-  /// Pass current is_private value from the user's profile
   final bool initialIsPrivate;
   const SettingsScreen({super.key, this.initialIsPrivate = false});
 
@@ -33,9 +34,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final ok = await cubit.updatePrivacy(value);
     cubit.close();
     if (!ok && mounted) {
-      setState(() => _isPrivate = !value); // revert on failure
+      setState(() => _isPrivate = !value);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to update privacy setting')),
+        SnackBar(content: Text(S.of(context).failedToUpdatePrivacy)),
       );
     }
     if (mounted) setState(() => _privacyLoading = false);
@@ -43,6 +44,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? const Color(0xFF111111) : const Color(0xFFF5F5F5);
     final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
@@ -51,7 +53,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       backgroundColor: bg,
       appBar: AppBar(
         backgroundColor: isDark ? const Color(0xFF141414) : Colors.white,
-        title: const Text('Settings'),
+        title: Text(s.settingsTitle),
         centerTitle: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
@@ -62,7 +64,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: EdgeInsets.all(16.w),
         children: [
           // ── Appearance ──────────────────────────────────────────────────
-          _SectionHeader('Appearance'),
+          _SectionHeader(s.appearanceSection),
           SizedBox(height: 8.h),
           Container(
             decoration: BoxDecoration(
@@ -77,6 +79,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               builder: (ctx, themeMode) {
                 final effectiveIsDark =
                     Theme.of(ctx).brightness == Brightness.dark;
+                final s2 = S.of(ctx);
                 return _SettingsTile(
                   icon: effectiveIsDark
                       ? Icons.dark_mode_rounded
@@ -84,8 +87,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   iconColor: effectiveIsDark
                       ? const Color(0xFFFFD60A)
                       : const Color(0xFFFF9500),
-                  title: 'Dark Mode',
-                  subtitle: effectiveIsDark ? 'On' : 'Off',
+                  title: s2.darkMode,
+                  subtitle: effectiveIsDark ? s2.darkModeOn : s2.darkModeOff,
                   trailing: Switch.adaptive(
                     value: effectiveIsDark,
                     activeColor: ColorManager.accent,
@@ -101,7 +104,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           SizedBox(height: 24.h),
 
           // ── Privacy ─────────────────────────────────────────────────────
-          _SectionHeader('Privacy'),
+          _SectionHeader(s.privacySection),
           SizedBox(height: 8.h),
           Container(
             decoration: BoxDecoration(
@@ -116,10 +119,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _SettingsTile(
                 icon: Icons.lock_outline_rounded,
                 iconColor: const Color(0xFF5E5CE6),
-                title: 'Private Account',
+                title: s.privateAccount,
                 subtitle: _isPrivate
-                    ? 'Only approved followers can see your posts'
-                    : 'Anyone can follow you and see your posts',
+                    ? s.onlyApprovedFollowers
+                    : s.anyoneCanFollow,
                 trailing: _privacyLoading
                     ? const SizedBox(width: 28, height: 28,
                         child: CircularProgressIndicator(strokeWidth: 2))
@@ -137,10 +140,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 8.w),
             child: Text(
-              'When your account is private, only people you approve can follow you '
-              'and see your posts and reels.',
+              s.privateAccountDisclaimer,
               style: TextStyles.font12Medium.copyWith(
                   color: ColorManager.normalGrey),
+            ),
+          ),
+
+          SizedBox(height: 24.h),
+
+          // ── Language ────────────────────────────────────────────────────
+          _SectionHeader(s.languageSection),
+          SizedBox(height: 8.h),
+          Container(
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(14.r),
+              boxShadow: isDark ? [] : [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 8, offset: const Offset(0, 2))
+              ],
+            ),
+            child: BlocBuilder<LanguageCubit, Locale>(
+              builder: (ctx, locale) {
+                final isAr = locale.languageCode == 'ar';
+                final s2 = S.of(ctx);
+                return _SettingsTile(
+                  icon: Icons.language_rounded,
+                  iconColor: const Color(0xFF30B0C7),
+                  title: s2.appLanguage,
+                  subtitle: isAr ? 'العربية' : 'English',
+                  trailing: Switch.adaptive(
+                    value: isAr,
+                    activeColor: ColorManager.accent,
+                    onChanged: (val) {
+                      ctx.read<LanguageCubit>().setLocale(
+                        Locale(val ? 'ar' : 'en'),
+                      );
+                    },
+                  ),
+                  isFirst: true,
+                  isLast: true,
+                );
+              },
             ),
           ),
 

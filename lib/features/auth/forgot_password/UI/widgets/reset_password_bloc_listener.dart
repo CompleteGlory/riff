@@ -8,6 +8,7 @@ import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/widgets/button.dart';
 import 'package:riff/features/auth/forgot_password/logic/cubit/forgot_password_cubit.dart';
 import 'package:riff/features/auth/forgot_password/logic/cubit/forgot_password_state.dart';
+import 'package:riff/generated/l10n.dart';
 
 class ResetPasswordBlocListener extends StatelessWidget {
   const ResetPasswordBlocListener({super.key});
@@ -21,6 +22,7 @@ class ResetPasswordBlocListener extends StatelessWidget {
           current is ResetPasswordFailed,
       listener: (context, state) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          final s = S.of(context);
           state.whenOrNull(
             resetPasswordLoading: () {
               // show loading dialog on root navigator so it can be popped reliably
@@ -54,13 +56,13 @@ class ResetPasswordBlocListener extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Success!',
+                        s.successTitle,
                         textAlign: TextAlign.center,
                         style: TextStyles.font18Semibold,
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Password updated successfully.\nPlease login to continue.',
+                        s.passwordUpdatedSuccessfully,
                         textAlign: TextAlign.center,
                         style: TextStyles.font14Medium.copyWith(
                           color: ColorManager.lightGrey,
@@ -70,7 +72,7 @@ class ResetPasswordBlocListener extends StatelessWidget {
                   ),
                   actions: [
                     AppButton(
-                      text: 'Proceed to Login',
+                      text: s.proceedToLogin,
                       onPressed: () {
                         Navigator.of(context).pop(); // Close success dialog
                         context.pushNamed(Routes.login);
@@ -82,7 +84,7 @@ class ResetPasswordBlocListener extends StatelessWidget {
               );
             },
             resetPasswordFailed: (error) {
-              _setupErrorState(context, error.message!);
+              _setupErrorState(context, error.message!,s);
             },
           );
         });
@@ -91,7 +93,7 @@ class ResetPasswordBlocListener extends StatelessWidget {
     );
   }
 
-  void _setupErrorState(BuildContext context, String error) {
+  void _setupErrorState(BuildContext context, String error,S s) {
     // Dismiss loading dialog if present (on root navigator) without popping page route
     if (Navigator.of(context, rootNavigator: true).canPop()) {
       Navigator.of(context, rootNavigator: true).pop();
@@ -111,7 +113,7 @@ class ResetPasswordBlocListener extends StatelessWidget {
               Navigator.of(context).pop();
             },
             child: Text(
-              'Try Again',
+              s.tryAgainBtn,
               style: TextStyles.font14Medium.copyWith(
                 color: ColorManager.primaryBlack,
               ),

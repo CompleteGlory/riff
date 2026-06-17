@@ -31,7 +31,21 @@ class LoginRepo {
     try {
       final body = GoogleAuthRequestBody(idToken: idToken);
       final response = await _apiService.googleLogin(body);
-      return await _handleLoginResponse(response, "");
+
+      // Extract isNewUser from response body (backend returns { isNewUser: bool })
+      bool isNewUser = true; // default: treat as new user
+      final rawData = response.response.data;
+      if (rawData is Map<String, dynamic>) {
+        isNewUser = rawData['isNewUser'] as bool? ?? true;
+      }
+
+      final result = await _handleLoginResponse(response, "");
+      return await result.when(
+        success: (loginResp) => ApiResult.success(
+          LoginResponse(user: loginResp.user, isNewUser: isNewUser),
+        ),
+        failure: ApiResult.failure,
+      );
     } catch (e) {
       return ApiResult.failure(ApiErrorHandler.handle(e));
     }

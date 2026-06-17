@@ -49,11 +49,17 @@ class AppRouter {
       case Routes.signup:
         final args = settings.arguments as Map<String, dynamic>?;
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (context) => getIt<SignupCubit>()
-              ..selectedInstruments =
-                  (args?['instruments'] as List<String>?) ?? const []
-              ..selectedGenres = (args?['genres'] as List<String>?) ?? const [],
+          builder: (_) => MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (context) => getIt<SignupCubit>()
+                  ..selectedInstruments =
+                      (args?['instruments'] as List<String>?) ?? const []
+                  ..selectedGenres =
+                      (args?['genres'] as List<String>?) ?? const [],
+              ),
+              BlocProvider(create: (_) => getIt<LoginCubit>()),
+            ],
             child: const SignupScreen(),
           ),
         );

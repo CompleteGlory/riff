@@ -12,6 +12,7 @@ import 'package:riff/features/home/feed/data/repos/feed_repo.dart';
 import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_item.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
+import 'package:riff/generated/l10n.dart';
 
 /// Shown when the user taps a [admin_notice] notification that has a
 /// [comment_id] in its metadata. Displays the flagged comment content
@@ -66,7 +67,7 @@ class _FlaggedCommentDetailScreenState
               setState(() => _post = Post.fromJson(postData));
             }
           },
-          failure: (err) => setState(() => _error = err.message ?? 'Failed to load comment'),
+          failure: (err) => setState(() => _error = err.message ?? S.of(context).failedToLoad),
         );
 
         // If post still null, fetch it separately via FeedRepo
@@ -94,7 +95,7 @@ class _FlaggedCommentDetailScreenState
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Flagged Comment'),
+        title: Text(S.of(context).flaggedComment),
         centerTitle: false,
       ),
       body: Column(
@@ -492,7 +493,7 @@ class _ErrorView extends StatelessWidget {
                   .copyWith(color: ColorManager.normalGrey),
               textAlign: TextAlign.center),
           SizedBox(height: 16.h),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
+          TextButton(onPressed: onRetry, child: Text(S.of(context).retryBtn)),
         ],
       ),
     );

@@ -6,6 +6,7 @@ import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/shared_post_card.dart';
+import 'package:riff/generated/l10n.dart';
 
 /// Bottom sheet that lets the user write an optional caption before sharing.
 class ShareSheet extends StatefulWidget {
@@ -43,6 +44,7 @@ class _ShareSheetState extends State<ShareSheet> {
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.of(context).viewInsets.bottom;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = S.of(context);
 
     return Container(
       decoration: BoxDecoration(
@@ -72,7 +74,7 @@ class _ShareSheetState extends State<ShareSheet> {
           // Title
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
-            child: Text('Share Post', style: TextStyles.font16Medium),
+            child: Text(s.postBtn, style: TextStyles.font16Medium),
           ),
           verticalSpace(12),
 
@@ -92,7 +94,7 @@ class _ShareSheetState extends State<ShareSheet> {
               textInputAction: TextInputAction.newline,
               style: TextStyles.font14Medium,
               decoration: InputDecoration(
-                hintText: 'Write a caption… (optional)',
+                hintText: s.writeCaption,
                 hintStyle: TextStyles.font14Medium.copyWith(
                   color: ColorManager.normalGrey,
                 ),
@@ -139,7 +141,7 @@ class _ShareSheetState extends State<ShareSheet> {
                         ),
                       )
                     : Text(
-                        'Share',
+                        s.shareBtn,
                         style: TextStyles.font16Medium
                             .copyWith(color: ColorManager.primaryBlack),
                       ),

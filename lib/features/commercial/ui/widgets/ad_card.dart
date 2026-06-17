@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:riff/core/networks/api_constants.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
+import 'package:riff/generated/l10n.dart';
 
 class AdCard extends StatefulWidget {
   final Ad ad;
@@ -58,7 +59,7 @@ class _AdCardState extends State<AdCard> {
   Widget build(BuildContext context) {
     final ad = widget.ad;
     final media = ad.media ?? [];
-    final storeName = ad.storeManager?.storeName ?? 'Sponsored';
+    final storeName = ad.storeManager?.storeName ?? S.of(context).sponsored;
     final logoUrl = ad.storeManager?.storeLogo;
 
     final hasLink = ad.link != null && ad.link!.isNotEmpty;
@@ -105,8 +106,8 @@ class _AdCardState extends State<AdCard> {
                           color: Colors.blue.shade100,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: const Text(
-                          'Sponsored',
+                        child: Text(
+                          S.of(context).sponsored,
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.blue,

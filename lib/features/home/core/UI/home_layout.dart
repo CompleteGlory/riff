@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:riff/generated/l10n.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:riff/core/services/push_notification_service.dart';
@@ -63,21 +64,33 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   }
 
   Future<bool> _onWillPop() async {
+    final s = S.of(context);
     final shouldExit = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Exit App'),
-        content: const Text('Do you want to exit the app?'),
+        title: Text(s.exitAppTitle),
+        content: Text(s.doYouWantToExit),
         actions: [
           TextButton(onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Cancel')),
+              child: Text(s.cancelBtn)),
           TextButton(onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Exit')),
+              child: Text(s.exitBtn)),
         ],
       ),
     );
     if (shouldExit == true) SystemNavigator.pop();
     return false;
+  }
+
+  String _navTitle(BuildContext context, int index) {
+    final s = S.of(context);
+    switch (index) {
+      case 0: return s.feedTitle;
+      case 1: return s.searchTitle;
+      case 2: return s.postScreenTitle;
+      case 3: return s.reelsTitle;
+      default: return '';
+    }
   }
 
   @override
@@ -94,7 +107,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
               appBar: isProfile
                   ? null
                   : AppBar(
-                      title: Text(cubit.titles[cubit.currentIndex]),
+                      title: Text(_navTitle(context, cubit.currentIndex)),
                       actions: [
                         if (cubit.currentIndex == 0)
                           BlocBuilder<NotificationsCubit, NotificationsState>(

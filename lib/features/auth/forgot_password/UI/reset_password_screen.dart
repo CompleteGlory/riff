@@ -8,6 +8,7 @@ import 'package:riff/core/widgets/button.dart';
 import 'package:riff/features/auth/forgot_password/logic/cubit/forgot_password_cubit.dart';
 import 'package:riff/features/auth/forgot_password/UI/widgets/reset_password_form_fields.dart';
 import 'package:riff/features/auth/forgot_password/UI/widgets/reset_password_bloc_listener.dart';
+import 'package:riff/generated/l10n.dart';
 
 class ResetPasswordScreen extends StatelessWidget {
   const ResetPasswordScreen({super.key});
@@ -25,6 +26,7 @@ class ResetPasswordScreen extends StatelessWidget {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
+            final s = S.of(context);
             return SingleChildScrollView(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
@@ -36,10 +38,10 @@ class ResetPasswordScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Reset Password", style: TextStyles.font28Bold),
+                        Text(s.resetPasswordTitle, style: TextStyles.font28Bold),
                         verticalSpace(8),
                         Text(
-                          "Set the new password for your account so you can login and access all the features.",
+                          s.resetPasswordSubtitle,
                           style: TextStyles.font16Medium.copyWith(color: ColorManager.lightGrey),
                         ),
                         verticalSpace(32),
@@ -49,7 +51,7 @@ class ResetPasswordScreen extends StatelessWidget {
                           onPressed: () {
                             validateAndResetPassword(context);
                           },
-                          text: "Reset Password",
+                          text: s.resetPasswordBtn,
                           isWhite: false
                         ),
                         verticalSpace(30),
