@@ -12,8 +12,8 @@ Post _$PostFromJson(Map<String, dynamic> json) => Post(
       ? null
       : Author.fromJson(json['author'] as Map<String, dynamic>),
   content: json['content'] as String?,
-  createdAt: (json['created_at'] as String?) ?? '',
-  updatedAt: (json['updated_at'] as String?) ?? '',
+  createdAt: json['created_at'] as String? ?? '',
+  updatedAt: json['updated_at'] as String? ?? '',
   isLiked: json['is_liked'] as bool?,
   likesCount: json['likes_count'] as String?,
   authorId: json['author_id'] as String?,
@@ -24,11 +24,12 @@ Post _$PostFromJson(Map<String, dynamic> json) => Post(
   comments: (json['comments'] as List<dynamic>?)
       ?.map((e) => Comment.fromJson(e as Map<String, dynamic>))
       .toList(),
-  commentsCount: json['comments_count'] as String?,
+  commentsCount: json['comments_count'] as String ?,
   originalPost: json['original_post'] == null
       ? null
       : Post.fromJson(json['original_post'] as Map<String, dynamic>),
   sharesCount: (json['shares_count'] as num?)?.toInt(),
+  viewsCount: (json['views_count'] as num?)?.toInt() ?? 0,
 );
 
 Map<String, dynamic> _$PostToJson(Post instance) => <String, dynamic>{
@@ -46,4 +47,5 @@ Map<String, dynamic> _$PostToJson(Post instance) => <String, dynamic>{
   'comments_count': instance.commentsCount,
   'original_post': instance.originalPost,
   'shares_count': instance.sharesCount,
+  'views_count': instance.viewsCount,
 };

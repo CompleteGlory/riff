@@ -54,6 +54,21 @@ class CommentRepo {
     );
   }
 
+  /// Fetch a single comment by its ID (returns raw JSON map so callers can
+  /// inspect nested relations like [post] without a full Comment parse).
+  Future<ApiResult<Map<String, dynamic>>> getCommentById(int commentId) async {
+    try {
+      final response = await _apiService.getCommentById(commentId);
+      if (response.data is Map<String, dynamic>) {
+        return ApiResult.success(response.data as Map<String, dynamic>);
+      }
+      return ApiResult.failure(
+          ApiErrorHandler.handle(Exception('Invalid comment response')));
+    } catch (e) {
+      return ApiResult.failure(ApiErrorHandler.handle(e));
+    }
+  }
+
   Future<ApiResult<List<Comment>>> getPostComments(String postId) async {
     try {
       final response = await _apiService.getPostComments(postId);

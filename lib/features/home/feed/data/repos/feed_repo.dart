@@ -9,6 +9,16 @@ class FeedRepo {
 
   FeedRepo(this._apiService);
 
+  Future<ApiResult<Post>> getPostById(int postId) async {
+    try {
+      final response = await _apiService.getPostById(postId);
+      return ApiResult.success(
+          Post.fromJson(response.data as Map<String, dynamic>));
+    } catch (e) {
+      return ApiResult.failure(ApiErrorHandler.handle(e));
+    }
+  }
+
   Future<ApiResult<PostsResponse>> getPosts(int page, int limit) async {
     try {
       final response = await _apiService.getPosts(page, limit);
@@ -25,6 +35,25 @@ class FeedRepo {
         {'content': caption ?? ''},
       );
       return ApiResult.success(response);
+    } catch (e) {
+      return ApiResult.failure(ApiErrorHandler.handle(e));
+    }
+  }
+
+  Future<void> recordView(int postId) async {
+    try {
+      await _apiService.recordView(postId);
+    } catch (_) {
+      // fire-and-forget — silently ignore errors
+    }
+  }
+
+  Future<ApiResult<Post?>> getTrendingPost() async {
+    try {
+      final response = await _apiService.getTrendingPost();
+      if (response.data == null) return const ApiResult.success(null);
+      final post = Post.fromJson(response.data as Map<String, dynamic>);
+      return ApiResult.success(post);
     } catch (e) {
       return ApiResult.failure(ApiErrorHandler.handle(e));
     }

@@ -20,6 +20,8 @@ class ApiConstants {
   static const String userPosts = "/api/users/{id}/posts";
   static const String reels = "/api/posts/reels";
   static const String sharePost = "/api/posts/{id}/share";
+  static const String recordView = "/api/posts/{id}/view";
+  static const String trendingPost = "/api/posts/trending";
   static const String feedAds = "/api/commercial/ads/feed";
   static const String trackAdView = "/api/commercial/ads/{id}/view";
 

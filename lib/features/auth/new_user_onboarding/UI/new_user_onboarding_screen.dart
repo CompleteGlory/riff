@@ -14,8 +14,8 @@ import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/widgets/button.dart';
 import 'package:riff/features/auth/new_user_onboarding/data/repos/suggested_users_repo.dart';
-import 'package:riff/features/home/follow/data/repos/follow_repo.dart';
-import 'package:riff/features/home/profile/data/repos/profile_repo.dart';
+import 'package:riff/features/home/follow/logic/cubit/follow_cubit.dart';
+import 'package:riff/features/home/profile/logic/cubit/profile_cubit.dart';
 import 'package:riff/features/home/search/data/models/search_user.dart';
 import 'package:dio/dio.dart';
 
@@ -47,10 +47,9 @@ class _NewUserOnboardingScreenState extends State<NewUserOnboardingScreen> {
   final Set<String> _followed = {};
   final Map<String, bool> _inProgress = {};
 
-  final ProfileRepo _profileRepo = getIt<ProfileRepo>();
-  final FollowRepo _followRepo = getIt<FollowRepo>();
+  final ProfileCubit _profileCubit = getIt<ProfileCubit>();
   final SuggestedUsersRepo _suggestedRepo = getIt<SuggestedUsersRepo>();
-  final Dio _dio = getIt<Dio>();
+  final Dio _dio = getIt<Dio>(); // used only for contacts sync (no cubit exists)
 
   @override
   void initState() {
@@ -89,7 +88,7 @@ class _NewUserOnboardingScreenState extends State<NewUserOnboardingScreen> {
   Future<void> _uploadAndNext() async {
     if (_photo != null) {
       setState(() => _uploadingPhoto = true);
-      await _profileRepo.uploadProfileImage(_photo!);
+      await _profileCubit.uploadProfileImage(_photo!);
       setState(() => _uploadingPhoto = false);
     }
     _goTo(1);
@@ -147,14 +146,15 @@ class _NewUserOnboardingScreenState extends State<NewUserOnboardingScreen> {
   Future<void> _toggleFollow(SearchUser user) async {
     if (_inProgress[user.id] == true) return;
     setState(() => _inProgress[user.id] = true);
+    final followCubit = getIt<FollowCubit>();
     if (_followed.contains(user.id)) {
-      await _followRepo.unfollowUser(user.id);
+      await followCubit.unfollow(user.id);
       _followed.remove(user.id);
     } else {
-      await _followRepo.followUser(user.id);
+      await followCubit.follow(user.id);
       _followed.add(user.id);
     }
-    setState(() => _inProgress[user.id] = false);
+    if (mounted) setState(() => _inProgress[user.id] = false);
   }
 
   void _finish() =>

@@ -11,6 +11,11 @@ class CommentCubit extends Cubit<CommentState> {
 
   CommentCubit(this._commentRepo) : super(const CommentState.initial());
 
+  /// Fetch a single comment by ID (returns raw map with nested relations)
+  Future<ApiResult<Map<String, dynamic>>> getComment(int commentId) async {
+    return await _commentRepo.getCommentById(commentId);
+  }
+
   /// Create a comment on a post
   Future<ApiResult<Comment>> createComment(
     String postId,

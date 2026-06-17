@@ -9,6 +9,7 @@ import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/features/home/chat/UI/chat_screen.dart';
 import 'package:riff/features/home/follow/data/models/follow_user.dart';
 import 'package:riff/features/home/follow/data/repos/follow_repo.dart';
+import 'package:riff/features/home/follow/logic/cubit/follow_cubit.dart';
 import 'package:riff/features/home/user_profile/ui/user_profile_screen.dart';
 
 enum FollowListType { followers, following }
@@ -82,28 +83,22 @@ class _FollowListScreenState extends State<FollowListScreen> {
       _statusOverrides[u.id] ?? u.followStatus;
 
   Future<void> _toggleFollow(FollowUser u) async {
+    final followCubit = GetIt.I<FollowCubit>();
     final current = _statusFor(u);
-    if (current == 'following') {
+    if (current == 'following' || current == 'pending') {
       setState(() => _statusOverrides[u.id] = 'not_following');
       try {
-        await _repo.unfollowUser(u.id);
+        await followCubit.unfollow(u.id);
       } catch (_) {
-        setState(() => _statusOverrides[u.id] = 'following');
-      }
-    } else if (current == 'pending') {
-      setState(() => _statusOverrides[u.id] = 'not_following');
-      try {
-        await _repo.unfollowUser(u.id);
-      } catch (_) {
-        setState(() => _statusOverrides[u.id] = 'pending');
+        if (mounted) setState(() => _statusOverrides[u.id] = current);
       }
     } else {
       final next = u.isPrivate ? 'pending' : 'following';
       setState(() => _statusOverrides[u.id] = next);
       try {
-        await _repo.followUser(u.id);
+        await followCubit.follow(u.id);
       } catch (_) {
-        setState(() => _statusOverrides[u.id] = 'not_following');
+        if (mounted) setState(() => _statusOverrides[u.id] = 'not_following');
       }
     }
   }

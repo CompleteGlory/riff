@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:riff/core/di/dependency_injection.dart';
 import 'package:riff/core/helpers/extenstions.dart';
 import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
 import 'package:riff/core/routing/routes.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:riff/features/home/notifications/logic/cubit/notifications_cubit.dart';
 import 'package:riff/features/home/settings/UI/settings_screen.dart';
 import 'package:riff/features/home/core/UI/bug_report/bug_report_screen.dart';
 import 'package:riff/features/home/core/UI/feature_request/feature_request_screen.dart';
+import 'package:riff/features/home/core/logic/bug_report/bug_report_cubit.dart';
+import 'package:riff/features/home/core/logic/feature_request/feature_request_cubit.dart';
+import 'package:riff/features/home/core/data/repos/feedback_repo.dart';
 
 class AppDrawer extends StatelessWidget {
   final bool isPrivate;
@@ -59,7 +65,12 @@ class AppDrawer extends StatelessWidget {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const BugReportScreen()),
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider(
+                    create: (_) => BugReportCubit(getIt<FeedbackRepo>()),
+                    child: const BugReportScreen(),
+                  ),
+                ),
               );
             },
           ),
@@ -75,7 +86,12 @@ class AppDrawer extends StatelessWidget {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const FeatureRequestScreen()),
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider(
+                    create: (_) => FeatureRequestCubit(getIt<FeedbackRepo>()),
+                    child: const FeatureRequestScreen(),
+                  ),
+                ),
               );
             },
           ),
@@ -185,6 +201,9 @@ class _LogoutButton extends StatelessWidget {
     return GestureDetector(
       onTap: () async {
         Navigator.pop(context);
+        // Reset notifications before navigating away so the next user
+        // starts with a clean slate (cancels polling + socket).
+        getIt<NotificationsCubit>().reset();
         context.pushReplacementNamed(Routes.login);
         // Clear user session data but preserve theme preference so the
         // user's chosen light/dark mode survives logout.

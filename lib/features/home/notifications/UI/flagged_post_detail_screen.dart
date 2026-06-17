@@ -1,11 +1,12 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/di/dependency_injection.dart';
+import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
+import 'package:riff/features/home/feed/data/repos/feed_repo.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_item.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 
@@ -47,26 +48,15 @@ class _FlaggedPostDetailScreenState extends State<FlaggedPostDetailScreen> {
 
   Future<void> _fetchPost() async {
     setState(() { _loading = true; _error = null; });
-    try {
-      final dio = getIt<Dio>();
-      final resp = await dio.get('/api/posts/${widget.postId}');
-      final data = resp.data;
-      if (data is Map<String, dynamic>) {
-        setState(() {
-          _post = Post.fromJson(data);
-          _loading = false;
-        });
-      } else {
-        setState(() { _error = 'Unexpected response format'; _loading = false; });
-      }
-    } on DioException catch (e) {
-      final msg = (e.response?.data?['message'] as String?) ??
-          e.message ??
-          'Failed to load post';
-      setState(() { _error = msg; _loading = false; });
-    } catch (e) {
-      setState(() { _error = e.toString(); _loading = false; });
-    }
+    final result = await getIt<FeedRepo>().getPostById(widget.postId!);
+    if (!mounted) return;
+    result.when(
+      success: (post) => setState(() { _post = post; _loading = false; }),
+      failure: (err) => setState(() {
+        _error = err.message ?? 'Failed to load post';
+        _loading = false;
+      }),
+    );
   }
 
   @override

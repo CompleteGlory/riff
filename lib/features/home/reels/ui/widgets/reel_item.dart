@@ -20,7 +20,10 @@ import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/posts/post_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
 import 'package:riff/features/home/user_profile/ui/user_profile_screen.dart';
-import 'package:riff/features/home/follow/data/repos/follow_repo.dart';
+import 'package:riff/features/home/follow/logic/cubit/follow_cubit.dart';
+import 'package:riff/features/home/feed/logic/view_tracker.dart';
+import 'package:riff/features/home/feed/Ui/widgets/post/post_options.dart';
+import 'package:riff/features/home/feed/Ui/post_detail_screen.dart';
 
 /// Full-screen reel card.
 class ReelItem extends StatefulWidget {
@@ -73,6 +76,7 @@ class _ReelItemState extends State<ReelItem> {
     _commentCount = int.tryParse(widget.post.commentsCount ?? '0') ?? 0;
     _shareCount = widget.post.sharesCount ?? 0;
     _loadMyId();
+    ViewTracker.instance.track(widget.post.id);
     // Attach listener immediately if controller is already ready on first build.
     if (widget.isReady && widget.controller != null) {
       widget.controller!.addListener(_onControllerUpdate);
@@ -218,7 +222,7 @@ class _ReelItemState extends State<ReelItem> {
     if (authorId == null || _followLoading) return;
     setState(() { _followLoading = true; _isFollowing = true; });
     try {
-      await getIt<FollowRepo>().followUser(authorId);
+      await getIt<FollowCubit>().follow(authorId);
     } catch (_) {
       if (mounted) setState(() => _isFollowing = false);
     } finally {
@@ -285,6 +289,30 @@ class _ReelItemState extends State<ReelItem> {
             setState(() => _shareCount++);
           }
         },
+      ),
+    );
+  }
+
+  void _openOptions() {
+    showPostOptions(
+      isMine: _isOwnPost,
+      context: context,
+      post: widget.post,
+    );
+  }
+
+  void _openFullPost() {
+    HomeCubit? homeCubit;
+    try { homeCubit = context.read<HomeCubit>(); } catch (_) {}
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => homeCubit != null
+            ? BlocProvider.value(
+                value: homeCubit,
+                child: PostDetailScreen(post: widget.post),
+              )
+            : PostDetailScreen(post: widget.post),
       ),
     );
   }
@@ -490,6 +518,22 @@ class _ReelItemState extends State<ReelItem> {
                   height: 28.h,
                   color: Colors.white,
                 ),
+              ),
+              SizedBox(height: 20.h),
+              // View full post
+              _ReelAction(
+                label: '',
+                onTap: _openFullPost,
+                child: Icon(Icons.article_outlined,
+                    size: 28.w, color: Colors.white),
+              ),
+              SizedBox(height: 20.h),
+              // More options (edit / delete / report)
+              _ReelAction(
+                label: '',
+                onTap: _openOptions,
+                child: Icon(Icons.more_horiz,
+                    size: 28.w, color: Colors.white),
               ),
             ],
           ),

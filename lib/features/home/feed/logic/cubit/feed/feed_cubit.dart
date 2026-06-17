@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:riff/features/home/feed/data/repos/feed_repo.dart';
 import 'package:riff/features/home/feed/logic/cubit/feed/feed_state.dart';
@@ -18,6 +19,13 @@ class FeedCubit extends Cubit<FeedState> {
   final List<Post> _posts = [];
   bool _isLoadingMore = false;
   bool _hasMore = true;
+
+  Post? trendingPost;
+
+  Future<void> loadTrending() async {
+    final result = await _feedRepo.getTrendingPost();
+    result.whenOrNull(success: (post) => trendingPost = post);
+  }
 
   bool get isLoadingMore => _isLoadingMore;
   bool get hasMore => _hasMore;
@@ -142,6 +150,7 @@ class FeedCubit extends Cubit<FeedState> {
       page = 1;
       _posts.clear();
       _hasMore = true;
+      unawaited(loadTrending());
     }
 
     // For first page show full loading state, for subsequent pages keep current data
