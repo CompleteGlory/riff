@@ -11,6 +11,7 @@ import 'package:riff/features/home/follow/data/models/follow_user.dart';
 import 'package:riff/features/home/follow/data/repos/follow_repo.dart';
 import 'package:riff/features/home/follow/logic/cubit/follow_cubit.dart';
 import 'package:riff/features/home/user_profile/ui/user_profile_screen.dart';
+import 'package:riff/generated/l10n.dart';
 
 enum FollowListType { followers, following }
 
@@ -108,8 +109,8 @@ class _FollowListScreenState extends State<FollowListScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? const Color(0xFF0F0F0F) : const Color(0xFFF8F8F8);
     final title = widget.type == FollowListType.followers
-        ? 'Followers'
-        : 'Following';
+        ? S.of(context).followersTitle
+        : S.of(context).followingTitle;
 
     return Scaffold(
       backgroundColor: bg,
@@ -169,7 +170,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
                   Icon(Icons.wifi_off_rounded,
                       size: 40.r, color: const Color(0xFF444444)),
                   SizedBox(height: 14.h),
-                  Text('Failed to load',
+                  Text(S.of(context).failedToLoad,
                       style: TextStyle(
                         fontFamily: 'GeneralSans',
                         fontSize: 15,
@@ -178,7 +179,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
                   SizedBox(height: 10.h),
                   TextButton(
                     onPressed: () => setState(_load),
-                    child: Text('Retry',
+                    child: Text(S.of(context).retryBtn,
                         style: TextStyle(
                             color: ColorManager.accent,
                             fontFamily: 'GeneralSans',
@@ -226,7 +227,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
                           color: isDark ? Colors.white : ColorManager.black,
                         ),
                         decoration: InputDecoration(
-                          hintText: 'Search',
+                          hintText: S.of(context).searchHintFollow,
                           hintStyle: TextStyle(
                             fontFamily: 'GeneralSans',
                             fontSize: 14,
@@ -267,7 +268,7 @@ class _FollowListScreenState extends State<FollowListScreen> {
                 child: visible.isEmpty
                     ? Center(
                         child: Text(
-                          'No results for "$_query"',
+                          S.of(context).noResultsForQueryShort(_query),
                           style: TextStyle(
                             fontFamily: 'GeneralSans',
                             fontSize: 14,
@@ -493,10 +494,10 @@ class _FollowChip extends StatelessWidget {
         : ColorManager.black;
 
     final label = isFollowing
-        ? 'Following'
+        ? S.of(context).followingStatus
         : isPending
             ? 'Requested'
-            : 'Follow';
+            : S.of(context).followBtn;
 
     return GestureDetector(
       onTap: onTap,
@@ -583,7 +584,7 @@ class _EmptyState extends StatelessWidget {
           ),
           SizedBox(height: 18.h),
           Text(
-            isFollowers ? 'No followers yet' : 'Not following anyone',
+            isFollowers ? S.of(context).noFollowersYet : S.of(context).notFollowingAnyone,
             style: TextStyle(
               fontFamily: 'GeneralSans',
               fontSize: 17,
@@ -594,8 +595,8 @@ class _EmptyState extends StatelessWidget {
           SizedBox(height: 6.h),
           Text(
             isFollowers
-                ? 'When someone follows this account,\nthey\'ll appear here.'
-                : 'Accounts followed\nwill appear here.',
+                ? S.of(context).whenSomeonFollows
+                : S.of(context).accountsFollowed,
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontFamily: 'GeneralSans',

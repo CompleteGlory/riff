@@ -23,6 +23,7 @@ import 'package:riff/features/home/notifications/logic/cubit/notifications_cubit
 import 'package:riff/core/widgets/button.dart';
 import 'package:riff/features/home/follow/UI/follow_list_screen.dart';
 import 'package:riff/features/home/chat/UI/chat_screen.dart';
+import 'package:riff/generated/l10n.dart';
 
 // ── Genre assets + accent colors (mirrors profile_screen.dart) ────────────────
 
@@ -181,7 +182,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           verticalSpace(16),
           TextButton(
             onPressed: () => _cubit.loadProfile(widget.userId),
-            child: Text('Retry',
+            child: Text(S.of(context).retryBtn,
                 style: TextStyles.font14semiBold
                     .copyWith(color: ColorManager.accent)),
           ),
@@ -262,7 +263,7 @@ class _ProfileBody extends StatelessWidget {
               child: Padding(
                 padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 10.h),
                 child: Row(children: [
-                  Text('Posts',
+                  Text(S.of(context).postsLabel,
                       style: TextStyle(
                         fontFamily: 'GeneralSans',
                         fontSize: 16,
@@ -338,7 +339,7 @@ class _ProfileBody extends StatelessWidget {
                           ? const Color(0xFF333333)
                           : ColorManager.lighterGrey),
                   verticalSpace(12),
-                  Text('No posts yet',
+                  Text(S.of(context).noPostsYet,
                       style: TextStyle(
                         fontFamily: 'GeneralSans',
                         fontSize: 15,
@@ -449,14 +450,14 @@ class _ProfileBody extends StatelessWidget {
               children: [
                 _StatCell(
                   count: profile.postsCount,
-                  label: profile.postsCount == 1 ? 'Post' : 'Posts',
+                  label: profile.postsCount == 1 ? S.of(context).postLabel : S.of(context).postsLabel,
                   onTap: null,
                   isDark: isDark,
                 ),
                 _StatDivider(isDark: isDark),
                 _StatCell(
                   count: profile.followersCount,
-                  label: 'Followers',
+                  label: S.of(context).followersLabel,
                   isDark: isDark,
                   onTap: canAccessList
                       ? () => Navigator.push(
@@ -474,7 +475,7 @@ class _ProfileBody extends StatelessWidget {
                 _StatDivider(isDark: isDark),
                 _StatCell(
                   count: profile.followingCount,
-                  label: 'Following',
+                  label: S.of(context).followingLabel,
                   isDark: isDark,
                   onTap: canAccessList
                       ? () => Navigator.push(
@@ -700,16 +701,16 @@ class _FollowButton extends StatelessWidget {
                 final remove = await showDialog<bool>(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    title: const Text('Remove Follower?'),
+                    title: Text(S.of(context).removeFollowerTitle),
                     content: Text(
                         '${profile.username} follows you. Remove them too?'),
                     actions: [
                       TextButton(
                           onPressed: () => Navigator.pop(ctx, false),
-                          child: const Text('Keep')),
+                          child: Text(S.of(context).keepBtn)),
                       TextButton(
                           onPressed: () => Navigator.pop(ctx, true),
-                          child: Text('Remove',
+                          child: Text(S.of(context).removeBtn,
                               style: TextStyle(color: ColorManager.red))),
                     ],
                   ),
@@ -732,7 +733,7 @@ class _FollowButton extends StatelessWidget {
                     Icon(Icons.person_remove_outlined,
                         color: ColorManager.red, size: 18.r),
                     SizedBox(width: 8.w),
-                    Text('Unfollow',
+                    Text(S.of(context).unfollowBtn,
                         style: TextStyles.font14semiBold
                             .copyWith(color: ColorManager.red)),
                   ]),
@@ -750,7 +751,7 @@ class _FollowButton extends StatelessWidget {
                     : const Color(0xFFF5F5F5),
                 borderRadius: BorderRadius.circular(12.r),
               ),
-              child: Text('Cancel',
+              child: Text(S.of(context).cancelBtn,
                   textAlign: TextAlign.center,
                   style: TextStyles.font14semiBold.copyWith(
                     color: isDark ? Colors.white : ColorManager.black,
@@ -769,7 +770,7 @@ class _FollowButton extends StatelessWidget {
     if (status == 'following') {
       return AppButton(
         onPressed: () => _showUnfollowSheet(context),
-        text: 'Following',
+        text: S.of(context).followingStatus,
         isWhite: true,
         icon: Icons.keyboard_arrow_down_rounded,
       );
@@ -782,13 +783,13 @@ class _FollowButton extends StatelessWidget {
             context.read<NotificationsCubit>().silentRefresh();
           } catch (_) {}
         },
-        text: 'Requested',
+        text: S.of(context).requestedBtn,
         isWhite: true,
       );
     }
     return AppButton(
       onPressed: () => cubit.follow(userId),
-      text: profile.isPrivate ? 'Request' : 'Follow',
+      text: profile.isPrivate ? S.of(context).requestBtn : S.of(context).followBtn,
       isWhite: false,
     );
   }
@@ -833,7 +834,7 @@ class _GenresSection extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 4.h),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(
-          'Genres',
+          S.of(context).genresSection,
           style: TextStyle(
             fontFamily: 'GeneralSans',
             fontSize: 14,
@@ -882,7 +883,7 @@ class _InstrumentsSection extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 16.h),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(
-          'Instruments',
+          S.of(context).instrumentsSection,
           style: TextStyle(
             fontFamily: 'GeneralSans',
             fontSize: 13,

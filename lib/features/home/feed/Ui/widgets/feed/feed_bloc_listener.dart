@@ -4,6 +4,7 @@ import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/home/feed/logic/cubit/feed/feed_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/feed/feed_state.dart';
+import 'package:riff/generated/l10n.dart';
 
 
 class FeedBlocListener extends StatelessWidget {
@@ -44,7 +45,7 @@ class FeedBlocListener extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
-              'Got it',
+              S.of(context).gotItBtn,
               style: TextStyles.font14Medium.copyWith(
                 color: Theme.of(context).brightness == Brightness.dark
                     ? ColorManager.white

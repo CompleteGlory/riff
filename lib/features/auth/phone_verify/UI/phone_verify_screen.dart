@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: deprecated_member_use, use_build_context_synchronously
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,6 +13,7 @@ import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/widgets/button.dart';
 import 'package:riff/features/auth/phone_verify/logic/cubit/phone_verify_cubit.dart';
 import 'package:riff/features/auth/phone_verify/logic/cubit/phone_verify_state.dart';
+import 'package:riff/generated/l10n.dart';
 
 /// Step 1 — enter phone number and receive WhatsApp OTP
 class PhoneVerifyScreen extends StatefulWidget {
@@ -29,10 +30,12 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = S.of(context);
 
     return Scaffold(
       body: SafeArea(
         child: BlocConsumer<PhoneVerifyCubit, PhoneVerifyState>(
+          listenWhen: (prev, curr) => curr != prev,
           listener: (context, state) {
             if (state is PhoneVerifyOtpSent) {
               Navigator.push(
@@ -47,7 +50,7 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen> {
             } else if (state is PhoneVerifyError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(state.message),
+                  content: Text(state.message == 'PHONE_ALREADY_TAKEN' ? S.of(context).phoneNumberAlreadyTaken : state.message),
                   backgroundColor: Colors.red,
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -79,7 +82,7 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen> {
                           (r) => false,
                         ),
                         child: Text(
-                          'Skip',
+                          s.skipBtn,
                           style: TextStyles.font14Medium.copyWith(
                             color: ColorManager.normalGrey,
                           ),
@@ -89,12 +92,12 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen> {
                   ),
                   verticalSpace(32),
                   Text(
-                    'Verify your\nphone number',
+                    s.verifyYourPhoneNumber,
                     style: TextStyles.font28Bold,
                   ),
                   verticalSpace(8),
                   Text(
-                    "We'll send a WhatsApp message with a 6-digit code.",
+                    s.wellSendWhatsApp,
                     style: TextStyles.font16Medium.copyWith(
                       color: ColorManager.lightGrey,
                     ),
@@ -103,7 +106,7 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen> {
                   // Phone field
                   IntlPhoneField(
                     decoration: InputDecoration(
-                      labelText: 'Phone Number',
+                      labelText: s.phoneNumberLabel,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14.r),
                       ),
@@ -143,7 +146,7 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen> {
                   ),
                   verticalSpace(32),
                   AppButton(
-                    text: loading ? 'Sending…' : 'Send OTP via WhatsApp',
+                    text: loading ? s.sendingOTP : s.sendOTPViaWhatsApp,
                     isWhite: false,
                     onPressed: () {
                       if (_valid && !loading) {
@@ -161,7 +164,7 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen> {
                         WhatsAppIcon(size: 18.r),
                         SizedBox(width: 6.w),
                         Text(
-                          'Code will be sent via WhatsApp',
+                          s.codeWillBeSentViaWhatsApp,
                           style: TextStyles.font14Medium.copyWith(
                             color: ColorManager.normalGrey,
                           ),
@@ -274,8 +277,17 @@ class _PhoneOtpScreenState extends State<PhoneOtpScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = S.of(context);
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (!didPop) {
+          context.read<PhoneVerifyCubit>().resetToInitial();
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
       body: SafeArea(
         child: BlocConsumer<PhoneVerifyCubit, PhoneVerifyState>(
           listener: (context, state) {
@@ -292,7 +304,7 @@ class _PhoneOtpScreenState extends State<PhoneOtpScreen> {
               });
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(state.message),
+                  content: Text(state.message == 'PHONE_ALREADY_TAKEN' ? S.of(context).phoneNumberAlreadyTaken : state.message),
                   backgroundColor: Colors.red,
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -310,15 +322,18 @@ class _PhoneOtpScreenState extends State<PhoneOtpScreen> {
                   verticalSpace(32),
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      context.read<PhoneVerifyCubit>().resetToInitial();
+                      Navigator.pop(context);
+                    },
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
                   verticalSpace(32),
-                  Text('Enter the code', style: TextStyles.font28Bold),
+                  Text(S.of(context).enterTheCode, style: TextStyles.font28Bold),
                   verticalSpace(8),
                   Text(
-                    'We sent a WhatsApp message to\n${widget.phoneNumber}',
+                    s.weSentWhatsAppTo(widget.phoneNumber),
                     style: TextStyles.font16Medium.copyWith(
                       color: ColorManager.lightGrey,
                     ),
@@ -405,7 +420,7 @@ class _PhoneOtpScreenState extends State<PhoneOtpScreen> {
                     const Center(child: CircularProgressIndicator())
                   else
                     AppButton(
-                      text: 'Verify',
+                      text: s.verifyBtn,
                       isWhite: false,
                       onPressed: () {
                         if (_otp.length == 6) {
@@ -420,7 +435,7 @@ class _PhoneOtpScreenState extends State<PhoneOtpScreen> {
                   Center(
                     child: _resendSeconds > 0
                         ? Text(
-                            'Resend code in ${_resendSeconds}s',
+                            s.resendCodeIn(_resendSeconds),
                             style: TextStyles.font14Medium.copyWith(
                               color: ColorManager.normalGrey,
                             ),
@@ -433,7 +448,7 @@ class _PhoneOtpScreenState extends State<PhoneOtpScreen> {
                               );
                             },
                             child: Text(
-                              'Resend via WhatsApp',
+                              s.resendViaWhatsApp,
                               style: TextStyles.font14Medium.copyWith(
                                 color: ColorManager.accent,
                                 decoration: TextDecoration.underline,
@@ -450,7 +465,7 @@ class _PhoneOtpScreenState extends State<PhoneOtpScreen> {
                         (r) => false,
                       ),
                       child: Text(
-                        'Skip for now',
+                        s.skipForNow,
                         style: TextStyles.font14Medium.copyWith(
                           color: ColorManager.normalGrey,
                         ),
@@ -462,6 +477,7 @@ class _PhoneOtpScreenState extends State<PhoneOtpScreen> {
             );
           },
         ),
+      ),
       ),
     );
   }

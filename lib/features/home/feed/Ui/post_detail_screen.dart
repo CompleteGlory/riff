@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_item.dart';
+import 'package:riff/generated/l10n.dart';
 
 /// Full-screen view of a single post (used when tapping a shared post card).
 class PostDetailScreen extends StatelessWidget {
@@ -17,7 +18,7 @@ class PostDetailScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
         ),
-        title: const Text('Post'),
+        title: Text(S.of(context).postScreenTitle),
         centerTitle: false,
       ),
       body: SingleChildScrollView(

@@ -8,6 +8,7 @@ import 'package:riff/core/widgets/button.dart';
 import 'package:riff/features/auth/forgot_password/UI/widgets/forgot_password_bloc_listener.dart';
 import 'package:riff/features/auth/forgot_password/UI/widgets/forgot_password_form_field.dart';
 import 'package:riff/features/auth/forgot_password/logic/cubit/forgot_password_cubit.dart';
+import 'package:riff/generated/l10n.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
   const ForgotPasswordScreen({super.key});
@@ -18,6 +19,7 @@ class ForgotPasswordScreen extends StatelessWidget {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
+            final s = S.of(context);
             return SingleChildScrollView(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
@@ -29,10 +31,10 @@ class ForgotPasswordScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Forgot Password", style: TextStyles.font28Bold),
+                        Text(s.forgotPasswordTitle, style: TextStyles.font28Bold),
                         verticalSpace(8),
                         Text(
-                          "Enter your email for the verification process. We will send 4 digits code to your email.",
+                          s.forgotPasswordSubtitle,
                           style: TextStyles.font16Medium.copyWith(color: ColorManager.lightGrey),
                         ),
                         verticalSpace(32),
@@ -40,7 +42,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                         verticalSpace(20),
                         AppButton(onPressed: () {
                           validateAndRequestOtp(context);
-                        }, text: "Send Code", isWhite: false),
+                        }, text: s.sendCodeBtn, isWhite: false),
                         verticalSpace(10),
                         const ForgotPasswordBlocListener(),
                       ],

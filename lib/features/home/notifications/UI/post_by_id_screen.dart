@@ -12,6 +12,7 @@ import 'package:riff/features/home/feed/data/repos/feed_repo.dart';
 import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
 import 'package:riff/features/home/feed/Ui/widgets/comments/comment_sheet.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_item.dart';
+import 'package:riff/generated/l10n.dart';
 
 /// Navigates to a post by its numeric ID. Used by like / comment notifications.
 /// When [openComments] is true the comment sheet is automatically shown after
@@ -57,7 +58,7 @@ class _PostByIdScreenState extends State<PostByIdScreen> {
         }
       },
       failure: (err) => setState(() {
-        _error = err.message ?? 'Failed to load post';
+        _error = err.message ?? S.of(context).failedToLoad;
         _loading = false;
       }),
     );
@@ -90,7 +91,7 @@ class _PostByIdScreenState extends State<PostByIdScreen> {
               ),
             ),
             const SizedBox(height: 14),
-            Text('Comments', style: TextStyles.font18Semibold),
+            Text(S.of(context).commentsLabel, style: TextStyles.font18Semibold),
             const Expanded(child: Center(child: CircularProgressIndicator())),
           ],
         ),
@@ -120,7 +121,7 @@ class _PostByIdScreenState extends State<PostByIdScreen> {
       },
       failure: (_) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to load comments')),
+          SnackBar(content: Text(S.of(context).failedToLoadComments)),
         );
       },
     );
@@ -136,7 +137,7 @@ class _PostByIdScreenState extends State<PostByIdScreen> {
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Post'),
+        title: Text(S.of(context).postScreenTitle),
         centerTitle: false,
       ),
       body: _loading
@@ -155,13 +156,13 @@ class _PostByIdScreenState extends State<PostByIdScreen> {
                           textAlign: TextAlign.center),
                       SizedBox(height: 16.h),
                       TextButton(
-                          onPressed: _fetchPost, child: const Text('Retry')),
+                          onPressed: _fetchPost, child: Text(S.of(context).retryBtn)),
                     ],
                   ),
                 )
               : _post == null
                   ? Center(
-                      child: Text('Post not found or was deleted.',
+                      child: Text(S.of(context).postNotFoundDeleted,
                           style: TextStyles.font14Medium.copyWith(
                               color: ColorManager.normalGrey)))
                   : RefreshIndicator(

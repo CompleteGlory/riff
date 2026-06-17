@@ -4,6 +4,7 @@ import 'package:riff/core/helpers/spacing.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/widgets/tff.dart';
 import 'package:riff/features/auth/forgot_password/logic/cubit/forgot_password_cubit.dart';
+import 'package:riff/generated/l10n.dart';
 
 class ResetPasswordFormFields extends StatelessWidget {
   const ResetPasswordFormFields({super.key});
@@ -11,13 +12,14 @@ class ResetPasswordFormFields extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final forgotPasswordCubit = context.read<ForgotPasswordCubit>();
+    final s = S.of(context);
 
     return Form(
       key: forgotPasswordCubit.resetFormKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("New Password", style: TextStyles.font15semiBold),
+          Text(s.passwordLabel, style: TextStyles.font15semiBold),
           verticalSpace(4),
           AppTextField(
             controller: forgotPasswordCubit.newPasswordController,
@@ -25,17 +27,17 @@ class ResetPasswordFormFields extends StatelessWidget {
             isPassword: true,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter a password';
+                return s.pleaseEnterPassword;
               }
               if (value.length < 8) {
-                return 'Password must be at least 8 characters';
+                return s.passwordMinLength;
               }
               return null;
             },
-            hintText: "Enter your new password",
+            hintText: s.enterNewPassword,
           ),
           verticalSpace(16),
-          Text("Confirm New Password", style: TextStyles.font15semiBold),
+          Text(s.passwordLabel, style: TextStyles.font15semiBold),
           verticalSpace(4),
           AppTextField(
             controller: forgotPasswordCubit.confirmPasswordController,
@@ -43,14 +45,14 @@ class ResetPasswordFormFields extends StatelessWidget {
             isPassword: true,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please confirm your password';
+                return s.pleaseConfirmPassword;
               }
               if (value != forgotPasswordCubit.newPasswordController.text) {
-                return 'Passwords do not match';
+                return s.passwordsDoNotMatch;
               }
               return null;
             },
-            hintText: "Confirm your new password",
+            hintText: s.confirmNewPassword,
           ),
         ],
       ),

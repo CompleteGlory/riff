@@ -9,6 +9,7 @@ import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/feed/data/repos/feed_repo.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_item.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
+import 'package:riff/generated/l10n.dart';
 
 /// Shown when the user taps a [post_flagged] notification.
 /// Fetches the reported post by ID and displays it with a warning banner.
@@ -53,7 +54,7 @@ class _FlaggedPostDetailScreenState extends State<FlaggedPostDetailScreen> {
     result.when(
       success: (post) => setState(() { _post = post; _loading = false; }),
       failure: (err) => setState(() {
-        _error = err.message ?? 'Failed to load post';
+        _error = err.message ?? S.of(context).failedToLoad;
         _loading = false;
       }),
     );
@@ -69,7 +70,7 @@ class _FlaggedPostDetailScreenState extends State<FlaggedPostDetailScreen> {
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Flagged Post'),
+        title: Text(S.of(context).flaggedPost),
         centerTitle: false,
       ),
       body: Column(
@@ -95,7 +96,7 @@ class _FlaggedPostDetailScreenState extends State<FlaggedPostDetailScreen> {
                           )
                         : _post == null
                         ? Center(
-                            child: Text('Post not found or was deleted.',
+                            child: Text(S.of(context).postNotFoundDeleted,
                                 style: TextStyles.font14Medium.copyWith(
                                     color: ColorManager.normalGrey)))
                         : RefreshIndicator(
@@ -294,7 +295,7 @@ class _ErrorView extends StatelessWidget {
                   color: ColorManager.normalGrey),
               textAlign: TextAlign.center),
           SizedBox(height: 16.h),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
+          TextButton(onPressed: onRetry, child: Text(S.of(context).retryBtn)),
         ],
       ),
     );

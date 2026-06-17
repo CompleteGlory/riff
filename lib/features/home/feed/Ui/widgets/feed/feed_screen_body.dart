@@ -17,6 +17,7 @@ import 'package:riff/features/home/feed/Ui/widgets/feed/trending_post_card.dart'
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/feed/logic/cubit/feed/feed_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/feed/feed_state.dart';
+import 'package:riff/generated/l10n.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Fade + slide-up entrance animation for list items with staggered delay
@@ -186,7 +187,7 @@ class _FeedScreenBodyState extends State<FeedScreenBody> {
       child: BlocBuilder<FeedCubit, FeedState>(
         builder: (context, state) {
           return state.when(
-            initial: () => const Center(child: Text("No posts loaded")),
+            initial: () => Center(child: Text(S.of(context).noPostsLoaded)),
             loading: () => const FeedShimmer(),
             success: (postsResponse) {
               final posts = postsResponse.data;
@@ -235,7 +236,7 @@ class _FeedScreenBodyState extends State<FeedScreenBody> {
                           children: [
                             Text(
                               paginationError.errors?.first.message ??
-                                  'Failed to load more posts',
+                                  S.of(context).failedToLoadMorePosts,
                               textAlign: TextAlign.center,
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
@@ -244,7 +245,7 @@ class _FeedScreenBodyState extends State<FeedScreenBody> {
                               onPressed: cubit.retryLoadMore,
                               icon: Icon(Icons.refresh,
                                   color: ColorManager.primaryBlack),
-                              label: const Text('Retry'),
+                              label: Text(S.of(context).retryBtn),
                             ),
                           ],
                         ),
@@ -273,7 +274,7 @@ class _FeedScreenBodyState extends State<FeedScreenBody> {
                   SliverFillRemaining(
                     hasScrollBody: false,
                     child: _FeedErrorWidget(
-                      message: msg ?? 'Something went wrong',
+                      message: msg ?? S.of(context).somethingWentWrong,
                       isConnectionError: isConnErr,
                       onRetry: () => cubit.getPosts(refresh: true),
                     ),
@@ -429,7 +430,7 @@ class _FeedErrorWidgetState extends State<_FeedErrorWidget>
 
                 // ── Title ──────────────────────────────────────────────────
                 Text(
-                  widget.isConnectionError ? 'No Connection' : 'Server Error',
+                  widget.isConnectionError ? S.of(context).noConnection : S.of(context).serverError,
                   style: TextStyles.font18Semibold,
                   textAlign: TextAlign.center,
                 ),
@@ -439,8 +440,8 @@ class _FeedErrorWidgetState extends State<_FeedErrorWidget>
                 // ── Subtitle ───────────────────────────────────────────────
                 Text(
                   widget.isConnectionError
-                      ? 'Check your connection, then pull down to refresh.'
-                      : 'We\'re having trouble loading your feed.\nPull down to try again.',
+                      ? S.of(context).checkYourConnection
+                      : S.of(context).somethingWentWrong,
                   style: TextStyles.font14Medium.copyWith(
                     color: isDark
                         ? const Color(0xFF888888)
@@ -474,7 +475,7 @@ class _FeedErrorWidgetState extends State<_FeedErrorWidget>
                         ),
                         SizedBox(width: 8.w),
                         Text(
-                          'Try Again',
+                          S.of(context).tryAgainBtn,
                           style: TextStyles.font14Medium.copyWith(
                             color: isDark
                                 ? ColorManager.primaryBlack

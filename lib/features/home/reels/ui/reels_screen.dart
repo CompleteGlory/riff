@@ -8,6 +8,7 @@ import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/reels/logic/cubit/reels_cubit.dart';
 import 'package:riff/features/home/reels/logic/cubit/reels_state.dart';
 import 'package:riff/features/home/reels/ui/widgets/reel_item.dart';
+import 'package:riff/generated/l10n.dart';
 
 class ReelsScreen extends StatelessWidget {
   /// When provided the reel list starts with this post (index 0) and the rest
@@ -198,7 +199,7 @@ class _ReelsBodyState extends State<_ReelsBody> {
                   TextButton(
                     onPressed: () =>
                         context.read<ReelsCubit>().loadReels(refresh: true),
-                    child: const Text('Retry',
+                    child: Text(S.of(context).retryBtn,
                         style: TextStyle(color: Colors.white)),
                   ),
                 ],
@@ -209,11 +210,11 @@ class _ReelsBodyState extends State<_ReelsBody> {
 
         // Empty state (no reels at all).
         if (_reels.isEmpty) {
-          return const Scaffold(
+          return Scaffold(
             backgroundColor: Colors.black,
             body: Center(
               child: Text(
-                'No reels yet.\nPost a video to get started!',
+                S.of(context).noReelsYet,
                 style: TextStyle(color: Colors.white54, fontSize: 16),
                 textAlign: TextAlign.center,
               ),

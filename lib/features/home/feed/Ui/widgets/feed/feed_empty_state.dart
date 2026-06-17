@@ -13,6 +13,7 @@ import 'package:riff/features/home/follow/logic/cubit/follow_cubit.dart';
 import 'package:riff/features/home/search/data/models/search_user.dart';
 import 'package:riff/features/home/user_profile/ui/user_profile_screen.dart';
 import 'package:video_player/video_player.dart';
+import 'package:riff/generated/l10n.dart';
 
 class FeedEmptyState extends StatefulWidget {
   const FeedEmptyState({super.key});
@@ -128,6 +129,7 @@ class _FeedEmptyStateState extends State<FeedEmptyState>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = S.of(context);
 
     return ListView(
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
@@ -142,10 +144,10 @@ class _FeedEmptyStateState extends State<FeedEmptyState>
                 color: ColorManager.accent,
               ),
               SizedBox(height: 12.h),
-              Text('Your feed is empty', style: TextStyles.font20Bold),
+              Text(s.noPostsLoaded, style: TextStyles.font20Bold),
               SizedBox(height: 6.h),
               Text(
-                'Follow artists to fill it with music.',
+                s.followArtistsToFillFeed,
                 style: TextStyles.font14Medium
                     .copyWith(color: ColorManager.normalGrey),
                 textAlign: TextAlign.center,
@@ -156,7 +158,7 @@ class _FeedEmptyStateState extends State<FeedEmptyState>
         SizedBox(height: 32.h),
 
         // Suggested users
-        _SectionHeader(title: 'Suggested for you', isDark: isDark),
+        _SectionHeader(title: s.followArtistsToFillFeed, isDark: isDark),
         SizedBox(height: 12.h),
 
         if (_loadingSuggested) ...[
@@ -182,7 +184,7 @@ class _FeedEmptyStateState extends State<FeedEmptyState>
         SizedBox(height: 28.h),
 
         // Contacts section
-        _SectionHeader(title: 'From your contacts', isDark: isDark),
+        _SectionHeader(title: s.seeWhichContactsOnRiff, isDark: isDark),
         SizedBox(height: 12.h),
 
         if (!_contactsSynced) ...[
@@ -370,7 +372,7 @@ class _SuggestedUserCard extends StatelessWidget {
                             ),
                           )
                         : Text(
-                            isFollowed ? 'Following' : 'Follow',
+                            isFollowed ? S.of(context).followingStatus : S.of(context).followBtn,
                             style: TextStyle(
                               fontFamily: 'GeneralSans',
                               fontSize: 13,
@@ -768,7 +770,7 @@ class _UserCard extends StatelessWidget {
                       ),
                     )
                   : Text(
-                      isFollowed ? 'Following' : 'Follow',
+                      isFollowed ? S.of(context).followingStatus : S.of(context).followBtn,
                       style: TextStyle(
                         fontFamily: 'GeneralSans',
                         fontSize: 13,
@@ -917,7 +919,7 @@ class _SyncContactsButton extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Sync Contacts',
+                    S.of(context).syncContactsBtn,
                     style: TextStyle(
                       fontFamily: 'GeneralSans',
                       fontSize: 14,
@@ -927,7 +929,7 @@ class _SyncContactsButton extends StatelessWidget {
                   ),
                   SizedBox(height: 2.h),
                   Text(
-                    'Find your contacts who are on Riff',
+                    S.of(context).seeWhichContactsOnRiff,
                     style: TextStyle(
                       fontFamily: 'GeneralSans',
                       fontSize: 12,

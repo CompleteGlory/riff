@@ -13,6 +13,7 @@ import 'package:riff/features/auth/user-prefrences/UI/widgets/selection_card.dar
 import 'package:riff/features/auth/user-prefrences/UI/widgets/step_indicator.dart';
 import 'package:riff/features/auth/user-prefrences/data/models/genre.dart';
 import 'package:riff/features/auth/user-prefrences/data/models/instrument.dart';
+import 'package:riff/generated/l10n.dart';
 
 final List<InstrumentModel> instruments = [
   InstrumentModel(name: 'Guitar', image: 'assets/images/electric-guitar.png'),
@@ -72,6 +73,7 @@ class _GenresScreenState extends State<GenresScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -103,7 +105,7 @@ class _GenresScreenState extends State<GenresScreen> {
                   ),
                   StepIndicator(current: 1, total: 2),
                   Text(
-                    'Step 2 of 2',
+                    s.step2Of2,
                     style: TextStyles.font12Medium.copyWith(
                       color: ColorManager.normalGrey,
                     ),
@@ -112,10 +114,10 @@ class _GenresScreenState extends State<GenresScreen> {
               ),
               verticalSpace(28),
 
-              Text('What do you listen to?', style: TextStyles.font28Bold),
+              Text(S.of(context).whatDoYouListenTo, style: TextStyles.font28Bold),
               verticalSpace(8),
               Text(
-                'Select the genres you love.\nThis helps us find your people.',
+                s.selectGenres,
                 style: TextStyles.font16Medium.copyWith(
                   color: ColorManager.lightGrey,
                 ),
@@ -149,7 +151,7 @@ class _GenresScreenState extends State<GenresScreen> {
 
               AppButton(
                 onPressed: _finish,
-                text: 'Get Started',
+                text: s.getStarted,
                 isWhite: false,
               ),
               verticalSpace(16),

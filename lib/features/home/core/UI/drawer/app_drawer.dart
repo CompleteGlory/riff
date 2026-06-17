@@ -13,6 +13,7 @@ import 'package:riff/features/home/core/UI/feature_request/feature_request_scree
 import 'package:riff/features/home/core/logic/bug_report/bug_report_cubit.dart';
 import 'package:riff/features/home/core/logic/feature_request/feature_request_cubit.dart';
 import 'package:riff/features/home/core/data/repos/feedback_repo.dart';
+import 'package:riff/generated/l10n.dart';
 
 class AppDrawer extends StatelessWidget {
   final bool isPrivate;
@@ -20,6 +21,7 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? const Color(0xFF1A1A1A) : ColorManager.white;
     final divider = isDark ? const Color(0xFF2A2A2A) : ColorManager.lighterGrey;
@@ -38,8 +40,8 @@ class AppDrawer extends StatelessWidget {
             isDark: isDark,
             icon: Icons.settings_outlined,
             iconColor: const Color(0xFF5E5CE6),
-            title: 'Settings',
-            subtitle: 'Privacy, appearance',
+            title: s.settingsDrawer,
+            subtitle: s.privacyAppearance,
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -59,8 +61,8 @@ class AppDrawer extends StatelessWidget {
             isDark: isDark,
             icon: Icons.bug_report_outlined,
             iconColor: const Color(0xFFFF6B35),
-            title: 'Report a Bug',
-            subtitle: 'Help us fix issues',
+            title: s.reportABugDrawer,
+            subtitle: s.helpUsFixIssues,
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -80,8 +82,8 @@ class AppDrawer extends StatelessWidget {
             isDark: isDark,
             icon: Icons.lightbulb_outline_rounded,
             iconColor: ColorManager.accent,
-            title: 'Request a Feature',
-            subtitle: 'Share your ideas',
+            title: s.requestAFeatureDrawer,
+            subtitle: s.shareYourIdeas,
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -126,8 +128,8 @@ class _DrawerHeader extends StatelessWidget {
           style: TextStyle(fontFamily: 'GeneralSans', fontSize: 22,
               fontWeight: FontWeight.w800, color: ColorManager.white)),
         const SizedBox(height: 2),
-        const Text('Your music social feed',
-          style: TextStyle(fontFamily: 'GeneralSans', fontSize: 13,
+        Text(S.of(context).yourMusicSocialFeed,
+          style: const TextStyle(fontFamily: 'GeneralSans', fontSize: 13,
               color: Color(0xFFAAAAAA))),
       ]),
     );
@@ -232,8 +234,8 @@ class _LogoutButton extends StatelessWidget {
                 size: 18, color: ColorManager.red),
           ),
           const SizedBox(width: 14),
-          const Text('Log out',
-            style: TextStyle(fontFamily: 'GeneralSans', fontSize: 15,
+          Text(S.of(context).logOut,
+            style: const TextStyle(fontFamily: 'GeneralSans', fontSize: 15,
                 fontWeight: FontWeight.w600, color: ColorManager.red)),
           const Spacer(),
           Icon(Icons.arrow_forward_ios_rounded,

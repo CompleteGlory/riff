@@ -18,6 +18,7 @@ import 'package:riff/features/home/follow/logic/cubit/follow_cubit.dart';
 import 'package:riff/features/home/profile/logic/cubit/profile_cubit.dart';
 import 'package:riff/features/home/search/data/models/search_user.dart';
 import 'package:dio/dio.dart';
+import 'package:riff/generated/l10n.dart';
 
 class NewUserOnboardingScreen extends StatefulWidget {
   const NewUserOnboardingScreen({super.key});
@@ -356,15 +357,16 @@ class _PhotoStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(horizontal: 24.w),
       child: Column(
         children: [
           verticalSpace(28),
-          Text('Add a profile photo', style: TextStyles.font28Bold),
+          Text(S.of(context).addAProfilePhoto, style: TextStyles.font28Bold),
           verticalSpace(6),
           Text(
-            'Help your friends recognise you.\nYou can always change this later.',
+            s.helpFriendsRecogniseYou,
             style: TextStyles.font16Medium.copyWith(
               color: ColorManager.lightGrey,
             ),
@@ -426,7 +428,7 @@ class _PhotoStep extends StatelessWidget {
           TextButton(
             onPressed: onPick,
             child: Text(
-              photo != null ? 'Change photo' : 'Choose from gallery',
+              photo != null ? s.changePhoto : s.chooseFromGallery,
               style: TextStyles.font14Medium.copyWith(
                 color: ColorManager.accent,
               ),
@@ -435,8 +437,8 @@ class _PhotoStep extends StatelessWidget {
           verticalSpace(36),
           AppButton(
             text: uploading
-                ? 'Saving…'
-                : (photo != null ? 'Save & Continue' : 'Continue'),
+                ? s.savingBtn
+                : (photo != null ? s.saveAndContinue : s.continueBtn),
             isWhite: false,
             onPressed: () {
               if (!uploading) onNext();
@@ -446,7 +448,7 @@ class _PhotoStep extends StatelessWidget {
           TextButton(
             onPressed: onSkip,
             child: Text(
-              'Skip for now',
+              s.skipForNow,
               style: TextStyles.font14Medium.copyWith(
                 color: ColorManager.normalGrey,
               ),
@@ -489,6 +491,7 @@ class _ContactsStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Column(
       children: [
         Padding(
@@ -496,10 +499,10 @@ class _ContactsStep extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Find your contacts', style: TextStyles.font28Bold),
+              Text(s.seeWhichContactsOnRiff, style: TextStyles.font28Bold),
               verticalSpace(6),
               Text(
-                'See which of your contacts are already on Riff.',
+                s.seeWhichContactsOnRiff,
                 style: TextStyles.font16Medium.copyWith(
                   color: ColorManager.lightGrey,
                 ),
@@ -547,7 +550,7 @@ class _ContactsStep extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Sync Contacts',
+                            s.syncContactsBtn,
                             style: TextStyle(
                               fontFamily: 'GeneralSans',
                               fontSize: 16,
@@ -557,7 +560,7 @@ class _ContactsStep extends StatelessWidget {
                           ),
                           SizedBox(height: 3.h),
                           Text(
-                            'We\'ll match your contacts with Riff users.',
+                            s.wellMatchContacts,
                             style: TextStyle(
                               fontFamily: 'GeneralSans',
                               fontSize: 13,
@@ -602,7 +605,7 @@ class _ContactsStep extends StatelessWidget {
                 SizedBox(width: 8.w),
                 Expanded(
                   child: Text(
-                    'Contacts synced — none of your contacts are on Riff yet.',
+                    s.contactsSyncedNoneOnRiff,
                     style: TextStyles.font14Medium.copyWith(
                       color: ColorManager.normalGrey,
                     ),
@@ -632,7 +635,7 @@ class _ContactsStep extends StatelessWidget {
         Padding(
           padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 24.h),
           child: AppButton(
-            text: synced ? 'Continue' : 'Skip',
+            text: synced ? s.continueBtn : s.skipBtn,
             isWhite: false,
             onPressed: onNext,
           ),
@@ -669,6 +672,7 @@ class _SuggestStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Column(
       children: [
         Padding(
@@ -676,10 +680,10 @@ class _SuggestStep extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('People you might like', style: TextStyles.font28Bold),
+              Text(s.followArtistsToFillFeed, style: TextStyles.font28Bold),
               verticalSpace(6),
               Text(
-                'Follow artists and musicians to fill your feed.',
+                s.followArtistsToFillFeed,
                 style: TextStyles.font16Medium.copyWith(
                   color: ColorManager.lightGrey,
                 ),
@@ -694,7 +698,7 @@ class _SuggestStep extends StatelessWidget {
               : users.isEmpty
               ? Center(
                   child: Text(
-                    'No suggestions yet',
+                    s.noSuggestionsYet,
                     style: TextStyles.font16Medium.copyWith(
                       color: ColorManager.normalGrey,
                     ),
@@ -716,7 +720,7 @@ class _SuggestStep extends StatelessWidget {
         Padding(
           padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 24.h),
           child: AppButton(
-            text: followed.isEmpty ? 'Skip' : 'Get Started  🎵',
+            text: followed.isEmpty ? s.skipBtn : s.getStarted,
             isWhite: false,
             onPressed: onFinish,
           ),
@@ -839,7 +843,7 @@ class _UserTile extends StatelessWidget {
                       ),
                     )
                   : Text(
-                      isFollowed ? 'Following' : 'Follow',
+                      isFollowed ? S.of(context).followingStatus : S.of(context).followBtn,
                       style: TextStyle(
                         fontFamily: 'GeneralSans',
                         fontSize: 13,

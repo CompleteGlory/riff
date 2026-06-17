@@ -8,6 +8,7 @@ import 'package:riff/features/auth/user-prefrences/UI/widgets/selected_chip.dart
 import 'package:riff/features/auth/user-prefrences/UI/widgets/selection_card.dart';
 import 'package:riff/features/auth/user-prefrences/UI/widgets/step_indicator.dart';
 import 'package:riff/features/auth/user-prefrences/genres_screen.dart';
+import 'package:riff/generated/l10n.dart';
 
 class InstrumentsScreen extends StatefulWidget {
   const InstrumentsScreen({super.key});
@@ -41,6 +42,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -56,7 +58,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                 children: [
                   StepIndicator(current: 0, total: 2),
                   Text(
-                    'Step 1 of 2',
+                    s.step1Of2,
                     style: TextStyles.font12Medium.copyWith(
                       color: ColorManager.normalGrey,
                     ),
@@ -65,10 +67,10 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
               ),
               verticalSpace(28),
 
-              Text('What do you play?', style: TextStyles.font28Bold),
+              Text(S.of(context).whatDoYouPlay, style: TextStyles.font28Bold),
               verticalSpace(8),
               Text(
-                'Select the instruments you play.\nPick as many as you like.',
+                s.selectInstruments,
                 style: TextStyles.font16Medium.copyWith(
                   color: ColorManager.lightGrey,
                 ),
@@ -102,7 +104,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
 
               AppButton(
                 onPressed: _continue,
-                text: 'Continue',
+                text: s.continueBtn,
                 isWhite: false,
               ),
               verticalSpace(16),

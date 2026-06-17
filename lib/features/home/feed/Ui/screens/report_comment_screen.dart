@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/features/home/feed/logic/cubit/report/report_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/report/report_state.dart';
+import 'package:riff/generated/l10n.dart';
 
 class ReportCommentScreen extends StatefulWidget {
   final String commentId;
@@ -23,17 +24,22 @@ class _ReportCommentScreenState extends State<ReportCommentScreen> {
   String? _selectedReason;
   final _detailsController = TextEditingController();
 
-  static const _reasons = [
-    'Spam or misleading',
-    'Hate speech or discrimination',
-    'Violence or dangerous content',
-    'Harassment or bullying',
-    'False information',
-    'Nudity or sexual content',
-    'Intellectual property violation',
-    'Other',
-  ];
 
+
+
+  List<String> _buildReasons(BuildContext context) {
+    final s = S.of(context);
+    return [
+      s.spamOrMisleading,
+      s.hateSpeechOrDiscrimination,
+      s.violenceOrDangerous,
+      s.nudityOrSexual,
+      s.harassmentOrBullying,
+      s.falseInformation,
+      s.intellectualPropertyViolation,
+      s.otherReason,
+    ];
+  }
   @override
   void dispose() {
     _detailsController.dispose();
@@ -43,7 +49,7 @@ class _ReportCommentScreenState extends State<ReportCommentScreen> {
   void _submit(ReportCubit cubit) {
     if (_selectedReason == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a reason')),
+        SnackBar(content: Text(S.of(context).pleaseSelectAReason)),
       );
       return;
     }
@@ -56,6 +62,7 @@ class _ReportCommentScreenState extends State<ReportCommentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF6F4F0);
     final cardBg = isDark ? const Color(0xFF252525) : Colors.white;
@@ -68,8 +75,8 @@ class _ReportCommentScreenState extends State<ReportCommentScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               backgroundColor: ColorManager.accent,
-              content: const Text(
-                'Report submitted. Thank you.',
+              content: Text(
+                s.reportSubmittedThankYou,
                 style: TextStyle(
                   fontFamily: 'GeneralSans',
                   fontWeight: FontWeight.w600,
@@ -80,7 +87,7 @@ class _ReportCommentScreenState extends State<ReportCommentScreen> {
           );
         } else if (state is ReportFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to submit report. Try again.')),
+            SnackBar(content: Text(s.failedToSubmitReport)),
           );
         }
       },
@@ -99,7 +106,7 @@ class _ReportCommentScreenState extends State<ReportCommentScreen> {
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
-              'Report Comment',
+              s.reportCommentTitle,
               style: TextStyle(
                 fontFamily: 'GeneralSans',
                 fontSize: 17.sp,
@@ -156,7 +163,7 @@ class _ReportCommentScreenState extends State<ReportCommentScreen> {
                         Padding(
                           padding: EdgeInsets.only(left: 4.w, bottom: 12.h),
                           child: Text(
-                            'Why are you reporting this comment?',
+                            s.whyReportingComment,
                             style: TextStyle(
                               fontFamily: 'GeneralSans',
                               fontSize: 14.sp,
@@ -168,10 +175,10 @@ class _ReportCommentScreenState extends State<ReportCommentScreen> {
                         Container(
                           decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(16.r)),
                           child: Column(
-                            children: _reasons.asMap().entries.map((e) {
+                            children: _buildReasons(context).asMap().entries.map((e) {
                               final idx = e.key;
                               final reason = e.value;
-                              final isLast = idx == _reasons.length - 1;
+                              final isLast = idx == _buildReasons(context).length - 1;
                               final isSelected = _selectedReason == reason;
                               return Column(
                                 children: [
@@ -232,7 +239,7 @@ class _ReportCommentScreenState extends State<ReportCommentScreen> {
                         ),
                         SizedBox(height: 20.h),
                         Text(
-                          'Additional details (optional)',
+                          s.additionalDetails,
                           style: TextStyle(
                             fontFamily: 'GeneralSans',
                             fontSize: 14.sp,
@@ -249,7 +256,7 @@ class _ReportCommentScreenState extends State<ReportCommentScreen> {
                             maxLength: 500,
                             style: TextStyle(fontFamily: 'GeneralSans', fontSize: 14.sp, color: onSurface),
                             decoration: InputDecoration(
-                              hintText: 'Tell us more about the issue...',
+                              hintText: s.tellUsMoreAboutIssue,
                               hintStyle: TextStyle(
                                 fontFamily: 'GeneralSans',
                                 fontSize: 14.sp,
@@ -267,7 +274,7 @@ class _ReportCommentScreenState extends State<ReportCommentScreen> {
                         ),
                         SizedBox(height: 8.h),
                         Text(
-                          'Your report is anonymous. We review all reports carefully.',
+                          s.yourReportIsAnonymous,
                           style: TextStyle(
                             fontFamily: 'GeneralSans',
                             fontSize: 12.sp,
@@ -315,7 +322,7 @@ class _ReportCommentScreenState extends State<ReportCommentScreen> {
                                 ),
                                 child: Center(
                                   child: Text(
-                                    'Submit Report',
+                                    s.submitReportBtn,
                                     style: TextStyle(
                                       fontFamily: 'GeneralSans',
                                       fontSize: 15.sp,

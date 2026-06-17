@@ -5,6 +5,7 @@ import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/auth/forgot_password/logic/cubit/forgot_password_cubit.dart';
 import 'package:riff/features/auth/forgot_password/logic/cubit/forgot_password_state.dart';
+import 'package:riff/generated/l10n.dart';
 
 
 class ForgotPasswordBlocListener extends StatelessWidget {
@@ -65,7 +66,7 @@ class ForgotPasswordBlocListener extends StatelessWidget {
             Navigator.of(context).pop();
           },
           child: Text(
-            'Got it',
+            S.of(context).gotItBtn,
             style: TextStyles.font14Medium.copyWith(color: ColorManager.primaryBlack),
           ),
         ),

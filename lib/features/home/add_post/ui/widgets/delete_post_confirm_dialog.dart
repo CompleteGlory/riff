@@ -6,6 +6,7 @@ import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/widgets/button.dart';
 import 'package:riff/features/home/add_post/logic/cubit/delete_post_cubit.dart';
 import 'package:riff/features/home/add_post/logic/cubit/delete_post_state.dart';
+import 'package:riff/generated/l10n.dart';
 
 class DeletePostConfirmDialog extends StatelessWidget {
   final String postId;
@@ -19,6 +20,7 @@ class DeletePostConfirmDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return BlocProvider.value(
       value: deletePostCubit,
       child: BlocListener<DeletePostCubit, DeletePostState>(
@@ -45,7 +47,7 @@ class DeletePostConfirmDialog extends StatelessWidget {
                 SnackBar(
                   backgroundColor: ColorManager.primaryBlack,
                   content: Text(
-                    'Post deleted successfully!',
+                    s.postDeletedSuccessfully,
                     style: TextStyles.font12Medium.copyWith(
                       color: ColorManager.lighterGrey,
                     ),
@@ -84,14 +86,14 @@ class DeletePostConfirmDialog extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Delete Post?',
+                  s.deletePostDialogTitle,
                   style: TextStyles.font28Bold.copyWith(
                     color: ColorManager.primaryBlack,
                   ),
                 ),
                 SizedBox(height: 16.h),
                 Text(
-                  'Are you sure you want to delete this post? This action cannot be undone.',
+                  s.deletePostDialogContent,
                   style: TextStyles.font14regular.copyWith(
                     color: ColorManager.normalGrey,
                   ),
@@ -103,7 +105,7 @@ class DeletePostConfirmDialog extends StatelessWidget {
                     Expanded(
                       child: AppButton(
                         onPressed: () => Navigator.pop(context),
-                        text: 'Cancel',
+                        text: s.cancelBtn,
                         isWhite: true,
                       ),
                     ),
@@ -113,7 +115,7 @@ class DeletePostConfirmDialog extends StatelessWidget {
                         onPressed: () {
                           deletePostCubit.deletePost(postId);
                         },
-                        text: 'Delete',
+                        text: s.deleteBtn,
                         isWhite: false,
                       ),
                     ),

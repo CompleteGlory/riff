@@ -5,6 +5,7 @@ import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/home/add_post/logic/cubit/create_post_cubit.dart';
 import 'package:riff/features/home/add_post/logic/cubit/create_post_state.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
+import 'package:riff/generated/l10n.dart';
 
 
 class AddPostListener extends StatelessWidget {
@@ -37,7 +38,7 @@ class AddPostListener extends StatelessWidget {
             
             // 2. Show a success message
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(backgroundColor: ColorManager.primaryBlack,content: Text('Post created successfully!',style: TextStyles.font12Medium.copyWith(color: ColorManager.lighterGrey),),),
+              SnackBar(backgroundColor: ColorManager.primaryBlack,content: Text(S.of(context).postCreatedSuccessfully,style: TextStyles.font12Medium.copyWith(color: ColorManager.lighterGrey),),),
             );
             
             // 3. Switch to Feed tab so the user sees their new post
@@ -53,7 +54,7 @@ class AddPostListener extends StatelessWidget {
             Navigator.pop(context); 
 
             // 2. Show an error message
-            final errorMessage = error.errors?[0].message ?? "Failed to create post.";
+            final errorMessage = error.errors?[0].message ?? S.of(context).failedToCreatePost;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(backgroundColor: ColorManager.primaryBlack,content: Text(errorMessage,style: TextStyles.font12Medium.copyWith(color: ColorManager.lighterGrey),)),
             );
