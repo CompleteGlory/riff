@@ -12,6 +12,8 @@ import 'package:riff/features/home/add_post/ui/widgets/update_post_listener.dart
 import 'package:riff/features/home/add_post/ui/widgets/update_post_screen.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/feed/Ui/screens/report_post_screen.dart';
+import 'package:riff/features/home/feed/data/repos/report_repo.dart';
+import 'package:riff/features/home/feed/logic/cubit/report/report_cubit.dart';
 
 void showPostOptions({
   required bool isMine,
@@ -94,7 +96,10 @@ void showPostOptions({
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => ReportPostScreen(postId: post.id.toString()),
+                      builder: (_) => BlocProvider(
+                        create: (_) => ReportCubit(getIt<ReportRepo>()),
+                        child: ReportPostScreen(postId: post.id.toString()),
+                      ),
                     ),
                   );
                 },

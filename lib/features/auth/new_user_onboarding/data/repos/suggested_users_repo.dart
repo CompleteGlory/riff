@@ -28,4 +28,20 @@ class SuggestedUsersRepo {
       return ApiResult.failure(ApiErrorHandler.handle(e));
     }
   }
+
+  Future<ApiResult<List<SearchUser>>> findContacts(
+      List<String> phoneNumbers) async {
+    try {
+      final resp = await _dio.post(
+        '${ApiConstants.apiBASEURL}${ApiConstants.findContacts}',
+        data: {'phone_numbers': phoneNumbers},
+      );
+      final list = (resp.data as List? ?? [])
+          .map((e) => SearchUser.fromJson(e as Map<String, dynamic>))
+          .toList();
+      return ApiResult.success(list);
+    } catch (e) {
+      return ApiResult.failure(ApiErrorHandler.handle(e));
+    }
+  }
 }

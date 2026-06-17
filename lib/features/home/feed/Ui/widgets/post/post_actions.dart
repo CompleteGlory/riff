@@ -9,6 +9,7 @@ class PostActions extends StatelessWidget {
   final int likeCount;
   final int commentCount;
   final int shareCount;
+  final int viewsCount;
   final VoidCallback onLikeTap;
   final VoidCallback onCommentTap;
   final VoidCallback onShareTap;
@@ -19,6 +20,7 @@ class PostActions extends StatelessWidget {
     required this.likeCount,
     required this.commentCount,
     required this.shareCount,
+    this.viewsCount = 0,
     required this.onLikeTap,
     required this.onCommentTap,
     required this.onShareTap,
@@ -47,6 +49,19 @@ class PostActions extends StatelessWidget {
           onTap: onCommentTap,
         ),
         const Spacer(),
+        // Views — eye icon, non-interactive
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.visibility_outlined, size: 16.w, color: mutedColor),
+            SizedBox(width: 4.w),
+            Text(
+              _formatCount(viewsCount),
+              style: TextStyles.font12semiBold.copyWith(color: mutedColor),
+            ),
+            SizedBox(width: 16.w),
+          ],
+        ),
         _ActionButton(
           svgAsset: 'assets/svgs/share.svg',
           color: mutedColor,

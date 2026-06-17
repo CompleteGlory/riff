@@ -1,14 +1,15 @@
 // ignore_for_file: prefer_final_fields, use_build_context_synchronously
 import 'dart:async';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/helpers/time_ago.dart';
 import 'package:riff/core/networks/api_constants.dart';
+import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
-import 'package:riff/features/home/follow/data/repos/follow_repo.dart';
+import 'package:riff/features/home/follow/logic/cubit/follow_cubit.dart';
+import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
 import 'package:riff/core/di/dependency_injection.dart';
 import 'package:riff/features/home/notifications/data/models/notification_model.dart';
 import 'package:riff/features/home/notifications/logic/cubit/notifications_cubit.dart';
@@ -201,23 +202,25 @@ class _NotificationTile extends StatelessWidget {
         ),
       );
       try {
-        final dio = getIt<Dio>();
-        final resp = await dio.get('/api/comments/$commentId');
+        final result = await getIt<CommentCubit>().getComment(commentId);
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        final data = resp.data;
-        if (data is! Map<String, dynamic>) {
-          _showNavError(context, 'Could not load post.');
-          return;
-        }
-        final postData = data['post'] as Map<String, dynamic>?;
-        final rawId = postData?['id'];
-        final resolvedId = rawId != null ? int.tryParse(rawId.toString()) : null;
-        if (resolvedId == null) {
-          _showNavError(context, 'Post not found.');
-          return;
-        }
-        _pushPostScreen(context, postId: resolvedId, openComments: openComments);
+        result.when(
+          success: (data) {
+            final postData = data['post'] as Map<String, dynamic>?;
+            final rawId = postData?['id'];
+            final resolvedId =
+                rawId != null ? int.tryParse(rawId.toString()) : null;
+            if (resolvedId == null) {
+              _showNavError(context, 'Post not found.');
+            } else {
+              _pushPostScreen(context,
+                  postId: resolvedId, openComments: openComments);
+            }
+          },
+          failure: (err) =>
+              _showNavError(context, err.message ?? 'Could not load post.'),
+        );
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -949,11 +952,11 @@ class _AcceptDeclineButtonsState extends State<_AcceptDeclineButtons> {
   Future<void> _act(bool accept) async {
     setState(() => _loading = true);
     try {
-      final repo = getIt<FollowRepo>();
+      final followCubit = getIt<FollowCubit>();
       if (accept) {
-        await repo.acceptFollow(widget.notification.sender!.id);
+        await followCubit.acceptFollow(widget.notification.sender!.id);
       } else {
-        await repo.rejectFollow(widget.notification.sender!.id);
+        await followCubit.rejectFollow(widget.notification.sender!.id);
       }
       if (mounted) {
         setState(() { _loading = false; _done = accept ? 'accepted' : 'declined'; });
@@ -1034,13 +1037,14 @@ class _FollowBackButtonState extends State<_FollowBackButton> {
     widget.notifsCubit.updateFollowBackStatus(
         widget.notification.id, 'following');
     try {
-      final status = await getIt<FollowRepo>()
-          .followUser(widget.notification.sender!.id);
-      final resolved = status; // already mapped to 'following'|'pending'
-      if (mounted && resolved != _status) {
-        setState(() => _status = resolved);
+      await getIt<FollowCubit>().follow(widget.notification.sender!.id);
+      // FollowCubit.follow already maps status; if the cubit state is FollowSuccess
+      // we can read the resolved status from it
+      final followState = getIt<FollowCubit>().state;
+      if (followState is FollowSuccess && mounted && followState.status != _status) {
+        setState(() => _status = followState.status);
         widget.notifsCubit.updateFollowBackStatus(
-            widget.notification.id, resolved);
+            widget.notification.id, followState.status);
       }
     } catch (_) {
       // Revert
@@ -1057,7 +1061,7 @@ class _FollowBackButtonState extends State<_FollowBackButton> {
     widget.notifsCubit.updateFollowBackStatus(
         widget.notification.id, 'not_following');
     try {
-      await getIt<FollowRepo>().unfollowUser(widget.notification.sender!.id);
+      await getIt<FollowCubit>().unfollow(widget.notification.sender!.id);
       // Refresh badge immediately so count drops after unfollow
       widget.notifsCubit.silentRefresh();
     } catch (_) {

@@ -10,9 +10,13 @@ part of 'like_state.dart';
 // **************************************************************************
 
 // dart format off
+
 T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$LikePostState {
+
+
+
 
 
 
@@ -198,9 +202,6 @@ class Initial implements LikePostState {
 
 
 
-
-
-
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is Initial);
@@ -220,16 +221,12 @@ String toString() {
 
 
 
-
 /// @nodoc
 
 
 class Loading implements LikePostState {
   const Loading();
   
-
-
-
 
 
 
@@ -249,7 +246,6 @@ String toString() {
 
 
 }
-
 
 
 
@@ -294,7 +290,6 @@ abstract mixin class $SuccessCopyWith<$Res> implements $LikePostStateCopyWith<$R
 $Res call({
  bool liked
 });
-
 
 
 
@@ -360,7 +355,6 @@ abstract mixin class $FailureCopyWith<$Res> implements $LikePostStateCopyWith<$R
 $Res call({
  ApiErrorModel errors
 });
-
 
 
 

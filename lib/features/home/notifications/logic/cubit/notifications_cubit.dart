@@ -118,6 +118,18 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     if (!isClosed) emit(NotificationsLoaded(updated, unread));
   }
 
+  // ── Reset (call on logout) ────────────────────────────────────────────────
+
+  /// Cancels polling, disconnects socket, and wipes state.
+  /// Call this before navigating to login so the next user starts clean.
+  void reset() {
+    _pollTimer?.cancel();
+    _pollTimer = null;
+    _socket.off('notification');
+    _socket.disconnect();
+    if (!isClosed) emit(NotificationsInitial());
+  }
+
   // ── Actions ───────────────────────────────────────────────────────────────
 
   Future<void> deleteAll() async {
