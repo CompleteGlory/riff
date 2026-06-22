@@ -6,7 +6,7 @@
         "request": "launch",
         "type": "dart",
         "program": "lib/main_development.dart",
-        "args": ["--flavor", "Development", "--target", "lib/main_development.dart" ]
+        "args": ["--flavor", "Development", "--target", "lib/main_development.dart" ,"--dart-define=SPOTIFY_CLIENT_ID=5bf7c19bb7b84c8cb8af0128fa7c59eb"]
       },
       {
         "name": "profile",
@@ -14,14 +14,14 @@
         "type": "dart",
         "program": "lib/main_development.dart",
         "flutterMode": "profile",
-        "args": ["--flavor", "Development", "--target", "lib/main_development.dart" ]
+        "args": ["--flavor", "Development", "--target", "lib/main_development.dart" ,"--dart-define=SPOTIFY_CLIENT_ID=5bf7c19bb7b84c8cb8af0128fa7c59eb"]
       },
       {
         "name": "Riff",
         "request": "launch",
         "type": "dart",
         "program": "lib/main_production.dart",
-        "args": ["--flavor", "Production", "--target", "lib/main_production.dart" ]
+        "args": ["--flavor", "Production", "--target", "lib/main_production.dart" ,"--dart-define=SPOTIFY_CLIENT_ID=5bf7c19bb7b84c8cb8af0128fa7c59eb"]
       }
     ],
   }

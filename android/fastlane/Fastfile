@@ -6,7 +6,7 @@ platform :android do
     # Run Flutter commands from project root
     Dir.chdir("..") do
       sh "flutter clean"
-      sh "flutter build apk --release --flavor production --target lib/main_production.dart --no-tree-shake-icons"
+      sh "flutter build apk --release --flavor production --target lib/main_production.dart --no-tree-shake-icons --dart-define=SPOTIFY_CLIENT_ID=#{ENV['SPOTIFY_CLIENT_ID']}"
     end
 
     firebase_app_distribution(
@@ -14,12 +14,71 @@ platform :android do
       firebase_cli_token: ENV["FIREBASE_CLI_TOKEN"],
       android_artifact_type: "APK",
       android_artifact_path: "../build/app/outputs/flutter-apk/app-production-release.apk",
-      testers: "fadyalaa441@gmail.com, fadyalaa2112@gmail.com, zakymagd@gmail.com, magddevf@gmail.com" ,
+      testers: "fadyalaa441@gmail.com, fadyalaa2112@gmail.com, zakymagd@gmail.com, magddevf@gmail.com, Danielgeorge369gmail.com, " ,
       upload_timeout: 600,
       release_notes: <<~RELEASE_NOTES
-        Version 1.0.9 — Huge update 
+        Version 1.0.10
 
-        Date: 2026-06-17
+        Date: 2026-06-22
+
+
+        # Riff – Release Notes v1.0.10
+
+*What's New in Riff*
+
+---
+
+## Welcome to Riff
+
+Riff is a music-social app built for people who live and breathe music. Share what you're listening to, discover what your people are into, and connect through the universal language — sound.
+
+---
+
+## Features
+
+### Music-First Social Feed
+- Post reels, videos, and images centered around music moments
+- Scroll a full-screen reel feed — think music content, not noise
+- Like, comment, and engage with posts from people you follow
+
+### Social Sharing — Bring Music From Anywhere
+- Share directly into Riff from **Spotify**, **TikTok**, and **Instagram**
+- Link a Spotify track, playlist, or artist straight from the Spotify app
+- Share a TikTok or Instagram reel and it lands ready to post in Riff
+
+### Spotify Integration
+- Connect your Spotify account
+- Show what you're listening to right now
+
+### Messaging — DMs & Group Chats
+- Direct messages with full media support (images, videos, voice notes)
+- **Group chats** — create a group with a name, photo, and description
+- Add members when creating a group or manage them later
+- **Voice notes** — hold to record, send instantly
+- Read receipts and typing indicators
+
+### Group Management
+- Group admins can update the group name, description, and photo anytime
+- Clear admin badge so everyone knows who runs the group
+- Members list with profile photos in the group details screen
+
+### Push Notifications
+- Real-time push notifications for messages, likes, and activity
+- Powered by Firebase — delivered even when the app is closed
+
+### Authentication
+- Sign in with Google or email/password
+- Secure JWT authentication with automatic token refresh — you stay logged in
+
+---
+
+## Bug Fixes & Improvements
+
+- Fixed: voice notes occasionally appeared twice after sending — now shows once, always
+- Fixed: editing a group name or description no longer crashes on close
+- Fixed: sharing from Spotify or TikTok no longer causes a white/frozen screen
+- Improved: shares from backgrounded apps now open the create post screen reliably
+- Improved: automatic session recovery on 401 — no unexpected sign-outs
 
       RELEASE_NOTES
     )

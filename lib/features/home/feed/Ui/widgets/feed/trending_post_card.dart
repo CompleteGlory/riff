@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
@@ -82,10 +83,11 @@ class TrendingPostCard extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  Icon(
-                    Icons.visibility_outlined,
-                    size: 14.w,
-                    color: ColorManager.normalGrey,
+                  SvgPicture.asset(
+                    'assets/svgs/eye.svg',
+                    width: 14.w,
+                    height: 14.w,
+                    colorFilter: ColorFilter.mode(ColorManager.normalGrey, BlendMode.srcIn),
                   ),
                   SizedBox(width: 4.w),
                   Text(

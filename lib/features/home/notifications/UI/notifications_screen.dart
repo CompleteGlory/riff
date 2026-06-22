@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:riff/core/helpers/time_ago.dart';
 import 'package:riff/core/networks/api_constants.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
+import 'package:riff/core/widgets/app_error_widget.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/home/follow/logic/cubit/follow_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
@@ -30,8 +32,43 @@ class NotificationsScreen extends StatelessWidget {
   }
 }
 
-class _NotificationsBody extends StatelessWidget {
+class _NotificationsBody extends StatefulWidget {
   const _NotificationsBody();
+
+  @override
+  State<_NotificationsBody> createState() => _NotificationsBodyState();
+}
+
+class _NotificationsBodyState extends State<_NotificationsBody>
+    with WidgetsBindingObserver {
+  bool _notifsDenied = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkPermission();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Re-check when user returns from Settings
+    if (state == AppLifecycleState.resumed) _checkPermission();
+  }
+
+  Future<void> _checkPermission() async {
+    final status = await Permission.notification.status;
+    if (mounted) {
+      setState(() =>
+          _notifsDenied = status.isDenied || status.isPermanentlyDenied);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,68 +96,156 @@ class _NotificationsBody extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (state is NotificationsError) {
-            return Center(
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.error_outline, size: 48, color: Colors.grey),
-                const SizedBox(height: 12),
-                Text(state.message, style: TextStyles.font14Medium),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () => ctx.read<NotificationsCubit>().load(),
-                  child: Text(S.of(context).retryBtn),
-                ),
-              ]),
+            return AppErrorWidget(
+              message: state.message,
+              onRetry: () => ctx.read<NotificationsCubit>().load(),
             );
           }
           if (state is NotificationsLoaded) {
-            if (state.notifications.isEmpty) {
-              return Center(
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.notifications_none_outlined,
-                      size: 64.r, color: ColorManager.lighterGrey),
-                  const SizedBox(height: 16),
-                  Text(S.of(context).noNotificationsYet,
-                      style: TextStyles.font16Medium.copyWith(
-                          color: ColorManager.normalGrey)),
-                ]),
-              );
-            }
             final isDark = Theme.of(ctx).brightness == Brightness.dark;
-            return RefreshIndicator(
-              onRefresh: () => ctx.read<NotificationsCubit>().load(),
-              color: isDark ? ColorManager.accent : ColorManager.primaryBlack,
-              backgroundColor: isDark ? const Color(0xFF252525) : ColorManager.white,
-              child: ListView.separated(
-                padding: EdgeInsets.symmetric(vertical: 8.h),
-                itemCount: state.notifications.length,
-                separatorBuilder: (_, __) =>
-                    Divider(height: 1, color: ColorManager.lighterGrey),
-                itemBuilder: (_, i) {
-                  final notif = state.notifications[i];
-                  return Dismissible(
-                    key: ValueKey(notif.id),
-                    direction: DismissDirection.endToStart,
-                    onDismissed: (_) =>
-                        ctx.read<NotificationsCubit>().removeNotification(notif.id),
-                    background: Container(
-                      alignment: Alignment.centerRight,
-                      padding: EdgeInsets.only(right: 20.w),
-                      color: Colors.red.shade400,
-                      child: const Icon(Icons.delete_outline,
-                          color: Colors.white, size: 24),
-                    ),
-                    child: _NotificationTile(
-                      key: ValueKey(notif.id),
-                      notification: notif,
-                      notifsCubit: ctx.read<NotificationsCubit>(),
-                    ),
-                  );
-                },
+            final permBanner = _notifsDenied
+                ? _NotifPermissionBanner(isDark: isDark)
+                : const SizedBox.shrink();
+
+            if (state.notifications.isEmpty) {
+              return Column(children: [
+                permBanner,
+                Expanded(
+                  child: Center(
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.notifications_none_outlined,
+                          size: 64.r, color: ColorManager.lighterGrey),
+                      const SizedBox(height: 16),
+                      Text(S.of(context).noNotificationsYet,
+                          style: TextStyles.font16Medium.copyWith(
+                              color: ColorManager.normalGrey)),
+                    ]),
+                  ),
+                ),
+              ]);
+            }
+
+            return Column(children: [
+              permBanner,
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () => ctx.read<NotificationsCubit>().load(),
+                  color: isDark ? ColorManager.accent : ColorManager.primaryBlack,
+                  backgroundColor: isDark ? const Color(0xFF252525) : ColorManager.white,
+                  child: ListView.separated(
+                    padding: EdgeInsets.symmetric(vertical: 8.h),
+                    itemCount: state.notifications.length,
+                    separatorBuilder: (_, __) =>
+                        Divider(height: 1, color: ColorManager.lighterGrey),
+                    itemBuilder: (_, i) {
+                      final notif = state.notifications[i];
+                      return Dismissible(
+                        key: ValueKey(notif.id),
+                        direction: DismissDirection.endToStart,
+                        onDismissed: (_) =>
+                            ctx.read<NotificationsCubit>().removeNotification(notif.id),
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          padding: EdgeInsets.only(right: 20.w),
+                          color: Colors.red.shade400,
+                          child: const Icon(Icons.delete_outline,
+                              color: Colors.white, size: 24),
+                        ),
+                        child: _NotificationTile(
+                          key: ValueKey(notif.id),
+                          notification: notif,
+                          notifsCubit: ctx.read<NotificationsCubit>(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
-            );
+            ]);
           }
           return const SizedBox();
         },
+      ),
+    );
+  }
+}
+
+// ── Notification permission banner ───────────────────────────────────────────
+
+class _NotifPermissionBanner extends StatelessWidget {
+  final bool isDark;
+  const _NotifPermissionBanner({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => openAppSettings(),
+      child: Container(
+        width: double.infinity,
+        margin: EdgeInsets.fromLTRB(12.w, 10.h, 12.w, 4.h),
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF2A1A00) : const Color(0xFFFFF8E7),
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(
+            color: isDark
+                ? const Color(0xFF7A4800)
+                : const Color(0xFFFFCC66),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36.r,
+              height: 36.r,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFF9500).withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.notifications_off_outlined,
+                color: const Color(0xFFFF9500),
+                size: 18.r,
+              ),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Notifications are off',
+                    style: TextStyle(
+                      fontFamily: 'GeneralSans',
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w700,
+                      color: isDark
+                          ? const Color(0xFFFFCC66)
+                          : const Color(0xFF7A4800),
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    'Tap to enable in Settings',
+                    style: TextStyle(
+                      fontFamily: 'GeneralSans',
+                      fontSize: 12.sp,
+                      color: isDark
+                          ? const Color(0xFFBB8800)
+                          : const Color(0xFF9A6000),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14.r,
+              color: const Color(0xFFFF9500),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -922,10 +1047,18 @@ class _ActionArea extends StatelessWidget {
         return _PillBtn(
           label: 'Set up',
           filled: true,
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const InstrumentsScreen()),
-          ),
+          onTap: () {
+            final nav = Navigator.of(context);
+            nav.push(MaterialPageRoute(
+              builder: (_) => InstrumentsScreen(
+                // Pop both genres + instruments screens to return here.
+                onFinish: (_, __) {
+                  nav.pop(); // genres
+                  nav.pop(); // instruments
+                },
+              ),
+            ));
+          },
         );
       case 'like':
       case 'comment':

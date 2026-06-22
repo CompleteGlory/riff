@@ -310,7 +310,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
             verticalSpace(16),
             if (_isCommentMine(comment)) ...[
               _OptionTile(
-                icon: Icons.edit_outlined,
+                svgAsset: 'assets/svgs/edit.svg',
                 label: S.of(context).editLabel,
                 onTap: () {
                   Navigator.pop(context);
@@ -318,7 +318,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                 },
               ),
               _OptionTile(
-                icon: Icons.delete_outline,
+                svgAsset: 'assets/svgs/delete.svg',
                 label: S.of(context).deleteBtn,
                 color: ColorManager.red,
                 onTap: () {
@@ -328,7 +328,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
               ),
             ] else
               _OptionTile(
-                icon: Icons.flag_outlined,
+                svgAsset: 'assets/svgs/report.svg',
                 label: S.of(context).reportLabel,
                 onTap: () {
                   Navigator.pop(context);
@@ -574,11 +574,14 @@ class _CommentsSheetState extends State<CommentsSheet> {
                                                     child: Padding(
                                                       padding: EdgeInsets.only(
                                                           left: 8.w),
-                                                      child: Icon(
-                                                        Icons.more_horiz,
-                                                        color:
-                                                            ColorManager.normalGrey,
-                                                        size: 18.r,
+                                                      child: SvgPicture.asset(
+                                                        'assets/svgs/more_options.svg',
+                                                        width: 18.r,
+                                                        height: 18.r,
+                                                        colorFilter: ColorFilter.mode(
+                                                          ColorManager.normalGrey,
+                                                          BlendMode.srcIn,
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
@@ -822,10 +825,11 @@ class _EmptyCommentsState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.chat_bubble_outline_rounded,
-              size: 52.r,
-              color: ColorManager.accent,
+            SvgPicture.asset(
+              'assets/svgs/Chat.svg',
+              width: 52.r,
+              height: 52.r,
+              colorFilter: ColorFilter.mode(ColorManager.accent, BlendMode.srcIn),
             ),
             SizedBox(height: 14.h),
             Text(
@@ -904,13 +908,13 @@ class _LikeButton extends StatelessWidget {
 
 /// Option row inside the comment options sheet
 class _OptionTile extends StatelessWidget {
-  final IconData icon;
+  final String svgAsset;
   final String label;
   final Color? color;
   final VoidCallback onTap;
 
   const _OptionTile({
-    required this.icon,
+    required this.svgAsset,
     required this.label,
     required this.onTap,
     this.color,
@@ -920,7 +924,12 @@ class _OptionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = color ?? Theme.of(context).colorScheme.onSurface;
     return ListTile(
-      leading: Icon(icon, color: c, size: 22.r),
+      leading: SvgPicture.asset(
+        svgAsset,
+        width: 22.r,
+        height: 22.r,
+        colorFilter: ColorFilter.mode(c, BlendMode.srcIn),
+      ),
       title: Text(
         label,
         style: TextStyles.font14regular.copyWith(color: c),

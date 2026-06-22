@@ -11,7 +11,11 @@ import 'package:riff/features/auth/user-prefrences/genres_screen.dart';
 import 'package:riff/generated/l10n.dart';
 
 class InstrumentsScreen extends StatefulWidget {
-  const InstrumentsScreen({super.key});
+  /// When provided, forwarded to GenresScreen so the two-step picker
+  /// returns to the caller instead of pushing to signup.
+  final void Function(List<String> instruments, List<String> genres)? onFinish;
+
+  const InstrumentsScreen({super.key, this.onFinish});
 
   @override
   State<InstrumentsScreen> createState() => _InstrumentsScreenState();
@@ -24,21 +28,26 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
         _selected.contains(i) ? _selected.remove(i) : _selected.add(i);
       });
 
-  void _continue() {
-  if (_selected.isEmpty) return;
-  final selectedInstruments = _selected.map((i) => instruments[i].name).toList();
-  Navigator.push(
-    context,
-    PageRouteBuilder(
-      pageBuilder: (_, a, __) => GenresScreen(instruments: selectedInstruments),
-      transitionsBuilder: (_, anim, __, child) => SlideTransition(
-        position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
-            .animate(CurvedAnimation(parent: anim, curve: Curves.easeInOut)),
-        child: child,
+  void _continue() => _goToGenres(
+        _selected.isEmpty ? [] : _selected.map((i) => instruments[i].name).toList(),
+      );
+
+  void _goToGenres(List<String> selected) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, a, __) => GenresScreen(
+          instruments: selected,
+          onFinish: widget.onFinish,
+        ),
+        transitionsBuilder: (_, anim, __, child) => SlideTransition(
+          position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+              .animate(CurvedAnimation(parent: anim, curve: Curves.easeInOut)),
+          child: child,
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +70,15 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
                     s.step1Of2,
                     style: TextStyles.font12Medium.copyWith(
                       color: ColorManager.normalGrey,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => _goToGenres([]),
+                    child: Text(
+                      s.skipBtn,
+                      style: TextStyles.font14Medium.copyWith(
+                        color: ColorManager.lightGrey,
+                      ),
                     ),
                   ),
                 ],
@@ -103,7 +121,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen> {
               verticalSpace(16),
 
               AppButton(
-                onPressed: _continue,
+                onPressed: _selected.isEmpty ? () {} : _continue,
                 text: s.continueBtn,
                 isWhite: false,
               ),

@@ -20,6 +20,8 @@ class SignupCubit extends Cubit<SignupState> {
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
   List<String> selectedInstruments = [];
   List<String> selectedGenres = [];
+  // Must be true before emitSignupStates() is allowed to proceed.
+  bool privacyAccepted = false;
 
   void emitSignupStates() async {
     emit(const SignupState.loading());

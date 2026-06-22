@@ -7,12 +7,20 @@ import 'package:riff/core/routing/routes.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:riff/features/home/notifications/logic/cubit/notifications_cubit.dart';
+import 'package:riff/features/home/chat/logic/cubit/chats_list_cubit.dart';
+import 'package:riff/features/home/chat/data/services/chat_socket_service.dart';
 import 'package:riff/features/home/settings/UI/settings_screen.dart';
 import 'package:riff/features/home/core/UI/bug_report/bug_report_screen.dart';
 import 'package:riff/features/home/core/UI/feature_request/feature_request_screen.dart';
 import 'package:riff/features/home/core/logic/bug_report/bug_report_cubit.dart';
 import 'package:riff/features/home/core/logic/feature_request/feature_request_cubit.dart';
 import 'package:riff/features/home/core/data/repos/feedback_repo.dart';
+import 'package:riff/features/home/block/UI/blocked_users_screen.dart';
+import 'package:riff/features/home/block/logic/cubit/block_cubit.dart';
+import 'package:riff/features/home/block/data/repos/block_repo.dart';
+import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
+import 'package:riff/features/home/core/logic/cubit/home_state.dart';
+import 'package:riff/features/home/profile/UI/profile_screen.dart';
 import 'package:riff/generated/l10n.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -33,9 +41,49 @@ class AppDrawer extends StatelessWidget {
         child: Column(children: [
           _DrawerHeader(isDark: isDark),
           Divider(height: 1, color: divider),
+
+          // Scrollable items — wrapped so adding more entries never overflows
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(children: [
           const SizedBox(height: 8),
 
-          // Settings
+          // Profile Settings
+          BlocBuilder<HomeCubit, HomeState>(
+            builder: (context, homeState) {
+              // Extract the loaded profile from HomeCubit's screens list.
+              // screens[4] is a ProfileScreen once the user is loaded.
+              final cubit = context.read<HomeCubit>();
+              final screen = cubit.screens[4];
+              final UserProfile? profile =
+                  screen is ProfileScreen ? screen.profile : null;
+
+              return _DrawerItem(
+                isDark: isDark,
+                icon: Icons.manage_accounts_outlined,
+                iconColor: const Color(0xFF30D158),
+                title: s.profileSettingsDrawer,
+                subtitle: s.editYourProfile,
+                onTap: profile == null
+                    ? () {} // profile not loaded yet — no-op
+                    : () {
+                        // Capture references before closing the drawer so
+                        // they stay valid after Navigator.pop.
+                        final homeCubit = context.read<HomeCubit>();
+                        final nav = Navigator.of(context);
+                        nav.pop(); // close drawer
+                        nav.pushNamed(
+                          Routes.profileSettings,
+                          arguments: (profile, homeCubit),
+                        );
+                      },
+              );
+            },
+          ),
+
+          const SizedBox(height: 4),
+
+          // App Settings
           _DrawerItem(
             isDark: isDark,
             icon: Icons.settings_outlined,
@@ -46,9 +94,26 @@ class AppDrawer extends StatelessWidget {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => SettingsScreen(initialIsPrivate: isPrivate),
-                ),
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
+            },
+          ),
+
+          const SizedBox(height: 4),
+
+          // Account Settings
+          _DrawerItem(
+            isDark: isDark,
+            icon: Icons.manage_accounts_outlined,
+            iconColor: const Color(0xFF30B0C7),
+            title: s.accountSettingsDrawer,
+            subtitle: s.accountSettingsSub,
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(
+                context,
+                Routes.accountSettings,
+                arguments: isPrivate,
               );
             },
           ),
@@ -99,7 +164,60 @@ class AppDrawer extends StatelessWidget {
           ),
 
           Divider(height: 1, color: divider, indent: 16, endIndent: 16),
-          const Spacer(),
+          const SizedBox(height: 8),
+
+          // Blocked Users
+          _DrawerItem(
+            isDark: isDark,
+            icon: Icons.block_rounded,
+            iconColor: const Color(0xFFFF3B30),
+            title: s.blockedUsersDrawer,
+            subtitle: s.manageBlockedUsers,
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider(
+                    create: (_) => BlockCubit(getIt<BlockRepo>()),
+                    child: const BlockedUsersScreen(),
+                  ),
+                ),
+              );
+            },
+          ),
+
+          // Privacy Policy
+          _DrawerItem(
+            isDark: isDark,
+            icon: Icons.shield_outlined,
+            iconColor: const Color(0xFF5E5CE6),
+            title: s.privacyPolicyDrawer,
+            subtitle: s.howWeHandleData,
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, Routes.privacyPolicy);
+            },
+          ),
+
+          // About Us
+          _DrawerItem(
+            isDark: isDark,
+            icon: Icons.info_outline_rounded,
+            iconColor: const Color(0xFFFFD60A),
+            title: s.aboutUsDrawer,
+            subtitle: s.aboutUsDrawerSubtitle,
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, Routes.aboutUs);
+            },
+          ),
+
+          Divider(height: 1, color: divider, indent: 16, endIndent: 16),
+          const SizedBox(height: 8),
+              ]),  // Column (scrollable)
+            ),    // SingleChildScrollView
+          ),      // Expanded
 
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -203,9 +321,11 @@ class _LogoutButton extends StatelessWidget {
     return GestureDetector(
       onTap: () async {
         Navigator.pop(context);
-        // Reset notifications before navigating away so the next user
-        // starts with a clean slate (cancels polling + socket).
+        // Reset all singletons that hold per-user state so the next login
+        // starts with a clean slate.
         getIt<NotificationsCubit>().reset();
+        getIt<ChatsListCubit>().reset();
+        getIt<ChatSocketService>().disconnect();
         context.pushReplacementNamed(Routes.login);
         // Clear user session data but preserve theme preference so the
         // user's chosen light/dark mode survives logout.

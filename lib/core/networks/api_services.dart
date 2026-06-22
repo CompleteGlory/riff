@@ -129,4 +129,19 @@ abstract class ApiService {
 
   @GET(ApiConstants.trendingPost)
   Future<HttpResponse<dynamic>> getTrendingPost();
+
+  @GET(ApiConstants.checkUsername)
+  Future<HttpResponse<dynamic>> checkUsername(
+    @Query('username') String username,
+  );
+
+  @PATCH(ApiConstants.updateProfile)
+  Future<HttpResponse<dynamic>> updateProfile(
+    @Body() Map<String, dynamic> body,
+  );
+
+  @POST(ApiConstants.changePassword)
+  Future<HttpResponse<dynamic>> changePassword(
+    @Body() Map<String, dynamic> body,
+  );
 }

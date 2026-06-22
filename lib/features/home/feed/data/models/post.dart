@@ -45,6 +45,12 @@ class Post {
   @JsonKey(name: 'views_count', defaultValue: 0)
   final int? viewsCount;
 
+  @JsonKey(name: 'source_url')
+  final String? sourceUrl;
+
+  @JsonKey(name: 'source_platform')
+  final String? sourcePlatform;
+
   Post({
     required this.id,
     required this.author,
@@ -61,6 +67,8 @@ class Post {
     this.originalPost,
     this.sharesCount,
     this.viewsCount,
+    this.sourceUrl,
+    this.sourcePlatform,
   });
 
   factory Post.fromJson(Map<String, dynamic> json) => _$PostFromJson(json);

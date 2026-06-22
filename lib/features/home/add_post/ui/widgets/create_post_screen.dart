@@ -13,10 +13,28 @@ import 'package:riff/features/home/add_post/data/models/create_post_request_mode
 import 'package:riff/features/home/add_post/logic/cubit/create_post_cubit.dart';
 import 'package:riff/generated/l10n.dart';
 
+// Platform colours used in the social-share banner.
+const _igGradient = [Color(0xFFF58529), Color(0xFFDD2A7B), Color(0xFF8134AF)];
+const _ttColor = Color(0xFF010101);
+
 const _maxImages = 10;
 
 class CreatePostScreen extends StatefulWidget {
-  const CreatePostScreen({super.key});
+  /// Optional pre-fill when opened via the share sheet (Instagram / TikTok).
+  final String? initialCaption;
+  final String? sourceUrl;
+  final String? sourcePlatform;
+
+  /// Optional media files shared from another app.
+  final List<String>? initialMediaPaths;
+
+  const CreatePostScreen({
+    super.key,
+    this.initialCaption,
+    this.sourceUrl,
+    this.sourcePlatform,
+    this.initialMediaPaths,
+  });
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
@@ -26,6 +44,42 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   final TextEditingController _contentController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   final List<File> _selectedFiles = [];
+
+  /// For Spotify shares: the song/artist extracted from the shared text.
+  /// Spotify share text looks like "Song – Artist" (already cleaned by captionText).
+  /// We show this in the banner subtitle but do NOT pre-fill it into the caption
+  /// field so the user writes their own commentary.
+  String? get _spotifyTitle {
+    final t = widget.initialCaption?.trim();
+    if (t == null || t.isEmpty) return null;
+    // Truncate to first 80 chars to avoid huge subtitle
+    return t.length > 80 ? '${t.substring(0, 77)}…' : t;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    // For IG/TikTok, pre-fill with the caption text from the share.
+    // For Spotify we show the song title in the banner but leave caption blank
+    // so the user writes their own post text.
+    if (widget.sourcePlatform != 'spotify' &&
+        widget.initialCaption != null &&
+        widget.initialCaption!.isNotEmpty) {
+      _contentController.text = widget.initialCaption!;
+    }
+
+    if (widget.initialMediaPaths != null && widget.initialMediaPaths!.isNotEmpty) {
+      setState(() {
+        _selectedFiles.addAll(widget.initialMediaPaths!.map((path) {
+          if (path.startsWith('content://')) {
+            return File.fromUri(Uri.parse(path));
+          }
+          return File(path);
+        }));
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -126,14 +180,23 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
 
     context.read<CreatePostCubit>().createPost(
-          CreatePostRequestModel(content: content),
+          CreatePostRequestModel(
+            content: content,
+            sourceUrl: widget.sourceUrl,
+            sourcePlatform: widget.sourcePlatform,
+          ),
           mediaFiles: _selectedFiles.isEmpty ? null : List.of(_selectedFiles),
         );
+
+    // Navigate back to home immediately — upload continues in the background
+    // and the progress bar in HomeLayout keeps displaying.
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isShare = widget.sourcePlatform != null;
     return Scaffold(
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(vertical: 35.h, horizontal: 20.w),
@@ -145,6 +208,19 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               style: TextStyles.font28Bold,
             ),
             verticalSpace(20),
+
+            // Social-share origin banner (shown when opened via share sheet)
+            if (isShare) ...[
+              _SocialShareBanner(
+                platform: widget.sourcePlatform!,
+                // For Spotify: extracted song title shown as subtitle in the banner.
+                // For IG/TT: displayTitle is null (caption is already pre-filled above).
+                displayTitle: widget.sourcePlatform == 'spotify'
+                    ? _spotifyTitle
+                    : null,
+              ),
+              verticalSpace(16),
+            ],
 
             // Content input
             Container(
@@ -166,8 +242,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 keyboardType: TextInputType.multiline,
                 style: TextStyles.font16Medium,
                 decoration: InputDecoration(
-                  hintText:
-                      S.of(context).shareYourMusicRiff,
+                  hintText: isShare
+                      ? S.of(context).addCaptionToShare
+                      : S.of(context).shareYourMusicRiff,
                   hintStyle: TextStyles.font16Medium
                       .copyWith(color: ColorManager.normalGrey),
                   border: InputBorder.none,
@@ -362,6 +439,89 @@ class _MediaPickerPlaceholder extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Social-share origin banner
+// ---------------------------------------------------------------------------
+
+class _SocialShareBanner extends StatelessWidget {
+  const _SocialShareBanner({required this.platform, this.displayTitle});
+  final String platform;
+  /// For Spotify: extracted song name / artist, shown as a subtitle.
+  final String? displayTitle;
+
+  bool get _isInstagram => platform == 'instagram';
+  bool get _isTikTok    => platform == 'tiktok';
+  bool get _isSpotify   => platform == 'spotify';
+
+  String get _label {
+    if (_isInstagram) return 'Instagram';
+    if (_isTikTok)    return 'TikTok';
+    return 'Spotify';
+  }
+
+  String get _logoUrl {
+    if (_isInstagram) return 'https://logo.clearbit.com/instagram.com';
+    if (_isTikTok)    return 'https://logo.clearbit.com/tiktok.com';
+    return 'https://logo.clearbit.com/spotify.com';
+  }
+
+  Color get _color {
+    if (_isInstagram) return const Color(0xFFDD2A7B);
+    if (_isTikTok)    return const Color(0xFF010101);
+    return const Color(0xFF1DB954);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: _color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: _color.withOpacity(0.5), width: 1),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6.r),
+            child: Image.network(
+              _logoUrl,
+              width: 24.r,
+              height: 24.r,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Icon(Icons.link_rounded, size: 24.r, color: _color),
+            ),
+          ),
+          horizontalSpace(10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Sharing from $_label',
+                  style: TextStyles.font14Medium.copyWith(color: _color),
+                ),
+                if (displayTitle != null && displayTitle!.isNotEmpty) ...[
+                  SizedBox(height: 2.h),
+                  Text(
+                    displayTitle!,
+                    style: TextStyles.font12Medium.copyWith(
+                      color: _color.withOpacity(0.75),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

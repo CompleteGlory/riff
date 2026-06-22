@@ -13,8 +13,15 @@ CreatePostRequestModel _$CreatePostRequestModelFromJson(
 ) => CreatePostRequestModel(
   content: json['content'] as String,
   media: (json['media'] as List<dynamic>?)?.map((e) => e as String).toList(),
+  sourceUrl: json['source_url'] as String?,
+  sourcePlatform: json['source_platform'] as String?,
 );
 
 Map<String, dynamic> _$CreatePostRequestModelToJson(
   CreatePostRequestModel instance,
-) => <String, dynamic>{'content': instance.content, 'media': instance.media};
+) => <String, dynamic>{
+  'content': instance.content,
+  'media': instance.media,
+  'source_url': instance.sourceUrl,
+  'source_platform': instance.sourcePlatform,
+};

@@ -26,9 +26,13 @@ void main() async {
     PushNotificationService.instance.init();
   }
 
+  final privacyAccepted = await SharedPrefHelper.getBool(
+      SharedPrefKeys.privacyPolicyAccepted) as bool;
+
   runApp(RiffApp(
     appRouter: AppRouter(),
     startAtHome: isLoggedIn,
+    needsPrivacyAccept: !privacyAccepted,
   ));
 }
 

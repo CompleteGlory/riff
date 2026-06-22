@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously, deprecated_member_use
 // ignore_for_file: unused_import
 import 'package:flutter/material.dart';
+import 'package:riff/features/social_share/UI/widgets/now_playing_card.dart';
 
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,10 +9,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/di/dependency_injection.dart';
 import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
-import 'package:riff/core/networks/api_constants.dart';
+import 'package:riff/core/utils/media_url.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/helpers/spacing.dart';
+import 'package:riff/core/widgets/app_error_widget.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:video_player/video_player.dart';
 import 'package:riff/features/home/feed/Ui/post_detail_screen.dart';
@@ -22,7 +24,14 @@ import 'package:riff/features/home/user_profile/logic/cubit/user_profile_cubit.d
 import 'package:riff/features/home/notifications/logic/cubit/notifications_cubit.dart';
 import 'package:riff/core/widgets/button.dart';
 import 'package:riff/features/home/follow/UI/follow_list_screen.dart';
-import 'package:riff/features/home/chat/UI/chat_screen.dart';
+import 'package:riff/features/home/chat/data/repos/chat_repo.dart';
+import 'package:riff/features/home/chat/data/services/chat_socket_service.dart';
+import 'package:riff/features/home/chat/logic/cubit/chat_cubit.dart';
+import 'package:riff/features/home/chat/logic/cubit/chats_list_cubit.dart';
+import 'package:riff/features/home/chat/UI/chat_detail_screen.dart';
+import 'package:riff/features/home/block/data/repos/block_repo.dart';
+import 'package:riff/features/home/feed/data/repos/report_repo.dart';
+import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/generated/l10n.dart';
 
 // ── Genre assets + accent colors (mirrors profile_screen.dart) ────────────────
@@ -119,6 +128,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             username = '@${state.profile.username}';
           }
 
+          final isOwnProfile =
+              _currentUserId.isNotEmpty && _currentUserId == widget.userId;
+
           return Scaffold(
             backgroundColor:
                 isDark ? const Color(0xFF0F0F0F) : const Color(0xFFF8F8F8),
@@ -147,6 +159,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       ),
                     ),
               centerTitle: false,
+              actions: (!isOwnProfile && state is UserProfileLoaded)
+                  ? [
+                      _ProfileMoreMenu(
+                        userId: widget.userId,
+                        username: state .profile.username,
+                        isDark: isDark,
+                      ),
+                    ]
+                  : null,
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(1),
                 child: Divider(
@@ -170,23 +191,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       return const ProfilePageShimmer();
     }
     if (state is UserProfileFailure) {
-      return Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.error_outline,
-              size: 48.r, color: ColorManager.normalGrey),
-          verticalSpace(12),
-          Text(state.message,
-              style: TextStyles.font14Medium
-                  .copyWith(color: ColorManager.normalGrey),
-              textAlign: TextAlign.center),
-          verticalSpace(16),
-          TextButton(
-            onPressed: () => _cubit.loadProfile(widget.userId),
-            child: Text(S.of(context).retryBtn,
-                style: TextStyles.font14semiBold
-                    .copyWith(color: ColorManager.accent)),
-          ),
-        ]),
+      return AppErrorWidget(
+        message: state.message,
+        onRetry: () => _cubit.loadProfile(widget.userId),
       );
     }
 
@@ -236,7 +243,7 @@ class _ProfileBody extends StatelessWidget {
   String? get _avatarUrl {
     final raw = profile.profileImageUrl;
     if (raw == null || raw.isEmpty) return null;
-    return raw.startsWith('http') ? raw : '${ApiConstants.apiBASEURL}$raw';
+    return MediaUrl.resolve(raw);
   }
 
   String get _initials => profile.fullName
@@ -518,6 +525,9 @@ class _ProfileBody extends StatelessWidget {
           ]),
         ),
 
+        // ── Now Playing (Spotify) ──────────────────────────────────
+        NowPlayingCard(isOwnProfile: false, userId: profile.id),
+
         // ── Genres section ─────────────────────────────────────────
         if (profile.genres != null && profile.genres!.isNotEmpty)
           _GenresSection(genres: profile.genres!, isDark: isDark),
@@ -607,43 +617,418 @@ class _StatDivider extends StatelessWidget {
 
 // ── Message button ────────────────────────────────────────────────────────────
 
-class _MessageButton extends StatelessWidget {
+class _MessageButton extends StatefulWidget {
   final UserProfileModel profile;
   final bool isDark;
 
   const _MessageButton({required this.profile, required this.isDark});
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.push(
+  State<_MessageButton> createState() => _MessageButtonState();
+}
+
+class _MessageButtonState extends State<_MessageButton> {
+  bool _loading = false;
+
+  Future<void> _openChat() async {
+    setState(() => _loading = true);
+    try {
+      final conv = await getIt<ChatRepo>().startDirectConversation(widget.profile.id);
+      if (!mounted) return;
+      Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => ChatScreen(
-            userId: profile.id,
-            username: profile.username,
-            fullName: profile.fullName,
-            profileImageUrl: profile.profileImageUrl,
+          builder: (_) => MultiBlocProvider(
+            providers: [
+              BlocProvider(create: (_) => getIt<ChatsListCubit>()),
+              BlocProvider(
+                create: (_) => ChatCubit(
+                  getIt<ChatRepo>(),
+                  getIt<ChatSocketService>(),
+                ),
+              ),
+            ],
+            child: ChatDetailScreen(conversation: conv),
           ),
         ),
-      ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final msg = e.toString().contains('blocked')
+          ? 'You cannot message this user.'
+          : e.toString().contains('not_following')
+              ? 'You need to follow this user first.'
+              : 'Could not start conversation.';
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(msg)));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _loading ? null : _openChat,
       child: Container(
         width: 46.r,
         height: 46.r,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: isDark ? const Color(0xFF252525) : const Color(0xFFF0F0F0),
+          color: widget.isDark ? const Color(0xFF252525) : const Color(0xFFF0F0F0),
           border: Border.all(
-            color:
-                isDark ? const Color(0xFF3A3A3A) : const Color(0xFFDDDDDD),
+            color: widget.isDark ? const Color(0xFF3A3A3A) : const Color(0xFFDDDDDD),
           ),
         ),
-        child: Icon(
-          Icons.chat_bubble_outline_rounded,
-          size: 20.r,
-          color:
-              isDark ? const Color(0xFFCCCCCC) : const Color(0xFF444444),
+        child: _loading
+            ? Center(
+                child: SizedBox(
+                  width: 18.r,
+                  height: 18.r,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: ColorManager.accent,
+                  ),
+                ),
+              )
+            : Icon(
+                Icons.chat_bubble_outline_rounded,
+                size: 20.r,
+                color: widget.isDark ? const Color(0xFFCCCCCC) : const Color(0xFF444444),
+              ),
+      ),
+    );
+  }
+}
+
+// ── Three-dot AppBar menu (report + block) ────────────────────────────────────
+
+class _ProfileMoreMenu extends StatelessWidget {
+  final String userId;
+  final String username;
+  final bool isDark;
+
+  const _ProfileMoreMenu({
+    required this.userId,
+    required this.username,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      icon: Icon(
+        Icons.more_vert_rounded,
+        color: isDark ? Colors.white : ColorManager.black,
+      ),
+      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+      onSelected: (value) {
+        if (value == 'report') {
+          _showReportSheet(context);
+        } else if (value == 'block') {
+          _showBlockDialog(context);
+        }
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem(
+          value: 'report',
+          child: Row(children: [
+            Icon(Icons.flag_outlined, size: 18.r, color: const Color(0xFFFF9500)),
+            SizedBox(width: 10.w),
+            Text(
+              'Report @$username',
+              style: TextStyle(
+                fontFamily: 'GeneralSans',
+                fontSize: 14,
+                color: isDark ? Colors.white : ColorManager.black,
+              ),
+            ),
+          ]),
         ),
+        PopupMenuItem(
+          value: 'block',
+          child: Row(children: [
+            Icon(Icons.block_rounded, size: 18.r, color: ColorManager.red),
+            SizedBox(width: 10.w),
+            Text(
+              'Block @$username',
+              style: TextStyle(
+                fontFamily: 'GeneralSans',
+                fontSize: 14,
+                color: ColorManager.red,
+              ),
+            ),
+          ]),
+        ),
+      ],
+    );
+  }
+
+  void _showReportSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ReportUserSheet(userId: userId, isDark: isDark),
+    );
+  }
+
+  void _showBlockDialog(BuildContext context) {
+    showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        title: Text(
+          'Block @$username?',
+          style: TextStyle(
+            fontFamily: 'GeneralSans',
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white : ColorManager.black,
+          ),
+        ),
+        content: Text(
+          'They won\'t be able to message you or see your content. You can unblock them anytime from your profile settings.',
+          style: TextStyle(
+            fontFamily: 'GeneralSans',
+            fontSize: 14,
+            color: isDark ? const Color(0xFFAAAAAA) : const Color(0xFF555555),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              'Cancel',
+              style: TextStyles.font14semiBold.copyWith(
+                color: isDark ? Colors.white : ColorManager.black,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              'Block',
+              style: TextStyles.font14semiBold.copyWith(color: ColorManager.red),
+            ),
+          ),
+        ],
+      ),
+    ).then((confirmed) async {
+      if (confirmed != true) return;
+      try {
+        await getIt<BlockRepo>().blockUser(userId);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('@$username has been blocked.')),
+          );
+          Navigator.pop(context); // pop profile screen
+        }
+      } catch (_) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not block user. Please try again.')),
+          );
+        }
+      }
+    });
+  }
+}
+
+// ── Report user bottom sheet ──────────────────────────────────────────────────
+
+class _ReportUserSheet extends StatefulWidget {
+  final String userId;
+  final bool isDark;
+  const _ReportUserSheet({required this.userId, required this.isDark});
+
+  @override
+  State<_ReportUserSheet> createState() => _ReportUserSheetState();
+}
+
+class _ReportUserSheetState extends State<_ReportUserSheet> {
+  String? _selectedReason;
+  bool _submitting = false;
+
+  static const _reasons = [
+    'Spam or misleading',
+    'Hate speech or discrimination',
+    'Harassment or bullying',
+    'Impersonation',
+    'Violence or dangerous content',
+    'Nudity or sexual content',
+    'Intellectual property violation',
+    'Other',
+  ];
+
+  Future<void> _submit() async {
+    if (_selectedReason == null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Please select a reason.')));
+      return;
+    }
+    setState(() => _submitting = true);
+    final result = await getIt<ReportRepo>().reportUser(
+      userId: widget.userId,
+      reason: _selectedReason!,
+    );
+    if (!mounted) return;
+    Navigator.pop(context);
+    result.when(
+      success: (_) => ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Report submitted. Thank you.')),
+      ),
+      failure: (_) => ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not submit report. Please try again.')),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = widget.isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final textColor = widget.isDark ? Colors.white : ColorManager.black;
+    final subColor = widget.isDark ? const Color(0xFFAAAAAA) : const Color(0xFF666666);
+    final tileBg = widget.isDark ? const Color(0xFF252525) : const Color(0xFFF5F5F5);
+    final selectedBorder = ColorManager.accent;
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.5,
+      maxChildSize: 0.9,
+      builder: (_, controller) => Container(
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        ),
+        child: Column(children: [
+          // Handle
+          Container(
+            width: 36.w,
+            height: 4.h,
+            margin: EdgeInsets.symmetric(vertical: 12.h),
+            decoration: BoxDecoration(
+              color: widget.isDark ? const Color(0xFF3A3A3A) : const Color(0xFFDDDDDD),
+              borderRadius: BorderRadius.circular(2.r),
+            ),
+          ),
+
+          Padding(
+            padding: EdgeInsets.fromLTRB(20.w, 4.h, 20.w, 16.h),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(
+                'Report User',
+                style: TextStyle(
+                  fontFamily: 'GeneralSans',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: textColor,
+                ),
+              ),
+              SizedBox(height: 4.h),
+              Text(
+                'Why are you reporting this account?',
+                style: TextStyle(
+                  fontFamily: 'GeneralSans',
+                  fontSize: 13,
+                  color: subColor,
+                ),
+              ),
+            ]),
+          ),
+
+          Expanded(
+            child: ListView(
+              controller: controller,
+              padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 20.h),
+              children: [
+                ..._reasons.map((reason) {
+                  final selected = _selectedReason == reason;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedReason = reason),
+                    child: Container(
+                      margin: EdgeInsets.only(bottom: 8.h),
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? selectedBorder.withValues(alpha: 0.1)
+                            : tileBg,
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(
+                          color: selected
+                              ? selectedBorder
+                              : Colors.transparent,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(children: [
+                        Expanded(
+                          child: Text(
+                            reason,
+                            style: TextStyle(
+                              fontFamily: 'GeneralSans',
+                              fontSize: 14,
+                              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                              color: selected ? selectedBorder : textColor,
+                            ),
+                          ),
+                        ),
+                        if (selected)
+                          Icon(Icons.check_circle_rounded,
+                              size: 18.r, color: selectedBorder),
+                      ]),
+                    ),
+                  );
+                }),
+
+                SizedBox(height: 12.h),
+
+                // Submit button
+                GestureDetector(
+                  onTap: _submitting ? null : _submit,
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(vertical: 15.h),
+                    decoration: BoxDecoration(
+                      color: _selectedReason != null
+                          ? ColorManager.accent
+                          : (widget.isDark
+                              ? const Color(0xFF2A2A2A)
+                              : const Color(0xFFEEEEEE)),
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
+                    child: _submitting
+                        ? Center(
+                            child: SizedBox(
+                              width: 20.r,
+                              height: 20.r,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: _selectedReason != null
+                                    ? Colors.black
+                                    : Colors.grey,
+                              ),
+                            ),
+                          )
+                        : Text(
+                            'Submit Report',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: 'GeneralSans',
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: _selectedReason != null
+                                  ? Colors.black
+                                  : subColor,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ]),
       ),
     );
   }
@@ -998,8 +1383,6 @@ class _PostThumbnailState extends State<_PostThumbnail> {
         lower.endsWith('.mkv');
   }
 
-  String _resolve(String url) =>
-      url.startsWith('http') ? url : '${ApiConstants.apiBASEURL}$url';
 
   @override
   void initState() {
@@ -1010,7 +1393,7 @@ class _PostThumbnailState extends State<_PostThumbnail> {
         : (widget.post.originalPost?.media ?? []).where((m) => m.isNotEmpty).toList();
     final firstMedia = effectiveMedia.isNotEmpty ? effectiveMedia.first : null;
     if (firstMedia != null && _isVideo(firstMedia)) {
-      _loadThumb(_resolve(firstMedia));
+      _loadThumb(MediaUrl.resolveOrEmpty(firstMedia));
     }
   }
 
@@ -1087,7 +1470,7 @@ class _PostThumbnailState extends State<_PostThumbnail> {
       ]);
     } else {
       thumbnail = Image.network(
-        _resolve(firstMedia),
+        MediaUrl.resolveOrEmpty(firstMedia),
         fit: BoxFit.cover,
         loadingBuilder: (_, child, progress) => progress == null
             ? child

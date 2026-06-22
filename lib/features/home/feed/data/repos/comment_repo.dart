@@ -25,15 +25,6 @@ class CommentRepo {
       if (data is Comment) {
         return ApiResult.success(_attachCurrentUserAsAuthor(data));
       }
-
-      if (data is Map<String, dynamic>) {
-        final comment = Comment.fromJson(data as Map<String, dynamic>);
-        return ApiResult.success(_attachCurrentUserAsAuthor(comment));
-      }
-
-      return ApiResult.failure(
-        ApiErrorHandler.handle(Exception('Invalid createComment response')),
-      );
     } catch (e) {
       return ApiResult.failure(ApiErrorHandler.handle(e));
     }
@@ -77,16 +68,10 @@ class CommentRepo {
       if (data is List) {
         final comments = data.map<Comment>((e) {
           if (e is Comment) return e;
-          if (e is Map<String, dynamic>) return Comment.fromJson(e as Map<String, dynamic>);
-          throw Exception('Invalid comment item');
         }).toList();
 
         return ApiResult.success(comments);
       }
-
-      return ApiResult.failure(
-        ApiErrorHandler.handle(Exception('Invalid comments response')),
-      );
     } catch (e) {
       return ApiResult.failure(ApiErrorHandler.handle(e));
     }

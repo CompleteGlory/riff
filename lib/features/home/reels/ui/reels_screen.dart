@@ -9,6 +9,7 @@ import 'package:riff/features/home/reels/logic/cubit/reels_cubit.dart';
 import 'package:riff/features/home/reels/logic/cubit/reels_state.dart';
 import 'package:riff/features/home/reels/ui/widgets/reel_item.dart';
 import 'package:riff/generated/l10n.dart';
+import 'package:riff/core/widgets/app_error_widget.dart';
 
 class ReelsScreen extends StatelessWidget {
   /// When provided the reel list starts with this post (index 0) and the rest
@@ -184,26 +185,9 @@ class _ReelsBodyState extends State<_ReelsBody> {
         if (state is ReelsFailure && _reels.isEmpty) {
           return Scaffold(
             backgroundColor: Colors.black,
-            body: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.white54, size: 48),
-                  const SizedBox(height: 12),
-                  Text(
-                    state.message,
-                    style: const TextStyle(color: Colors.white54),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () =>
-                        context.read<ReelsCubit>().loadReels(refresh: true),
-                    child: Text(S.of(context).retryBtn,
-                        style: TextStyle(color: Colors.white)),
-                  ),
-                ],
-              ),
+            body: AppErrorWidget(
+              message: state.message,
+              onRetry: () => context.read<ReelsCubit>().loadReels(refresh: true),
             ),
           );
         }

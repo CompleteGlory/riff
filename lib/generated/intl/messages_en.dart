@@ -20,23 +20,68 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'en';
 
-  static String m0(max) => "Maximum ${max} files allowed.";
+  static String m0(message) => "Error: ${message}";
 
-  static String m1(filterLabel) => "No posts in \"${filterLabel}\" yet";
+  static String m1(max) => "Maximum ${max} files allowed.";
 
-  static String m2(query) => "No results for \"${query}\"";
+  static String m2(filterLabel) => "No posts in \"${filterLabel}\" yet";
 
   static String m3(query) => "No results for \"${query}\"";
 
-  static String m4(seconds) => "Resend code in ${seconds}s";
+  static String m4(query) => "No results for \"${query}\"";
 
-  static String m5(phoneNumber) =>
+  static String m5(date) => "Last seen ${date}";
+
+  static String m6(n) => "Last seen ${n}m ago";
+
+  static String m7(time) => "Last seen today at ${time}";
+
+  static String m8(time) => "Last seen yesterday at ${time}";
+
+  static String m9(name) =>
+      "${name} wants to send you a message.\nThey can\'t see that you\'ve viewed this request.";
+
+  static String m10(seconds) => "Resend code in ${seconds}s";
+
+  static String m11(phoneNumber) =>
       "We sent a WhatsApp message to\n${phoneNumber}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+        "aboutUsContactEmail":
+            MessageLookupByLibrary.simpleMessage("magddevf@gmail.com"),
+        "aboutUsContactLabel":
+            MessageLookupByLibrary.simpleMessage("Get in touch"),
+        "aboutUsDescription": MessageLookupByLibrary.simpleMessage(
+            "Riff is a music-first social platform built for musicians, producers, and passionate listeners. Share what you\'re playing, discover who\'s listening to the same tracks, connect with fellow artists, and grow your musical community — all in one place."),
+        "aboutUsDeveloperBio": MessageLookupByLibrary.simpleMessage(
+            "Magd is a passionate Flutter developer who built Riff from the ground up — from backend architecture to pixel-perfect UI. A music lover himself, he created Riff to solve a real problem: there\'s no great social space designed purely for the music community."),
+        "aboutUsDeveloperName": MessageLookupByLibrary.simpleMessage("Magd"),
+        "aboutUsDeveloperRole": MessageLookupByLibrary.simpleMessage(
+            "Founder & Full-Stack Developer"),
+        "aboutUsDeveloperTitle":
+            MessageLookupByLibrary.simpleMessage("Meet the Developer"),
+        "aboutUsDrawer": MessageLookupByLibrary.simpleMessage("About Riff"),
+        "aboutUsDrawerSubtitle":
+            MessageLookupByLibrary.simpleMessage("Our story and the team"),
+        "aboutUsMadeWith": MessageLookupByLibrary.simpleMessage(
+            "Made with ❤️ for the music community"),
+        "aboutUsMission": MessageLookupByLibrary.simpleMessage("Our Mission"),
+        "aboutUsMissionBody": MessageLookupByLibrary.simpleMessage(
+            "Music is universal, but finding your people isn\'t always easy. Riff exists to close that gap — giving every musician and music lover a space to express themselves, share their sound, and connect authentically."),
+        "aboutUsTagline":
+            MessageLookupByLibrary.simpleMessage("Your Music. Your People."),
+        "aboutUsTitle": MessageLookupByLibrary.simpleMessage("About Riff"),
+        "aboutUsVersion": MessageLookupByLibrary.simpleMessage("Version"),
+        "acceptBtn": MessageLookupByLibrary.simpleMessage("Accept"),
         "acceptedYourFollowRequest": MessageLookupByLibrary.simpleMessage(
             "accepted your follow request."),
+        "accountSettingsDrawer":
+            MessageLookupByLibrary.simpleMessage("Account Settings"),
+        "accountSettingsSub": MessageLookupByLibrary.simpleMessage(
+            "Privacy, password & security"),
+        "accountSettingsTitle":
+            MessageLookupByLibrary.simpleMessage("Account Settings"),
         "accountsFollowed": MessageLookupByLibrary.simpleMessage(
             "Accounts followed\nwill appear here."),
         "addAComment": MessageLookupByLibrary.simpleMessage("Add a comment…"),
@@ -54,6 +99,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "anyoneCanFollow": MessageLookupByLibrary.simpleMessage(
             "Anyone can follow you and see your posts"),
         "appLanguage": MessageLookupByLibrary.simpleMessage("App Language"),
+        "appSettingsTitle":
+            MessageLookupByLibrary.simpleMessage("App Settings"),
         "appTitle": MessageLookupByLibrary.simpleMessage("Riff"),
         "appearanceSection": MessageLookupByLibrary.simpleMessage("Appearance"),
         "areYouSureDeleteComment": MessageLookupByLibrary.simpleMessage(
@@ -63,13 +110,26 @@ class MessageLookup extends MessageLookupByLibrary {
             "Be the first to post something in this category."),
         "beFirstToSaySomething": MessageLookupByLibrary.simpleMessage(
             "Be the first to say something!"),
+        "blockedUsersDrawer":
+            MessageLookupByLibrary.simpleMessage("Blocked Users"),
         "bugReportSubmitted": MessageLookupByLibrary.simpleMessage(
             "Bug report submitted. Thank you!"),
         "bugTitleLabel": MessageLookupByLibrary.simpleMessage("Title"),
         "bySigningUpAccepting": MessageLookupByLibrary.simpleMessage(
             "By signing up you are accepting our"),
         "cancelBtn": MessageLookupByLibrary.simpleMessage("Cancel"),
+        "changePasswordBtn":
+            MessageLookupByLibrary.simpleMessage("Change Password"),
+        "changePasswordSub": MessageLookupByLibrary.simpleMessage(
+            "Update your account password"),
+        "changePasswordTile":
+            MessageLookupByLibrary.simpleMessage("Change Password"),
+        "changePasswordTitle":
+            MessageLookupByLibrary.simpleMessage("Change Password"),
         "changePhoto": MessageLookupByLibrary.simpleMessage("Change photo"),
+        "chatMessagesTitle": MessageLookupByLibrary.simpleMessage("Messages"),
+        "chatTabChats": MessageLookupByLibrary.simpleMessage("Chats"),
+        "chatTabRequests": MessageLookupByLibrary.simpleMessage("Requests"),
         "checkYourConnection": MessageLookupByLibrary.simpleMessage(
             "Check your connection, then pull down to refresh."),
         "chooseFromGallery":
@@ -94,6 +154,10 @@ class MessageLookup extends MessageLookupByLibrary {
             "Complete your profile to get discovered!"),
         "confirmNewPassword":
             MessageLookupByLibrary.simpleMessage("Confirm your new password"),
+        "confirmNewPasswordHint":
+            MessageLookupByLibrary.simpleMessage("Re-enter your new password"),
+        "confirmNewPasswordLabel":
+            MessageLookupByLibrary.simpleMessage("Confirm New Password"),
         "confirmPassword":
             MessageLookupByLibrary.simpleMessage("Confirm Password"),
         "contactsSyncedNoneOnRiff": MessageLookupByLibrary.simpleMessage(
@@ -101,21 +165,41 @@ class MessageLookup extends MessageLookupByLibrary {
         "continueBtn": MessageLookupByLibrary.simpleMessage("Continue"),
         "continueWithGoogle":
             MessageLookupByLibrary.simpleMessage("Continue with Google"),
+        "conversationDeleted":
+            MessageLookupByLibrary.simpleMessage("Conversation deleted"),
+        "conversationsSectionLabel":
+            MessageLookupByLibrary.simpleMessage("Conversations"),
+        "couldNotDeleteConversation": MessageLookupByLibrary.simpleMessage(
+            "Could not delete conversation."),
         "createAnAccount":
             MessageLookupByLibrary.simpleMessage("Create an account"),
         "createAnAccountBtn":
             MessageLookupByLibrary.simpleMessage("Create An Account"),
+        "createGroupBtn": MessageLookupByLibrary.simpleMessage("Create"),
         "criticalSeverity": MessageLookupByLibrary.simpleMessage("Critical"),
         "currentLanguageName": MessageLookupByLibrary.simpleMessage("English"),
+        "currentPasswordHint":
+            MessageLookupByLibrary.simpleMessage("Enter your current password"),
+        "currentPasswordLabel":
+            MessageLookupByLibrary.simpleMessage("Current Password"),
         "darkMode": MessageLookupByLibrary.simpleMessage("Dark Mode"),
         "darkModeOff": MessageLookupByLibrary.simpleMessage("Off"),
         "darkModeOn": MessageLookupByLibrary.simpleMessage("On"),
+        "declineBtn": MessageLookupByLibrary.simpleMessage("Decline"),
         "declined": MessageLookupByLibrary.simpleMessage("Declined"),
         "defineYourself": MessageLookupByLibrary.simpleMessage(
             "Define Yourself\nin Your Unique Way."),
         "deleteBtn": MessageLookupByLibrary.simpleMessage("Delete"),
         "deleteCommentTitle":
             MessageLookupByLibrary.simpleMessage("Delete Comment"),
+        "deleteConversationContent": MessageLookupByLibrary.simpleMessage(
+            "This will permanently delete all messages for everyone in this chat."),
+        "deleteConversationTitle":
+            MessageLookupByLibrary.simpleMessage("Delete conversation?"),
+        "deleteForEveryoneBtn":
+            MessageLookupByLibrary.simpleMessage("Delete for everyone"),
+        "deleteMessageOption":
+            MessageLookupByLibrary.simpleMessage("Delete message"),
         "deletePostDialogContent": MessageLookupByLibrary.simpleMessage(
             "Are you sure you want to delete this post? This action cannot be undone."),
         "deletePostDialogTitle":
@@ -137,9 +221,19 @@ class MessageLookup extends MessageLookupByLibrary {
         "editPostOption": MessageLookupByLibrary.simpleMessage("Edit Post"),
         "editYourComment":
             MessageLookupByLibrary.simpleMessage("Edit your comment..."),
+        "editYourProfile":
+            MessageLookupByLibrary.simpleMessage("Edit your profile info"),
+        "emailInvalid":
+            MessageLookupByLibrary.simpleMessage("Enter a valid email address"),
         "emailLabel": MessageLookupByLibrary.simpleMessage("Email"),
         "emailOrUsername":
             MessageLookupByLibrary.simpleMessage("Email or Username"),
+        "emailRequired":
+            MessageLookupByLibrary.simpleMessage("Email is required"),
+        "emailSettingsHint":
+            MessageLookupByLibrary.simpleMessage("Enter your email"),
+        "emailSettingsLabel":
+            MessageLookupByLibrary.simpleMessage("Email Address"),
         "enterCodeSubtitle": MessageLookupByLibrary.simpleMessage(
             "Enter 6 digit code that you\'ve received on your email address."),
         "enterConfirmPassword":
@@ -217,14 +311,35 @@ class MessageLookup extends MessageLookupByLibrary {
         "fullName": MessageLookupByLibrary.simpleMessage("Full Name"),
         "genresFilter": MessageLookupByLibrary.simpleMessage("Genres"),
         "genresSection": MessageLookupByLibrary.simpleMessage("Genres"),
+        "genresSettingsLabel":
+            MessageLookupByLibrary.simpleMessage("Music Genres"),
+        "genresSettingsSubtitle": MessageLookupByLibrary.simpleMessage(
+            "Tap to select the genres you love"),
         "getStarted": MessageLookupByLibrary.simpleMessage("Get Started"),
         "gmailAlreadyLinked": MessageLookupByLibrary.simpleMessage(
             "This Gmail is already linked to an account. Logging you in..."),
         "gmailAlreadyLinkedTitle":
             MessageLookupByLibrary.simpleMessage("Account Found"),
+        "googleAccountEmailNote": MessageLookupByLibrary.simpleMessage(
+            "Email cannot be changed for Google accounts"),
         "googleSignInFailed": MessageLookupByLibrary.simpleMessage(
             "Google sign-in was cancelled or failed. Please try again."),
         "gotItBtn": MessageLookupByLibrary.simpleMessage("Got it"),
+        "groupAdminBadge": MessageLookupByLibrary.simpleMessage("Admin"),
+        "groupCreationError": m0,
+        "groupDescriptionHint":
+            MessageLookupByLibrary.simpleMessage("Description (optional)"),
+        "groupDescriptionLabel":
+            MessageLookupByLibrary.simpleMessage("Description"),
+        "groupDetailsTitle": MessageLookupByLibrary.simpleMessage("Group Info"),
+        "groupMemberRequired":
+            MessageLookupByLibrary.simpleMessage("Add at least one member"),
+        "groupMembersSection": MessageLookupByLibrary.simpleMessage("Members"),
+        "groupNameHint": MessageLookupByLibrary.simpleMessage("Group name"),
+        "groupNameRequired":
+            MessageLookupByLibrary.simpleMessage("Please enter a group name"),
+        "groupNoDescription":
+            MessageLookupByLibrary.simpleMessage("No description"),
         "harassmentOrBullying":
             MessageLookupByLibrary.simpleMessage("Harassment or bullying"),
         "hateSpeechOrDiscrimination": MessageLookupByLibrary.simpleMessage(
@@ -234,6 +349,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "helpUsFixIssues":
             MessageLookupByLibrary.simpleMessage("Help us fix issues"),
         "highSeverity": MessageLookupByLibrary.simpleMessage("High"),
+        "howWeHandleData":
+            MessageLookupByLibrary.simpleMessage("How we handle your data"),
         "instrumentsFilter":
             MessageLookupByLibrary.simpleMessage("Instruments"),
         "instrumentsSection":
@@ -261,28 +378,42 @@ class MessageLookup extends MessageLookupByLibrary {
         "loginTitle":
             MessageLookupByLibrary.simpleMessage("Login To your account"),
         "lowSeverity": MessageLookupByLibrary.simpleMessage("Low"),
+        "manageBlockedUsers":
+            MessageLookupByLibrary.simpleMessage("Manage who you have blocked"),
         "markAllRead": MessageLookupByLibrary.simpleMessage("Mark all read"),
-        "maximumFilesAllowed": m0,
+        "maximumFilesAllowed": m1,
         "mediaLabel": MessageLookupByLibrary.simpleMessage("Media"),
         "mediumSeverity": MessageLookupByLibrary.simpleMessage("Medium"),
+        "messageBtn": MessageLookupByLibrary.simpleMessage("Message"),
         "messageHint": MessageLookupByLibrary.simpleMessage("Message…"),
         "messagesComingSoon":
             MessageLookupByLibrary.simpleMessage("Messages coming soon"),
+        "newGroupTitle": MessageLookupByLibrary.simpleMessage("New Group"),
+        "newPasswordHint":
+            MessageLookupByLibrary.simpleMessage("Enter your new password"),
+        "newPasswordLabel":
+            MessageLookupByLibrary.simpleMessage("New Password"),
         "noCommentsYet":
             MessageLookupByLibrary.simpleMessage("No comments yet"),
         "noConnection": MessageLookupByLibrary.simpleMessage("No Connection"),
+        "noConversationsYet": MessageLookupByLibrary.simpleMessage(
+            "No conversations yet.\nSearch for someone to start chatting."),
         "noFollowersYet":
             MessageLookupByLibrary.simpleMessage("No followers yet"),
+        "noGenresSelected":
+            MessageLookupByLibrary.simpleMessage("Select at least one genre"),
+        "noMessageRequests":
+            MessageLookupByLibrary.simpleMessage("No message requests"),
         "noNotificationsYet":
             MessageLookupByLibrary.simpleMessage("No notifications yet"),
-        "noPostsInCategory": m1,
+        "noPostsInCategory": m2,
         "noPostsLoaded":
             MessageLookupByLibrary.simpleMessage("No posts loaded"),
         "noPostsYet": MessageLookupByLibrary.simpleMessage("No posts yet"),
         "noReelsYet": MessageLookupByLibrary.simpleMessage(
             "No reels yet.\nPost a video to get started!"),
-        "noResultsForQuery": m2,
-        "noResultsForQueryShort": m3,
+        "noResultsForQuery": m3,
+        "noResultsForQueryShort": m4,
         "noSuggestionsYet":
             MessageLookupByLibrary.simpleMessage("No suggestions yet"),
         "notFollowingAnyone":
@@ -297,6 +428,10 @@ class MessageLookup extends MessageLookupByLibrary {
             "Only approved followers can see your posts"),
         "orDivider": MessageLookupByLibrary.simpleMessage("Or"),
         "otherReason": MessageLookupByLibrary.simpleMessage("Other"),
+        "passwordChangedFailure": MessageLookupByLibrary.simpleMessage(
+            "Failed to change password. Please try again."),
+        "passwordChangedSuccess": MessageLookupByLibrary.simpleMessage(
+            "Password changed successfully!"),
         "passwordIsRequired":
             MessageLookupByLibrary.simpleMessage("Password is required"),
         "passwordLabel": MessageLookupByLibrary.simpleMessage("Password"),
@@ -357,8 +492,73 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Post updated successfully!"),
         "postsLabel": MessageLookupByLibrary.simpleMessage("Posts"),
         "postsSection": MessageLookupByLibrary.simpleMessage("Posts"),
+        "ppSection10Body": MessageLookupByLibrary.simpleMessage(
+            "We may update this Privacy Policy from time to time. When we make significant changes, we will notify you via in-app notification or email. Continued use of Riff after changes are posted constitutes your acceptance of the updated policy.\n\nLast updated: June 2026."),
+        "ppSection10Title":
+            MessageLookupByLibrary.simpleMessage("10. Changes to This Policy"),
+        "ppSection11Body": MessageLookupByLibrary.simpleMessage(
+            "If you have questions, concerns, or requests regarding this Privacy Policy or your personal data, please contact us at:\n\nEmail: magddevf@gmail.com\n"),
+        "ppSection11Title":
+            MessageLookupByLibrary.simpleMessage("11. Contact Us"),
+        "ppSection1Body": MessageLookupByLibrary.simpleMessage(
+            "Welcome to Riff (\"we\", \"our\", or \"us\"). Riff is a music-focused social platform that lets you share your passion for music, connect with other musicians and fans, and communicate through direct and group messaging.\n\nThis Privacy Policy explains what information we collect, how we use it, and your rights regarding your data. By creating an account or using Riff, you agree to this policy."),
+        "ppSection1Title":
+            MessageLookupByLibrary.simpleMessage("1. Introduction"),
+        "ppSection2Body": MessageLookupByLibrary.simpleMessage(
+            "Account information — When you sign up, we collect your full name, username, email address, and password (stored as a one-way hash).\n\nProfile information — Profile picture, bio, and music preferences including instruments you play and genres you enjoy.\n\nContent you create — Posts, reels, comments, reactions, and any media you upload (photos, videos, audio recordings).\n\nMessages — Direct messages and group chat content are stored on our servers to deliver them to recipients and support message history.\n\nContacts (optional) — If you grant permission, we access your device contacts solely to help you find friends already on Riff. Contact data is never stored on our servers without your explicit action.\n\nDevice & usage data — Device model, OS version, app version, IP address, and in-app activity (screens visited, features used) for diagnostics and improvement."),
+        "ppSection2Title":
+            MessageLookupByLibrary.simpleMessage("2. Information We Collect"),
+        "ppSection3Body": MessageLookupByLibrary.simpleMessage(
+            "• Provide and operate the Riff service, including account management, messaging, and social features.\n• Personalise your feed and music recommendations based on your stated preferences.\n• Send push notifications about new messages, interactions, and platform updates (you can manage these in Settings → Notifications).\n• Detect and prevent fraud, abuse, and policy violations.\n• Analyse usage patterns to improve app performance and develop new features.\n• Respond to your support requests and bug reports."),
+        "ppSection3Title": MessageLookupByLibrary.simpleMessage(
+            "3. How We Use Your Information"),
+        "ppSection4Body": MessageLookupByLibrary.simpleMessage(
+            "We do not sell your personal data to third parties.\n\nService providers — We share data with trusted third-party providers that help us operate Riff, including:\n• Firebase Cloud Messaging (FCM) — to deliver push notifications.\n• Cloud hosting providers — to store and serve app data securely.\n\nLegal requirements — We may disclose information if required by law, subpoena, or to protect the rights and safety of our users or the public.\n\nBusiness transfers — In the event of a merger, acquisition, or asset sale, user data may be transferred as part of that transaction."),
+        "ppSection4Title": MessageLookupByLibrary.simpleMessage(
+            "4. How We Share Your Information"),
+        "ppSection5Body": MessageLookupByLibrary.simpleMessage(
+            "We use industry-standard security measures including encrypted connections (HTTPS/TLS), hashed passwords, JWT-based authentication with refresh tokens, and access controls to protect your data.\n\nNo method of transmission over the internet is 100% secure. While we strive to protect your data, we cannot guarantee absolute security."),
+        "ppSection5Title":
+            MessageLookupByLibrary.simpleMessage("5. Data Security"),
+        "ppSection6Body": MessageLookupByLibrary.simpleMessage(
+            "Messages sent through Riff are stored on our servers to ensure reliable delivery and support chat history. We do not read the content of your messages except where required by law or to investigate abuse reports you submit.\n\nOnline presence (e.g. \"Online\" / \"Last seen\") is shared with users you have a conversation with. You may restrict this in Settings."),
+        "ppSection6Title": MessageLookupByLibrary.simpleMessage(
+            "6. Messaging & Real-Time Features"),
+        "ppSection7Body": MessageLookupByLibrary.simpleMessage(
+            "Riff is not intended for users under the age of 13. We do not knowingly collect personal information from children under 13. If we become aware that a child under 13 has provided us with personal information, we will delete it immediately."),
+        "ppSection7Title":
+            MessageLookupByLibrary.simpleMessage("7. Children\'s Privacy"),
+        "ppSection8Body": MessageLookupByLibrary.simpleMessage(
+            "Access & correction — You can view and update your profile information at any time through Settings.\n\nAccount deletion — You can delete your account from Settings → Account. This permanently removes your profile, posts, and personal data within 30 days.\n\nNotifications — Manage push notification preferences in Settings → Notifications or through your device\'s system settings.\n\nContacts access — You can revoke contacts permission at any time in your device\'s app permissions settings."),
+        "ppSection8Title":
+            MessageLookupByLibrary.simpleMessage("8. Your Rights & Choices"),
+        "ppSection9Body": MessageLookupByLibrary.simpleMessage(
+            "Riff uses local device storage (SharedPreferences) to securely store your authentication tokens and user preferences such as theme settings. This data is stored only on your device and is cleared when you log out."),
+        "ppSection9Title":
+            MessageLookupByLibrary.simpleMessage("9. Cookies & Local Storage"),
+        "presenceLastSeenDate": m5,
+        "presenceLastSeenJustNow":
+            MessageLookupByLibrary.simpleMessage("Last seen just now"),
+        "presenceLastSeenMinutes": m6,
+        "presenceLastSeenTodayAt": m7,
+        "presenceLastSeenYesterdayAt": m8,
+        "presenceOnline": MessageLookupByLibrary.simpleMessage("Online"),
         "privacyAppearance":
-            MessageLookupByLibrary.simpleMessage("Privacy, appearance"),
+            MessageLookupByLibrary.simpleMessage("Appearance & language"),
+        "privacyPolicyConsentPrefix": MessageLookupByLibrary.simpleMessage(
+            "I have read and agree to the "),
+        "privacyPolicyDrawer":
+            MessageLookupByLibrary.simpleMessage("Privacy Policy"),
+        "privacyPolicyHeaderSubtitle": MessageLookupByLibrary.simpleMessage(
+            "Your privacy matters to us. Read how we collect, use, and protect your data."),
+        "privacyPolicyHeaderTitle":
+            MessageLookupByLibrary.simpleMessage("Riff Privacy Policy"),
+        "privacyPolicyLinkText":
+            MessageLookupByLibrary.simpleMessage("Privacy Policy"),
+        "privacyPolicyRequiredSnackbar": MessageLookupByLibrary.simpleMessage(
+            "Please read and accept the Privacy Policy to continue."),
+        "privacyPolicyScreenTitle":
+            MessageLookupByLibrary.simpleMessage("Privacy Policy"),
         "privacySection": MessageLookupByLibrary.simpleMessage("Privacy"),
         "privateAccount":
             MessageLookupByLibrary.simpleMessage("Private Account"),
@@ -368,6 +568,16 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Proceed to Login"),
         "profilePhotoUpdated":
             MessageLookupByLibrary.simpleMessage("Profile photo updated"),
+        "profileSavedFailure": MessageLookupByLibrary.simpleMessage(
+            "Failed to save profile. Please try again."),
+        "profileSavedSuccess": MessageLookupByLibrary.simpleMessage(
+            "Profile updated successfully!"),
+        "profileSettingsDrawer":
+            MessageLookupByLibrary.simpleMessage("Profile Settings"),
+        "profileSettingsSubtitle": MessageLookupByLibrary.simpleMessage(
+            "Update your name, username, email, and music genres."),
+        "profileSettingsTitle":
+            MessageLookupByLibrary.simpleMessage("Profile Settings"),
         "recordVideo": MessageLookupByLibrary.simpleMessage("Record Video"),
         "reelsTitle": MessageLookupByLibrary.simpleMessage("Reels"),
         "removeBtn": MessageLookupByLibrary.simpleMessage("Remove"),
@@ -386,11 +596,12 @@ class MessageLookup extends MessageLookupByLibrary {
         "requestAFeatureDrawer":
             MessageLookupByLibrary.simpleMessage("Request a Feature"),
         "requestBtn": MessageLookupByLibrary.simpleMessage("Request"),
+        "requestInfoMessage": m9,
         "requestedBtn": MessageLookupByLibrary.simpleMessage("Requested"),
         "requestedToFollowYou":
             MessageLookupByLibrary.simpleMessage("requested to follow you."),
         "resendCode": MessageLookupByLibrary.simpleMessage("Resend code"),
-        "resendCodeIn": m4,
+        "resendCodeIn": m10,
         "resendViaWhatsApp":
             MessageLookupByLibrary.simpleMessage("Resend via WhatsApp"),
         "resetPasswordBtn":
@@ -405,23 +616,34 @@ class MessageLookup extends MessageLookupByLibrary {
         "saveAndContinue":
             MessageLookupByLibrary.simpleMessage("Save & Continue"),
         "saveChangesBtn": MessageLookupByLibrary.simpleMessage("Save Changes"),
+        "saveProfileBtn": MessageLookupByLibrary.simpleMessage("Save Changes"),
         "savingBtn": MessageLookupByLibrary.simpleMessage("Saving…"),
+        "searchConversationsHint": MessageLookupByLibrary.simpleMessage(
+            "Search people and conversations…"),
         "searchHint":
             MessageLookupByLibrary.simpleMessage("Search people or posts…"),
         "searchHintFollow": MessageLookupByLibrary.simpleMessage("Search"),
         "searchTitle": MessageLookupByLibrary.simpleMessage("Search"),
+        "searchUsersHint":
+            MessageLookupByLibrary.simpleMessage("Search users…"),
         "seeWhichContactsOnRiff": MessageLookupByLibrary.simpleMessage(
             "See which of your contacts are already on Riff."),
         "selectGenres": MessageLookupByLibrary.simpleMessage(
             "Select the genres you love.\nThis helps us find your people."),
+        "selectGenresTitle":
+            MessageLookupByLibrary.simpleMessage("Select Genres"),
         "selectInstruments": MessageLookupByLibrary.simpleMessage(
             "Select the instruments you play.\nPick as many as you like."),
         "sendCodeBtn": MessageLookupByLibrary.simpleMessage("Send Code"),
         "sendOTPViaWhatsApp":
             MessageLookupByLibrary.simpleMessage("Send OTP via WhatsApp"),
+        "sendingFile": MessageLookupByLibrary.simpleMessage("Sending file…"),
         "sendingOTP": MessageLookupByLibrary.simpleMessage("Sending…"),
+        "sendingPhoto": MessageLookupByLibrary.simpleMessage("Sending photo…"),
+        "sendingVideo": MessageLookupByLibrary.simpleMessage("Sending video…"),
+        "sendingVoice": MessageLookupByLibrary.simpleMessage("Sending voice…"),
         "serverError": MessageLookupByLibrary.simpleMessage("Server Error"),
-        "settingsDrawer": MessageLookupByLibrary.simpleMessage("Settings"),
+        "settingsDrawer": MessageLookupByLibrary.simpleMessage("App Settings"),
         "settingsTitle": MessageLookupByLibrary.simpleMessage("Settings"),
         "severityLabel": MessageLookupByLibrary.simpleMessage("Severity"),
         "shareBtn": MessageLookupByLibrary.simpleMessage("Share"),
@@ -478,15 +700,26 @@ class MessageLookup extends MessageLookupByLibrary {
         "unlike": MessageLookupByLibrary.simpleMessage("Unlike"),
         "updateBtn": MessageLookupByLibrary.simpleMessage("Update"),
         "userName": MessageLookupByLibrary.simpleMessage("UserName"),
+        "usernameAvailable":
+            MessageLookupByLibrary.simpleMessage("Username is available"),
+        "usernameChecking": MessageLookupByLibrary.simpleMessage("Checking…"),
         "usernameEnglishOnly": MessageLookupByLibrary.simpleMessage(
             "Username must contain only English letters, numbers, underscores or dots"),
+        "usernameHint": MessageLookupByLibrary.simpleMessage("e.g. john_doe"),
+        "usernameLabel": MessageLookupByLibrary.simpleMessage("Username"),
+        "usernameRequired":
+            MessageLookupByLibrary.simpleMessage("Username is required"),
+        "usernameTaken":
+            MessageLookupByLibrary.simpleMessage("Username is already taken"),
+        "usernameUnchanged": MessageLookupByLibrary.simpleMessage(
+            "This is your current username"),
         "verifyBtn": MessageLookupByLibrary.simpleMessage("Verify"),
         "verifyYourPhoneNumber":
             MessageLookupByLibrary.simpleMessage("Verify your\nphone number"),
         "videoLabel": MessageLookupByLibrary.simpleMessage("Video"),
         "violenceOrDangerous": MessageLookupByLibrary.simpleMessage(
             "Violence or dangerous content"),
-        "weSentWhatsAppTo": m5,
+        "weSentWhatsAppTo": m11,
         "wellMatchContacts": MessageLookupByLibrary.simpleMessage(
             "We\'ll match your contacts with Riff users."),
         "wellSendWhatsApp": MessageLookupByLibrary.simpleMessage(
@@ -512,6 +745,8 @@ class MessageLookup extends MessageLookupByLibrary {
             "Why would this be useful? (optional)"),
         "writeCaption":
             MessageLookupByLibrary.simpleMessage("Write a caption… (optional)"),
+        "wrongCurrentPassword": MessageLookupByLibrary.simpleMessage(
+            "Current password is incorrect"),
         "youLabel": MessageLookupByLibrary.simpleMessage("You"),
         "yourCaption": MessageLookupByLibrary.simpleMessage("Your caption"),
         "yourMusicSocialFeed":

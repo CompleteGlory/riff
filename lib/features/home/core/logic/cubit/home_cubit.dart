@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
 import 'package:riff/core/networks/api_result.dart';
+import 'package:riff/core/widgets/app_error_widget.dart';
 import 'package:riff/features/home/add_post/ui/widgets/create_post_wrapper.dart';
 import 'package:riff/features/home/core/data/repos/home_repo.dart';
 import 'package:riff/features/home/core/logic/cubit/home_state.dart';
@@ -19,6 +20,11 @@ class HomeCubit extends Cubit<HomeState> {
   }
 
   int currentIndex = 0;
+
+  /// Shared scroll controller for the feed list.
+  /// Held here so [changeScreen] can animate to top on re-tap without
+  /// needing a new freezed state variant.
+  final ScrollController feedScrollController = ScrollController();
 
   final List<String> titles = [
     'Feed',
@@ -50,14 +56,41 @@ class HomeCubit extends Cubit<HomeState> {
         screens[4] = ProfileScreen(profile: profile);
         emit(HomeState.changeScreen(currentIndex));
       },
-      failure: (_) {
-        // Keep spinner — user can retry by navigating away and back
+      failure: (err) {
+        screens[4] = Center(
+          child: AppErrorWidget(
+            message: err.message,
+            onRetry: _loadUser,
+          ),
+        );
+        emit(HomeState.changeScreen(currentIndex));
       },
     );
   }
 
+  /// Re-fetches the current user and rebuilds screens[4].
+  /// Call this after a profile update to reflect changes without a restart.
+  Future<void> refreshProfile() => _loadUser();
+
   void changeScreen(int index) {
+    // Re-tapping the feed tab: scroll to top without refreshing.
+    if (index == 0 && currentIndex == 0) {
+      if (feedScrollController.hasClients) {
+        feedScrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeOutCubic,
+        );
+      }
+      return;
+    }
     currentIndex = index;
     emit(HomeState.changeScreen(index));
+  }
+
+  @override
+  Future<void> close() {
+    feedScrollController.dispose();
+    return super.close();
   }
 }

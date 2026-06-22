@@ -30,6 +30,8 @@ Post _$PostFromJson(Map<String, dynamic> json) => Post(
       : Post.fromJson(json['original_post'] as Map<String, dynamic>),
   sharesCount: (json['shares_count'] as num?)?.toInt(),
   viewsCount: (json['views_count'] as num?)?.toInt() ?? 0,
+  sourceUrl: json['source_url'] as String?,
+  sourcePlatform: json['source_platform'] as String?,
 );
 
 Map<String, dynamic> _$PostToJson(Post instance) => <String, dynamic>{
@@ -48,4 +50,6 @@ Map<String, dynamic> _$PostToJson(Post instance) => <String, dynamic>{
   'original_post': instance.originalPost,
   'shares_count': instance.sharesCount,
   'views_count': instance.viewsCount,
+  'source_url': instance.sourceUrl,
+  'source_platform': instance.sourcePlatform,
 };

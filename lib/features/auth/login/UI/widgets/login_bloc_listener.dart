@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:riff/core/routing/routes.dart';
 import 'package:riff/core/services/push_notification_service.dart';
-import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/auth/login/data/models/login_response.dart';
 import 'package:riff/features/auth/login/logic/cubit/login_cubit.dart';
@@ -30,10 +29,8 @@ class LoginBlocListener extends StatelessWidget {
                 context: context,
                 useRootNavigator: true,
                 barrierDismissible: false,
-                builder: (context) =>  Center(
-                  child: CircularProgressIndicator(
-                    color: ColorManager.primaryBlack,
-                  ),
+                builder: (context) => const Center(
+                  child: CircularProgressIndicator(),
                 ),
               );
             },
@@ -50,35 +47,45 @@ class LoginBlocListener extends StatelessWidget {
                 final s = S.of(context);
                 await showDialog(
                   context: context,
-                  builder: (_) => AlertDialog(
-                    icon: const Icon(
-                      Icons.account_circle_rounded,
-                      color: Color(0xFF4285F4),
-                      size: 36,
-                    ),
-                    title: Text(
-                      s.gmailAlreadyLinkedTitle,
-                      textAlign: TextAlign.center,
-                      style: TextStyles.font15semiBold
-                          .copyWith(color: const Color(0xFF4285F4)),
-                    ),
-                    content: Text(
-                      s.gmailAlreadyLinked,
-                      textAlign: TextAlign.center,
-                      style: TextStyles.font14Medium,
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: Text(
-                          s.gotItBtn,
-                          style: TextStyles.font14Medium.copyWith(
-                            color: ColorManager.primaryBlack,
-                          ),
+                  builder: (ctx) {
+                    final isDark =
+                        Theme.of(ctx).brightness == Brightness.dark;
+                    final dialogBg =
+                        isDark ? const Color(0xFF2C2C2C) : Colors.white;
+                    final onDialog =
+                        isDark ? Colors.white : const Color(0xFF1A1A1A);
+                    return AlertDialog(
+                      backgroundColor: dialogBg,
+                      icon: const Icon(
+                        Icons.account_circle_rounded,
+                        color: Color(0xFF4285F4),
+                        size: 36,
+                      ),
+                      title: Text(
+                        s.gmailAlreadyLinkedTitle,
+                        textAlign: TextAlign.center,
+                        style: TextStyles.font15semiBold
+                            .copyWith(color: const Color(0xFF4285F4)),
+                      ),
+                      content: Text(
+                        s.gmailAlreadyLinked,
+                        textAlign: TextAlign.center,
+                        style: TextStyles.font14Medium.copyWith(
+                          color: onDialog,
                         ),
                       ),
-                    ],
-                  ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: Text(
+                            s.gotItBtn,
+                            style: TextStyles.font14Medium
+                                .copyWith(color: onDialog),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 );
               }
 
@@ -113,36 +120,44 @@ class LoginBlocListener extends StatelessWidget {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        icon: isGoogleAccount
-            ? const Icon(Icons.account_circle_rounded, color: Color(0xFF4285F4), size: 36)
-            : const Icon(Icons.error, color: Colors.red, size: 32),
-        title: isGoogleAccount
-            ? Text(
-                'Google Account',
-                textAlign: TextAlign.center,
-                style: TextStyles.font15semiBold.copyWith(color: const Color(0xFF4285F4)),
-              )
-            : null,
-        content: Text(
-          isGoogleAccount ? s.linkedToGoogleAccount : error,
-          textAlign: TextAlign.center,
-          style: TextStyles.font14Medium.copyWith(
-            color: isGoogleAccount ? Colors.black87 : Colors.red,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              s.gotItBtn,
-              style: TextStyles.font14Medium.copyWith(
-                color: ColorManager.primaryBlack,
-              ),
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final dialogBg =
+            isDark ? const Color(0xFF2C2C2C) : Colors.white;
+        final onDialog =
+            isDark ? Colors.white : const Color(0xFF1A1A1A);
+        return AlertDialog(
+          backgroundColor: dialogBg,
+          icon: isGoogleAccount
+              ? const Icon(Icons.account_circle_rounded,
+                  color: Color(0xFF4285F4), size: 36)
+              : const Icon(Icons.error, color: Colors.red, size: 32),
+          title: isGoogleAccount
+              ? Text(
+                  'Google Account',
+                  textAlign: TextAlign.center,
+                  style: TextStyles.font15semiBold
+                      .copyWith(color: const Color(0xFF4285F4)),
+                )
+              : null,
+          content: Text(
+            isGoogleAccount ? s.linkedToGoogleAccount : error,
+            textAlign: TextAlign.center,
+            style: TextStyles.font14Medium.copyWith(
+              color: isGoogleAccount ? Colors.blue.shade700 : Colors.red,
             ),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                s.gotItBtn,
+                style: TextStyles.font14Medium.copyWith(color: onDialog),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

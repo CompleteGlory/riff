@@ -70,8 +70,27 @@ class SignupScreen extends StatelessWidget {
   }
 
   void validateAndSignup(BuildContext context) {
-    if (context.read<SignupCubit>().formKey.currentState!.validate()) {
-      context.read<SignupCubit>().emitSignupStates();
+    final cubit = context.read<SignupCubit>();
+    if (!cubit.privacyAccepted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            S.of(context).privacyPolicyRequiredSnackbar,
+          ),
+          backgroundColor:
+              Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF2A2A2A)
+                  : const Color(0xFF222222),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+      return;
+    }
+    if (cubit.formKey.currentState!.validate()) {
+      cubit.emitSignupStates();
     }
   }
 }

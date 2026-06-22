@@ -860,21 +860,191 @@ class S {
     );
   }
 
-  /// `Settings`
+  /// `App Settings`
   String get settingsDrawer {
     return Intl.message(
-      'Settings',
+      'App Settings',
       name: 'settingsDrawer',
       desc: '',
       args: [],
     );
   }
 
-  /// `Privacy, appearance`
+  /// `Appearance & language`
   String get privacyAppearance {
     return Intl.message(
-      'Privacy, appearance',
+      'Appearance & language',
       name: 'privacyAppearance',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Account Settings`
+  String get accountSettingsDrawer {
+    return Intl.message(
+      'Account Settings',
+      name: 'accountSettingsDrawer',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Privacy, password & security`
+  String get accountSettingsSub {
+    return Intl.message(
+      'Privacy, password & security',
+      name: 'accountSettingsSub',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Account Settings`
+  String get accountSettingsTitle {
+    return Intl.message(
+      'Account Settings',
+      name: 'accountSettingsTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Change Password`
+  String get changePasswordTitle {
+    return Intl.message(
+      'Change Password',
+      name: 'changePasswordTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Change Password`
+  String get changePasswordTile {
+    return Intl.message(
+      'Change Password',
+      name: 'changePasswordTile',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Update your account password`
+  String get changePasswordSub {
+    return Intl.message(
+      'Update your account password',
+      name: 'changePasswordSub',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Current Password`
+  String get currentPasswordLabel {
+    return Intl.message(
+      'Current Password',
+      name: 'currentPasswordLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enter your current password`
+  String get currentPasswordHint {
+    return Intl.message(
+      'Enter your current password',
+      name: 'currentPasswordHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `New Password`
+  String get newPasswordLabel {
+    return Intl.message(
+      'New Password',
+      name: 'newPasswordLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enter your new password`
+  String get newPasswordHint {
+    return Intl.message(
+      'Enter your new password',
+      name: 'newPasswordHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Confirm New Password`
+  String get confirmNewPasswordLabel {
+    return Intl.message(
+      'Confirm New Password',
+      name: 'confirmNewPasswordLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Re-enter your new password`
+  String get confirmNewPasswordHint {
+    return Intl.message(
+      'Re-enter your new password',
+      name: 'confirmNewPasswordHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Change Password`
+  String get changePasswordBtn {
+    return Intl.message(
+      'Change Password',
+      name: 'changePasswordBtn',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Password changed successfully!`
+  String get passwordChangedSuccess {
+    return Intl.message(
+      'Password changed successfully!',
+      name: 'passwordChangedSuccess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Failed to change password. Please try again.`
+  String get passwordChangedFailure {
+    return Intl.message(
+      'Failed to change password. Please try again.',
+      name: 'passwordChangedFailure',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Current password is incorrect`
+  String get wrongCurrentPassword {
+    return Intl.message(
+      'Current password is incorrect',
+      name: 'wrongCurrentPassword',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `App Settings`
+  String get appSettingsTitle {
+    return Intl.message(
+      'App Settings',
+      name: 'appSettingsTitle',
       desc: '',
       args: [],
     );
@@ -3055,6 +3225,1106 @@ class S {
     return Intl.message(
       'Account Found',
       name: 'gmailAlreadyLinkedTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Messages`
+  String get chatMessagesTitle {
+    return Intl.message(
+      'Messages',
+      name: 'chatMessagesTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Chats`
+  String get chatTabChats {
+    return Intl.message(
+      'Chats',
+      name: 'chatTabChats',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Requests`
+  String get chatTabRequests {
+    return Intl.message(
+      'Requests',
+      name: 'chatTabRequests',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Search people and conversations…`
+  String get searchConversationsHint {
+    return Intl.message(
+      'Search people and conversations…',
+      name: 'searchConversationsHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No conversations yet.\nSearch for someone to start chatting.`
+  String get noConversationsYet {
+    return Intl.message(
+      'No conversations yet.\nSearch for someone to start chatting.',
+      name: 'noConversationsYet',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No message requests`
+  String get noMessageRequests {
+    return Intl.message(
+      'No message requests',
+      name: 'noMessageRequests',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Conversations`
+  String get conversationsSectionLabel {
+    return Intl.message(
+      'Conversations',
+      name: 'conversationsSectionLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Message`
+  String get messageBtn {
+    return Intl.message(
+      'Message',
+      name: 'messageBtn',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `New Group`
+  String get newGroupTitle {
+    return Intl.message(
+      'New Group',
+      name: 'newGroupTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Create`
+  String get createGroupBtn {
+    return Intl.message(
+      'Create',
+      name: 'createGroupBtn',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Group name`
+  String get groupNameHint {
+    return Intl.message(
+      'Group name',
+      name: 'groupNameHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Description (optional)`
+  String get groupDescriptionHint {
+    return Intl.message(
+      'Description (optional)',
+      name: 'groupDescriptionHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Search users…`
+  String get searchUsersHint {
+    return Intl.message(
+      'Search users…',
+      name: 'searchUsersHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please enter a group name`
+  String get groupNameRequired {
+    return Intl.message(
+      'Please enter a group name',
+      name: 'groupNameRequired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add at least one member`
+  String get groupMemberRequired {
+    return Intl.message(
+      'Add at least one member',
+      name: 'groupMemberRequired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Error: {message}`
+  String groupCreationError(String message) {
+    return Intl.message(
+      'Error: $message',
+      name: 'groupCreationError',
+      desc: '',
+      args: [message],
+    );
+  }
+
+  /// `Group Info`
+  String get groupDetailsTitle {
+    return Intl.message(
+      'Group Info',
+      name: 'groupDetailsTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Members`
+  String get groupMembersSection {
+    return Intl.message(
+      'Members',
+      name: 'groupMembersSection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Admin`
+  String get groupAdminBadge {
+    return Intl.message(
+      'Admin',
+      name: 'groupAdminBadge',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Description`
+  String get groupDescriptionLabel {
+    return Intl.message(
+      'Description',
+      name: 'groupDescriptionLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No description`
+  String get groupNoDescription {
+    return Intl.message(
+      'No description',
+      name: 'groupNoDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Delete for everyone`
+  String get deleteForEveryoneBtn {
+    return Intl.message(
+      'Delete for everyone',
+      name: 'deleteForEveryoneBtn',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Delete conversation?`
+  String get deleteConversationTitle {
+    return Intl.message(
+      'Delete conversation?',
+      name: 'deleteConversationTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This will permanently delete all messages for everyone in this chat.`
+  String get deleteConversationContent {
+    return Intl.message(
+      'This will permanently delete all messages for everyone in this chat.',
+      name: 'deleteConversationContent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Conversation deleted`
+  String get conversationDeleted {
+    return Intl.message(
+      'Conversation deleted',
+      name: 'conversationDeleted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Could not delete conversation.`
+  String get couldNotDeleteConversation {
+    return Intl.message(
+      'Could not delete conversation.',
+      name: 'couldNotDeleteConversation',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Delete message`
+  String get deleteMessageOption {
+    return Intl.message(
+      'Delete message',
+      name: 'deleteMessageOption',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Accept`
+  String get acceptBtn {
+    return Intl.message(
+      'Accept',
+      name: 'acceptBtn',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Decline`
+  String get declineBtn {
+    return Intl.message(
+      'Decline',
+      name: 'declineBtn',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Online`
+  String get presenceOnline {
+    return Intl.message(
+      'Online',
+      name: 'presenceOnline',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Last seen just now`
+  String get presenceLastSeenJustNow {
+    return Intl.message(
+      'Last seen just now',
+      name: 'presenceLastSeenJustNow',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Last seen {n}m ago`
+  String presenceLastSeenMinutes(int n) {
+    return Intl.message(
+      'Last seen ${n}m ago',
+      name: 'presenceLastSeenMinutes',
+      desc: '',
+      args: [n],
+    );
+  }
+
+  /// `Last seen today at {time}`
+  String presenceLastSeenTodayAt(String time) {
+    return Intl.message(
+      'Last seen today at $time',
+      name: 'presenceLastSeenTodayAt',
+      desc: '',
+      args: [time],
+    );
+  }
+
+  /// `Last seen yesterday at {time}`
+  String presenceLastSeenYesterdayAt(String time) {
+    return Intl.message(
+      'Last seen yesterday at $time',
+      name: 'presenceLastSeenYesterdayAt',
+      desc: '',
+      args: [time],
+    );
+  }
+
+  /// `Last seen {date}`
+  String presenceLastSeenDate(String date) {
+    return Intl.message(
+      'Last seen $date',
+      name: 'presenceLastSeenDate',
+      desc: '',
+      args: [date],
+    );
+  }
+
+  /// `Sending photo…`
+  String get sendingPhoto {
+    return Intl.message(
+      'Sending photo…',
+      name: 'sendingPhoto',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Sending video…`
+  String get sendingVideo {
+    return Intl.message(
+      'Sending video…',
+      name: 'sendingVideo',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Sending voice…`
+  String get sendingVoice {
+    return Intl.message(
+      'Sending voice…',
+      name: 'sendingVoice',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Sending file…`
+  String get sendingFile {
+    return Intl.message(
+      'Sending file…',
+      name: 'sendingFile',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{name} wants to send you a message.\nThey can't see that you've viewed this request.`
+  String requestInfoMessage(String name) {
+    return Intl.message(
+      '$name wants to send you a message.\nThey can\'t see that you\'ve viewed this request.',
+      name: 'requestInfoMessage',
+      desc: '',
+      args: [name],
+    );
+  }
+
+  /// `Blocked Users`
+  String get blockedUsersDrawer {
+    return Intl.message(
+      'Blocked Users',
+      name: 'blockedUsersDrawer',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Manage who you have blocked`
+  String get manageBlockedUsers {
+    return Intl.message(
+      'Manage who you have blocked',
+      name: 'manageBlockedUsers',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Privacy Policy`
+  String get privacyPolicyDrawer {
+    return Intl.message(
+      'Privacy Policy',
+      name: 'privacyPolicyDrawer',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `How we handle your data`
+  String get howWeHandleData {
+    return Intl.message(
+      'How we handle your data',
+      name: 'howWeHandleData',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `I have read and agree to the `
+  String get privacyPolicyConsentPrefix {
+    return Intl.message(
+      'I have read and agree to the ',
+      name: 'privacyPolicyConsentPrefix',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Privacy Policy`
+  String get privacyPolicyLinkText {
+    return Intl.message(
+      'Privacy Policy',
+      name: 'privacyPolicyLinkText',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please read and accept the Privacy Policy to continue.`
+  String get privacyPolicyRequiredSnackbar {
+    return Intl.message(
+      'Please read and accept the Privacy Policy to continue.',
+      name: 'privacyPolicyRequiredSnackbar',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Privacy Policy`
+  String get privacyPolicyScreenTitle {
+    return Intl.message(
+      'Privacy Policy',
+      name: 'privacyPolicyScreenTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Riff Privacy Policy`
+  String get privacyPolicyHeaderTitle {
+    return Intl.message(
+      'Riff Privacy Policy',
+      name: 'privacyPolicyHeaderTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Your privacy matters to us. Read how we collect, use, and protect your data.`
+  String get privacyPolicyHeaderSubtitle {
+    return Intl.message(
+      'Your privacy matters to us. Read how we collect, use, and protect your data.',
+      name: 'privacyPolicyHeaderSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `1. Introduction`
+  String get ppSection1Title {
+    return Intl.message(
+      '1. Introduction',
+      name: 'ppSection1Title',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Welcome to Riff ("we", "our", or "us"). Riff is a music-focused social platform that lets you share your passion for music, connect with other musicians and fans, and communicate through direct and group messaging.\n\nThis Privacy Policy explains what information we collect, how we use it, and your rights regarding your data. By creating an account or using Riff, you agree to this policy.`
+  String get ppSection1Body {
+    return Intl.message(
+      'Welcome to Riff ("we", "our", or "us"). Riff is a music-focused social platform that lets you share your passion for music, connect with other musicians and fans, and communicate through direct and group messaging.\n\nThis Privacy Policy explains what information we collect, how we use it, and your rights regarding your data. By creating an account or using Riff, you agree to this policy.',
+      name: 'ppSection1Body',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `2. Information We Collect`
+  String get ppSection2Title {
+    return Intl.message(
+      '2. Information We Collect',
+      name: 'ppSection2Title',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Account information — When you sign up, we collect your full name, username, email address, and password (stored as a one-way hash).\n\nProfile information — Profile picture, bio, and music preferences including instruments you play and genres you enjoy.\n\nContent you create — Posts, reels, comments, reactions, and any media you upload (photos, videos, audio recordings).\n\nMessages — Direct messages and group chat content are stored on our servers to deliver them to recipients and support message history.\n\nContacts (optional) — If you grant permission, we access your device contacts solely to help you find friends already on Riff. Contact data is never stored on our servers without your explicit action.\n\nDevice & usage data — Device model, OS version, app version, IP address, and in-app activity (screens visited, features used) for diagnostics and improvement.`
+  String get ppSection2Body {
+    return Intl.message(
+      'Account information — When you sign up, we collect your full name, username, email address, and password (stored as a one-way hash).\n\nProfile information — Profile picture, bio, and music preferences including instruments you play and genres you enjoy.\n\nContent you create — Posts, reels, comments, reactions, and any media you upload (photos, videos, audio recordings).\n\nMessages — Direct messages and group chat content are stored on our servers to deliver them to recipients and support message history.\n\nContacts (optional) — If you grant permission, we access your device contacts solely to help you find friends already on Riff. Contact data is never stored on our servers without your explicit action.\n\nDevice & usage data — Device model, OS version, app version, IP address, and in-app activity (screens visited, features used) for diagnostics and improvement.',
+      name: 'ppSection2Body',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `3. How We Use Your Information`
+  String get ppSection3Title {
+    return Intl.message(
+      '3. How We Use Your Information',
+      name: 'ppSection3Title',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `• Provide and operate the Riff service, including account management, messaging, and social features.\n• Personalise your feed and music recommendations based on your stated preferences.\n• Send push notifications about new messages, interactions, and platform updates (you can manage these in Settings → Notifications).\n• Detect and prevent fraud, abuse, and policy violations.\n• Analyse usage patterns to improve app performance and develop new features.\n• Respond to your support requests and bug reports.`
+  String get ppSection3Body {
+    return Intl.message(
+      '• Provide and operate the Riff service, including account management, messaging, and social features.\n• Personalise your feed and music recommendations based on your stated preferences.\n• Send push notifications about new messages, interactions, and platform updates (you can manage these in Settings → Notifications).\n• Detect and prevent fraud, abuse, and policy violations.\n• Analyse usage patterns to improve app performance and develop new features.\n• Respond to your support requests and bug reports.',
+      name: 'ppSection3Body',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `4. How We Share Your Information`
+  String get ppSection4Title {
+    return Intl.message(
+      '4. How We Share Your Information',
+      name: 'ppSection4Title',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `We do not sell your personal data to third parties.\n\nService providers — We share data with trusted third-party providers that help us operate Riff, including:\n• Firebase Cloud Messaging (FCM) — to deliver push notifications.\n• Cloud hosting providers — to store and serve app data securely.\n\nLegal requirements — We may disclose information if required by law, subpoena, or to protect the rights and safety of our users or the public.\n\nBusiness transfers — In the event of a merger, acquisition, or asset sale, user data may be transferred as part of that transaction.`
+  String get ppSection4Body {
+    return Intl.message(
+      'We do not sell your personal data to third parties.\n\nService providers — We share data with trusted third-party providers that help us operate Riff, including:\n• Firebase Cloud Messaging (FCM) — to deliver push notifications.\n• Cloud hosting providers — to store and serve app data securely.\n\nLegal requirements — We may disclose information if required by law, subpoena, or to protect the rights and safety of our users or the public.\n\nBusiness transfers — In the event of a merger, acquisition, or asset sale, user data may be transferred as part of that transaction.',
+      name: 'ppSection4Body',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `5. Data Security`
+  String get ppSection5Title {
+    return Intl.message(
+      '5. Data Security',
+      name: 'ppSection5Title',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `We use industry-standard security measures including encrypted connections (HTTPS/TLS), hashed passwords, JWT-based authentication with refresh tokens, and access controls to protect your data.\n\nNo method of transmission over the internet is 100% secure. While we strive to protect your data, we cannot guarantee absolute security.`
+  String get ppSection5Body {
+    return Intl.message(
+      'We use industry-standard security measures including encrypted connections (HTTPS/TLS), hashed passwords, JWT-based authentication with refresh tokens, and access controls to protect your data.\n\nNo method of transmission over the internet is 100% secure. While we strive to protect your data, we cannot guarantee absolute security.',
+      name: 'ppSection5Body',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `6. Messaging & Real-Time Features`
+  String get ppSection6Title {
+    return Intl.message(
+      '6. Messaging & Real-Time Features',
+      name: 'ppSection6Title',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Messages sent through Riff are stored on our servers to ensure reliable delivery and support chat history. We do not read the content of your messages except where required by law or to investigate abuse reports you submit.\n\nOnline presence (e.g. "Online" / "Last seen") is shared with users you have a conversation with. You may restrict this in Settings.`
+  String get ppSection6Body {
+    return Intl.message(
+      'Messages sent through Riff are stored on our servers to ensure reliable delivery and support chat history. We do not read the content of your messages except where required by law or to investigate abuse reports you submit.\n\nOnline presence (e.g. "Online" / "Last seen") is shared with users you have a conversation with. You may restrict this in Settings.',
+      name: 'ppSection6Body',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `7. Children's Privacy`
+  String get ppSection7Title {
+    return Intl.message(
+      '7. Children\'s Privacy',
+      name: 'ppSection7Title',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Riff is not intended for users under the age of 13. We do not knowingly collect personal information from children under 13. If we become aware that a child under 13 has provided us with personal information, we will delete it immediately.`
+  String get ppSection7Body {
+    return Intl.message(
+      'Riff is not intended for users under the age of 13. We do not knowingly collect personal information from children under 13. If we become aware that a child under 13 has provided us with personal information, we will delete it immediately.',
+      name: 'ppSection7Body',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `8. Your Rights & Choices`
+  String get ppSection8Title {
+    return Intl.message(
+      '8. Your Rights & Choices',
+      name: 'ppSection8Title',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Access & correction — You can view and update your profile information at any time through Settings.\n\nAccount deletion — You can delete your account from Settings → Account. This permanently removes your profile, posts, and personal data within 30 days.\n\nNotifications — Manage push notification preferences in Settings → Notifications or through your device's system settings.\n\nContacts access — You can revoke contacts permission at any time in your device's app permissions settings.`
+  String get ppSection8Body {
+    return Intl.message(
+      'Access & correction — You can view and update your profile information at any time through Settings.\n\nAccount deletion — You can delete your account from Settings → Account. This permanently removes your profile, posts, and personal data within 30 days.\n\nNotifications — Manage push notification preferences in Settings → Notifications or through your device\'s system settings.\n\nContacts access — You can revoke contacts permission at any time in your device\'s app permissions settings.',
+      name: 'ppSection8Body',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `9. Cookies & Local Storage`
+  String get ppSection9Title {
+    return Intl.message(
+      '9. Cookies & Local Storage',
+      name: 'ppSection9Title',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Riff uses local device storage (SharedPreferences) to securely store your authentication tokens and user preferences such as theme settings. This data is stored only on your device and is cleared when you log out.`
+  String get ppSection9Body {
+    return Intl.message(
+      'Riff uses local device storage (SharedPreferences) to securely store your authentication tokens and user preferences such as theme settings. This data is stored only on your device and is cleared when you log out.',
+      name: 'ppSection9Body',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `10. Changes to This Policy`
+  String get ppSection10Title {
+    return Intl.message(
+      '10. Changes to This Policy',
+      name: 'ppSection10Title',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `We may update this Privacy Policy from time to time. When we make significant changes, we will notify you via in-app notification or email. Continued use of Riff after changes are posted constitutes your acceptance of the updated policy.\n\nLast updated: June 2026.`
+  String get ppSection10Body {
+    return Intl.message(
+      'We may update this Privacy Policy from time to time. When we make significant changes, we will notify you via in-app notification or email. Continued use of Riff after changes are posted constitutes your acceptance of the updated policy.\n\nLast updated: June 2026.',
+      name: 'ppSection10Body',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `11. Contact Us`
+  String get ppSection11Title {
+    return Intl.message(
+      '11. Contact Us',
+      name: 'ppSection11Title',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `If you have questions, concerns, or requests regarding this Privacy Policy or your personal data, please contact us at:\n\nEmail: magddevf@gmail.com\n`
+  String get ppSection11Body {
+    return Intl.message(
+      'If you have questions, concerns, or requests regarding this Privacy Policy or your personal data, please contact us at:\n\nEmail: magddevf@gmail.com\n',
+      name: 'ppSection11Body',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Profile Settings`
+  String get profileSettingsDrawer {
+    return Intl.message(
+      'Profile Settings',
+      name: 'profileSettingsDrawer',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Edit your profile info`
+  String get editYourProfile {
+    return Intl.message(
+      'Edit your profile info',
+      name: 'editYourProfile',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Profile Settings`
+  String get profileSettingsTitle {
+    return Intl.message(
+      'Profile Settings',
+      name: 'profileSettingsTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Update your name, username, email, and music genres.`
+  String get profileSettingsSubtitle {
+    return Intl.message(
+      'Update your name, username, email, and music genres.',
+      name: 'profileSettingsSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Username`
+  String get usernameLabel {
+    return Intl.message(
+      'Username',
+      name: 'usernameLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `e.g. john_doe`
+  String get usernameHint {
+    return Intl.message(
+      'e.g. john_doe',
+      name: 'usernameHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Checking…`
+  String get usernameChecking {
+    return Intl.message(
+      'Checking…',
+      name: 'usernameChecking',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Username is available`
+  String get usernameAvailable {
+    return Intl.message(
+      'Username is available',
+      name: 'usernameAvailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Username is already taken`
+  String get usernameTaken {
+    return Intl.message(
+      'Username is already taken',
+      name: 'usernameTaken',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This is your current username`
+  String get usernameUnchanged {
+    return Intl.message(
+      'This is your current username',
+      name: 'usernameUnchanged',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Email Address`
+  String get emailSettingsLabel {
+    return Intl.message(
+      'Email Address',
+      name: 'emailSettingsLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enter your email`
+  String get emailSettingsHint {
+    return Intl.message(
+      'Enter your email',
+      name: 'emailSettingsHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Music Genres`
+  String get genresSettingsLabel {
+    return Intl.message(
+      'Music Genres',
+      name: 'genresSettingsLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Tap to select the genres you love`
+  String get genresSettingsSubtitle {
+    return Intl.message(
+      'Tap to select the genres you love',
+      name: 'genresSettingsSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Save Changes`
+  String get saveProfileBtn {
+    return Intl.message(
+      'Save Changes',
+      name: 'saveProfileBtn',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Profile updated successfully!`
+  String get profileSavedSuccess {
+    return Intl.message(
+      'Profile updated successfully!',
+      name: 'profileSavedSuccess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Failed to save profile. Please try again.`
+  String get profileSavedFailure {
+    return Intl.message(
+      'Failed to save profile. Please try again.',
+      name: 'profileSavedFailure',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Username is required`
+  String get usernameRequired {
+    return Intl.message(
+      'Username is required',
+      name: 'usernameRequired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Email is required`
+  String get emailRequired {
+    return Intl.message(
+      'Email is required',
+      name: 'emailRequired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enter a valid email address`
+  String get emailInvalid {
+    return Intl.message(
+      'Enter a valid email address',
+      name: 'emailInvalid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Email cannot be changed for Google accounts`
+  String get googleAccountEmailNote {
+    return Intl.message(
+      'Email cannot be changed for Google accounts',
+      name: 'googleAccountEmailNote',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select at least one genre`
+  String get noGenresSelected {
+    return Intl.message(
+      'Select at least one genre',
+      name: 'noGenresSelected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select Genres`
+  String get selectGenresTitle {
+    return Intl.message(
+      'Select Genres',
+      name: 'selectGenresTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `About Riff`
+  String get aboutUsDrawer {
+    return Intl.message(
+      'About Riff',
+      name: 'aboutUsDrawer',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Our story and the team`
+  String get aboutUsDrawerSubtitle {
+    return Intl.message(
+      'Our story and the team',
+      name: 'aboutUsDrawerSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `About Riff`
+  String get aboutUsTitle {
+    return Intl.message(
+      'About Riff',
+      name: 'aboutUsTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Your Music. Your People.`
+  String get aboutUsTagline {
+    return Intl.message(
+      'Your Music. Your People.',
+      name: 'aboutUsTagline',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Riff is a music-first social platform built for musicians, producers, and passionate listeners. Share what you're playing, discover who's listening to the same tracks, connect with fellow artists, and grow your musical community — all in one place.`
+  String get aboutUsDescription {
+    return Intl.message(
+      'Riff is a music-first social platform built for musicians, producers, and passionate listeners. Share what you\'re playing, discover who\'s listening to the same tracks, connect with fellow artists, and grow your musical community — all in one place.',
+      name: 'aboutUsDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Our Mission`
+  String get aboutUsMission {
+    return Intl.message(
+      'Our Mission',
+      name: 'aboutUsMission',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Music is universal, but finding your people isn't always easy. Riff exists to close that gap — giving every musician and music lover a space to express themselves, share their sound, and connect authentically.`
+  String get aboutUsMissionBody {
+    return Intl.message(
+      'Music is universal, but finding your people isn\'t always easy. Riff exists to close that gap — giving every musician and music lover a space to express themselves, share their sound, and connect authentically.',
+      name: 'aboutUsMissionBody',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Meet the Developer`
+  String get aboutUsDeveloperTitle {
+    return Intl.message(
+      'Meet the Developer',
+      name: 'aboutUsDeveloperTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Magd`
+  String get aboutUsDeveloperName {
+    return Intl.message(
+      'Magd',
+      name: 'aboutUsDeveloperName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Founder & Full-Stack Developer`
+  String get aboutUsDeveloperRole {
+    return Intl.message(
+      'Founder & Full-Stack Developer',
+      name: 'aboutUsDeveloperRole',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Magd is a passionate Flutter developer who built Riff from the ground up — from backend architecture to pixel-perfect UI. A music lover himself, he created Riff to solve a real problem: there's no great social space designed purely for the music community.`
+  String get aboutUsDeveloperBio {
+    return Intl.message(
+      'Magd is a passionate Flutter developer who built Riff from the ground up — from backend architecture to pixel-perfect UI. A music lover himself, he created Riff to solve a real problem: there\'s no great social space designed purely for the music community.',
+      name: 'aboutUsDeveloperBio',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Get in touch`
+  String get aboutUsContactLabel {
+    return Intl.message(
+      'Get in touch',
+      name: 'aboutUsContactLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `magddevf@gmail.com`
+  String get aboutUsContactEmail {
+    return Intl.message(
+      'magddevf@gmail.com',
+      name: 'aboutUsContactEmail',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Version`
+  String get aboutUsVersion {
+    return Intl.message(
+      'Version',
+      name: 'aboutUsVersion',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Made with ❤️ for the music community`
+  String get aboutUsMadeWith {
+    return Intl.message(
+      'Made with ❤️ for the music community',
+      name: 'aboutUsMadeWith',
       desc: '',
       args: [],
     );

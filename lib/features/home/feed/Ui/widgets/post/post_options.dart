@@ -122,7 +122,12 @@ Widget _optionTile({
   Color color = Colors.black,
 }) {
   return ListTile(
-    leading: SvgPicture.asset(picture, width: 24.w, height: 24.h, color: color),
+    leading: SvgPicture.asset(
+      picture,
+      width: 24.w,
+      height: 24.h,
+      colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+    ),
     title: Text(text, style: TextStyles.font16Medium.copyWith(color: color)),
     onTap: onTap,
     contentPadding: EdgeInsets.zero,
