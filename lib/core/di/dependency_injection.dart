@@ -41,6 +41,16 @@ import 'package:riff/features/auth/phone_verify/logic/cubit/phone_verify_cubit.d
 import 'package:riff/features/auth/new_user_onboarding/data/repos/suggested_users_repo.dart';
 import 'package:riff/features/home/core/data/repos/feedback_repo.dart';
 import 'package:riff/features/home/feed/data/repos/report_repo.dart';
+import 'package:riff/features/home/chat/data/repos/chat_repo.dart';
+import 'package:riff/features/home/chat/data/services/chat_socket_service.dart';
+import 'package:riff/features/home/chat/logic/cubit/chats_list_cubit.dart';
+import 'package:riff/features/home/chat/logic/cubit/chat_cubit.dart';
+import 'package:riff/features/home/block/data/repos/block_repo.dart';
+import 'package:riff/features/home/block/logic/cubit/block_cubit.dart';
+import 'package:riff/features/social_share/data/repos/link_preview_repo.dart';
+import 'package:riff/features/social_share/data/repos/spotify_now_playing_repo.dart';
+import 'package:riff/features/home/profile_settings/logic/profile_settings_cubit.dart';
+import 'package:riff/features/home/account_settings/logic/change_password_cubit.dart';
 
 final getIt = GetIt.instance;
 
@@ -100,9 +110,10 @@ Future<void> setUpGetIt() async {
   // ads
   getIt.registerLazySingleton<AdRepo>(() => AdRepo(dio));
 
-  // create post
+  // create post — singleton so the cubit stays alive while a video upload
+  // runs in the background and the user navigates away.
   getIt.registerLazySingleton<CreatePostRepo>(() => CreatePostRepo(getIt()));
-  getIt.registerFactory<CreatePostCubit>(() => CreatePostCubit(getIt()));
+  getIt.registerLazySingleton<CreatePostCubit>(() => CreatePostCubit(getIt()));
 
   // update post
   getIt.registerLazySingleton<UpdatePostRepo>(() => UpdatePostRepo(getIt()));
@@ -138,4 +149,29 @@ Future<void> setUpGetIt() async {
 
   // content reporting (posts + comments)
   getIt.registerLazySingleton<ReportRepo>(() => ReportRepo(dio));
+
+  // chat
+  getIt.registerLazySingleton<ChatRepo>(() => ChatRepo(dio));
+  getIt.registerLazySingleton<ChatSocketService>(() => ChatSocketService());
+  // Singleton so HomeLayout and ChatsListScreen share the same unread state
+  getIt.registerLazySingleton<ChatsListCubit>(() => ChatsListCubit(getIt()));
+  getIt.registerFactory<ChatCubit>(() => ChatCubit(getIt(), getIt()));
+
+  // block
+  getIt.registerLazySingleton<BlockRepo>(() => BlockRepo(dio));
+  getIt.registerFactory<BlockCubit>(() => BlockCubit(getIt()));
+
+  // social share — link previews (singleton so cache is shared across the app)
+  getIt.registerLazySingleton<LinkPreviewRepo>(() => LinkPreviewRepo(dio));
+
+  // Spotify now-playing (singleton — only one fetch needed per session)
+  getIt.registerLazySingleton<SpotifyNowPlayingRepo>(() => SpotifyNowPlayingRepo());
+
+  // profile settings
+  getIt.registerFactory<ProfileSettingsCubit>(
+      () => ProfileSettingsCubit(getIt()));
+
+  // account settings — change password
+  getIt.registerFactory<ChangePasswordCubit>(
+      () => ChangePasswordCubit(getIt()));
 }

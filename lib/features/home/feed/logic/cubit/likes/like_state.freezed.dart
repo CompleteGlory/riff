@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: unreachable_switch_case, type=lint
+// ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'like_state.dart';
@@ -10,13 +10,9 @@ part of 'like_state.dart';
 // **************************************************************************
 
 // dart format off
-
 T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$LikePostState {
-
-
-
 
 
 
@@ -91,10 +87,7 @@ case Initial():
 return initial(_that);case Loading():
 return loading(_that);case Success():
 return success(_that);case Failure():
-return failure(_that);case _:
-  throw StateError('Unexpected subclass');
-
-}
+return failure(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -162,10 +155,7 @@ case Initial():
 return initial();case Loading():
 return loading();case Success():
 return success(_that.liked);case Failure():
-return failure(_that.errors);case _:
-  throw StateError('Unexpected subclass');
-
-}
+return failure(_that.errors);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -202,6 +192,9 @@ class Initial implements LikePostState {
 
 
 
+
+
+
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is Initial);
@@ -221,12 +214,16 @@ String toString() {
 
 
 
+
 /// @nodoc
 
 
 class Loading implements LikePostState {
   const Loading();
   
+
+
+
 
 
 
@@ -246,6 +243,7 @@ String toString() {
 
 
 }
+
 
 
 
@@ -290,6 +288,7 @@ abstract mixin class $SuccessCopyWith<$Res> implements $LikePostStateCopyWith<$R
 $Res call({
  bool liked
 });
+
 
 
 
@@ -355,6 +354,7 @@ abstract mixin class $FailureCopyWith<$Res> implements $LikePostStateCopyWith<$R
 $Res call({
  ApiErrorModel errors
 });
+
 
 
 

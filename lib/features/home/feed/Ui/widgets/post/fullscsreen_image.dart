@@ -1,7 +1,7 @@
 // Fullscreen Image Viewer — supports single image or swipeable gallery
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:riff/core/networks/api_constants.dart';
+import 'package:riff/core/utils/media_url.dart';
 
 class FullScreenImage extends StatefulWidget {
   final List<String> images;
@@ -39,8 +39,6 @@ class _FullScreenImageState extends State<FullScreenImage> {
     super.dispose();
   }
 
-  String _resolve(String url) =>
-      url.startsWith('http') ? url : '${ApiConstants.apiBASEURL}$url';
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +55,7 @@ class _FullScreenImageState extends State<FullScreenImage> {
             itemBuilder: (_, i) => InteractiveViewer(
               child: Center(
                 child: Image.network(
-                  _resolve(widget.images[i]),
+                  MediaUrl.resolveOrEmpty(widget.images[i]),
                   fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => const Icon(
                     Icons.broken_image_outlined,

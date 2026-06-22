@@ -49,7 +49,16 @@ final List<GenreModel> genres = [
 class GenresScreen extends StatefulWidget {
   final List<String> instruments;
 
-  const GenresScreen({super.key, required this.instruments});
+  /// When provided, called with (instruments, genres) and the screen pops
+  /// instead of pushing to signup. Use this when arriving from a post-auth
+  /// context (e.g. profile settings, notifications).
+  final void Function(List<String> instruments, List<String> genres)? onFinish;
+
+  const GenresScreen({
+    super.key,
+    required this.instruments,
+    this.onFinish,
+  });
 
   @override
   State<GenresScreen> createState() => _GenresScreenState();
@@ -62,9 +71,15 @@ class _GenresScreenState extends State<GenresScreen> {
     _selected.contains(i) ? _selected.remove(i) : _selected.add(i);
   });
 
-  void _finish() {
-    if (_selected.isEmpty) return;
-    final selectedGenres = _selected.map((i) => genres[i].name).toList();
+  void _finish() => _complete(
+        _selected.isEmpty ? [] : _selected.map((i) => genres[i].name).toList(),
+      );
+
+  void _complete(List<String> selectedGenres) {
+    if (widget.onFinish != null) {
+      widget.onFinish!(widget.instruments, selectedGenres);
+      return;
+    }
     context.pushNamed(
       Routes.signup,
       arguments: {'instruments': widget.instruments, 'genres': selectedGenres},
@@ -110,6 +125,15 @@ class _GenresScreenState extends State<GenresScreen> {
                       color: ColorManager.normalGrey,
                     ),
                   ),
+                  GestureDetector(
+                    onTap: () => _complete([]),
+                    child: Text(
+                      s.skipBtn,
+                      style: TextStyles.font12Medium.copyWith(
+                        color: ColorManager.lightGrey,
+                      ),
+                    ),
+                  ),
                 ],
               ),
               verticalSpace(28),
@@ -150,7 +174,11 @@ class _GenresScreenState extends State<GenresScreen> {
               verticalSpace(16),
 
               AppButton(
-                onPressed: _finish,
+                onPressed: () {
+                  if (_selected.isNotEmpty) {
+                    _finish();
+                  }
+                },
                 text: s.getStarted,
                 isWhite: false,
               ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:riff/features/commercial/data/models/ad.dart';
 import 'package:riff/features/commercial/data/repos/ad_repo.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:riff/core/networks/api_constants.dart';
+import 'package:riff/core/utils/media_url.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 import 'package:riff/generated/l10n.dart';
@@ -50,10 +50,6 @@ class _AdCardState extends State<AdCard> {
         lower.endsWith('.webm');
   }
 
-  String _resolve(String path) {
-    if (path.startsWith('http')) return path;
-    return '${ApiConstants.apiBASEURL}$path';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +79,7 @@ class _AdCardState extends State<AdCard> {
                 CircleAvatar(
                   radius: 18,
                   backgroundImage: logoUrl != null
-                      ? CachedNetworkImageProvider(_resolve(logoUrl))
+                      ? CachedNetworkImageProvider(MediaUrl.resolveOrEmpty(logoUrl))
                       : null,
                   backgroundColor: Colors.grey.shade300,
                   child: logoUrl == null
@@ -132,7 +128,7 @@ class _AdCardState extends State<AdCard> {
           // ── Media ────────────────────────────────────────────────────────────
           if (media.isNotEmpty)
             _AdMedia(
-              mediaUrls: media.map(_resolve).toList(),
+              mediaUrls: media.map(MediaUrl.resolveOrEmpty).toList(),
               isVideo: _isVideo(media.first),
             ),
 

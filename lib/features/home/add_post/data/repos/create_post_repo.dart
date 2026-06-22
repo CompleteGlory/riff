@@ -16,6 +16,7 @@ class CreatePostRepo {
   Future<ApiResult<Post>> createPost(
     CreatePostRequestModel requestModel, {
     List<File>? mediaFiles,
+    void Function(double progress)? onProgress,
   }) async {
     try {
       if (mediaFiles != null && mediaFiles.isNotEmpty) {
@@ -31,10 +32,15 @@ class CreatePostRepo {
         final formData = FormData.fromMap({
           'content': requestModel.content,
           'media': parts,
+          if (requestModel.sourceUrl != null) 'source_url': requestModel.sourceUrl,
+          if (requestModel.sourcePlatform != null) 'source_platform': requestModel.sourcePlatform,
         });
         final response = await dio.post(
           '${ApiConstants.apiBASEURL}/api/posts',
           data: formData,
+          onSendProgress: (sent, total) {
+            if (total > 0) onProgress?.call(sent / total);
+          },
         );
         final post = Post.fromJson(response.data as Map<String, dynamic>);
         return ApiResult.success(post);

@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/di/dependency_injection.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
+import 'package:riff/core/widgets/app_error_widget.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/feed/data/repos/feed_repo.dart';
@@ -88,7 +89,7 @@ class _FlaggedPostDetailScreenState extends State<FlaggedPostDetailScreen> {
                 ? const Center(
                     child: CircularProgressIndicator(color: Colors.orange))
                 : _error != null
-                    ? _ErrorView(message: _error!, onRetry: _fetchPost)
+                    ? AppErrorWidget(message: _error, onRetry: _fetchPost)
                     : widget.postId == null
                         ? _NoPostView(
                             title: widget.flagTitle,
@@ -274,30 +275,3 @@ class _NoPostView extends StatelessWidget {
   }
 }
 
-// ── Error view ────────────────────────────────────────────────────────────────
-
-class _ErrorView extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-  const _ErrorView({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.error_outline,
-              size: 48.r, color: ColorManager.normalGrey),
-          SizedBox(height: 12.h),
-          Text(message,
-              style: TextStyles.font14Medium.copyWith(
-                  color: ColorManager.normalGrey),
-              textAlign: TextAlign.center),
-          SizedBox(height: 16.h),
-          TextButton(onPressed: onRetry, child: Text(S.of(context).retryBtn)),
-        ],
-      ),
-    );
-  }
-}

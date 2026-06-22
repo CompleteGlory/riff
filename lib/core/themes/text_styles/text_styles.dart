@@ -12,6 +12,13 @@ class TextStyles {
     fontWeight: FontWeightHelper.semiBold,
   );
 
+  static const TextStyle font18SemiBold = TextStyle(
+    fontFamily: 'GeneralSans',
+    fontSize: 18,
+    fontWeight: FontWeightHelper.semiBold,
+  );
+
+
   static const TextStyle font20Bold = TextStyle(
     fontFamily: 'GeneralSans',
     fontSize: 20,

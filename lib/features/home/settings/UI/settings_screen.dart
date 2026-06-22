@@ -1,46 +1,16 @@
-// ignore_for_file: deprecated_member_use, use_build_context_synchronously
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:riff/core/di/dependency_injection.dart';
 import 'package:riff/core/logic/cubit/theme_cubit.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
-import 'package:riff/features/home/follow/logic/cubit/follow_cubit.dart';
 import 'package:riff/features/home/settings/logic/cubit/language_cubit.dart';
 import 'package:riff/generated/l10n.dart';
 
-class SettingsScreen extends StatefulWidget {
-  final bool initialIsPrivate;
-  const SettingsScreen({super.key, this.initialIsPrivate = false});
-
-  @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends State<SettingsScreen> {
-  late bool _isPrivate;
-  bool _privacyLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _isPrivate = widget.initialIsPrivate;
-  }
-
-  Future<void> _togglePrivacy(bool value) async {
-    setState(() { _privacyLoading = true; _isPrivate = value; });
-    final cubit = getIt<FollowCubit>();
-    final ok = await cubit.updatePrivacy(value);
-    cubit.close();
-    if (!ok && mounted) {
-      setState(() => _isPrivate = !value);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).failedToUpdatePrivacy)),
-      );
-    }
-    if (mounted) setState(() => _privacyLoading = false);
-  }
+class SettingsScreen extends StatelessWidget {
+  const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +23,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       backgroundColor: bg,
       appBar: AppBar(
         backgroundColor: isDark ? const Color(0xFF141414) : Colors.white,
-        title: Text(s.settingsTitle),
+        title: Text(s.appSettingsTitle),
         centerTitle: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
@@ -98,51 +68,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 );
               },
-            ),
-          ),
-
-          SizedBox(height: 24.h),
-
-          // ── Privacy ─────────────────────────────────────────────────────
-          _SectionHeader(s.privacySection),
-          SizedBox(height: 8.h),
-          Container(
-            decoration: BoxDecoration(
-              color: cardBg,
-              borderRadius: BorderRadius.circular(14.r),
-              boxShadow: isDark ? [] : [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 8, offset: const Offset(0, 2))
-              ],
-            ),
-            child: Column(children: [
-              _SettingsTile(
-                icon: Icons.lock_outline_rounded,
-                iconColor: const Color(0xFF5E5CE6),
-                title: s.privateAccount,
-                subtitle: _isPrivate
-                    ? s.onlyApprovedFollowers
-                    : s.anyoneCanFollow,
-                trailing: _privacyLoading
-                    ? const SizedBox(width: 28, height: 28,
-                        child: CircularProgressIndicator(strokeWidth: 2))
-                    : Switch.adaptive(
-                        value: _isPrivate,
-                        activeColor: ColorManager.accent,
-                        onChanged: _togglePrivacy,
-                      ),
-                isFirst: true,
-                isLast: true,
-              ),
-            ]),
-          ),
-          SizedBox(height: 8.h),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.w),
-            child: Text(
-              s.privateAccountDisclaimer,
-              style: TextStyles.font12Medium.copyWith(
-                  color: ColorManager.normalGrey),
             ),
           ),
 

@@ -164,6 +164,10 @@ class FeedCubit extends Cubit<FeedState> {
 
     final response = await _feedRepo.getPosts(page, limit);
 
+    // Guard: cubit may have been closed while the request was in-flight
+    // (e.g. user navigated away and the BlocProvider was disposed).
+    if (isClosed) return;
+
     response.when(
       success: (PostsResponse data) {
         // append new posts but avoid duplicates
@@ -177,7 +181,7 @@ class FeedCubit extends Cubit<FeedState> {
           pagination: data.pagination,
         );
 
-        emit(FeedState.success(combined));
+        if (!isClosed) emit(FeedState.success(combined));
 
         // update paging
         _isLoadingMore = false;
@@ -191,9 +195,9 @@ class FeedCubit extends Cubit<FeedState> {
         _isLoadingMore = false;
         if (page > 1) {
           _lastError = apiErrorModel;
-          if (state is Success) emit(state);
+          if (!isClosed && state is Success) emit(state);
         } else {
-          emit(FeedState.failure(apiErrorModel));
+          if (!isClosed) emit(FeedState.failure(apiErrorModel));
         }
       },
     );

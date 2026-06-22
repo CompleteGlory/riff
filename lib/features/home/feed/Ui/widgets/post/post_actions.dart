@@ -53,7 +53,12 @@ class PostActions extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.visibility_outlined, size: 16.w, color: mutedColor),
+            SvgPicture.asset(
+              'assets/svgs/eye.svg',
+              width: 16.w,
+              height: 16.w,
+              colorFilter: ColorFilter.mode(mutedColor, BlendMode.srcIn),
+            ),
             SizedBox(width: 4.w),
             Text(
               _formatCount(viewsCount),

@@ -5,4 +5,5 @@ class SharedPrefKeys {
   static const String userProfileImage = "userProfileImage";
   static const String firstName = "firstName";
   static const String lastName = "lastName";
+  static const String privacyPolicyAccepted = 'privacyPolicyAccepted';
 }

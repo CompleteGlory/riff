@@ -21,7 +21,11 @@ class DioFactory {
         ..options.baseUrl = ApiConstants.apiBASEURL
         ..options.connectTimeout = timeOut
         ..options.receiveTimeout = timeOut
-        ..options.validateStatus = (status) => status == 200 || status == 201;
+        // Accept any 2xx status. The original whitelist (200, 201) caused
+        // DioExceptionType.badResponse for every endpoint decorated with
+        // @HttpCode(HttpStatus.NO_CONTENT) (204) — e.g. decline/accept request,
+        // delete message, add/remove participant.
+        ..options.validateStatus = (status) => status != null && status >= 200 && status < 300;
       
       await addDioHeaders();
       addDioInterceptor();

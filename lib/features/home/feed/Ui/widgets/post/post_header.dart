@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
 import 'package:riff/core/helpers/spacing.dart';
@@ -117,10 +118,11 @@ class PostHeader extends StatelessWidget {
           },
           child: Padding(
             padding: EdgeInsets.all(4.r),
-            child: Icon(
-              Icons.more_horiz,
-              color: ColorManager.normalGrey,
-              size: 22.r,
+            child: SvgPicture.asset(
+              'assets/svgs/more_options.svg',
+              width: 22.r,
+              height: 22.r,
+              colorFilter: ColorFilter.mode(ColorManager.normalGrey, BlendMode.srcIn),
             ),
           ),
         ),

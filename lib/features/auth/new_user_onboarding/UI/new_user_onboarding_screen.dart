@@ -8,6 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:riff/core/di/dependency_injection.dart';
 import 'package:riff/core/helpers/spacing.dart';
 import 'package:riff/core/networks/api_constants.dart';
+import 'package:riff/core/utils/media_url.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/routing/routes.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
@@ -161,8 +162,6 @@ class _NewUserOnboardingScreenState extends State<NewUserOnboardingScreen> {
   void _finish() =>
       Navigator.pushNamedAndRemoveUntil(context, Routes.home, (r) => false);
 
-  String _resolve(String url) =>
-      url.startsWith('http') ? url : '${ApiConstants.apiBASEURL}$url';
 
   // ── Build ──────────────────────────────────────────────────────────────────
 
@@ -206,7 +205,7 @@ class _NewUserOnboardingScreenState extends State<NewUserOnboardingScreen> {
                     onSync: _syncContacts,
                     onToggleFollow: _toggleFollow,
                     onNext: () => _goTo(2),
-                    resolveUrl: _resolve,
+                    resolveUrl: MediaUrl.resolveOrEmpty,
                   ),
                   // ── Step 3: Suggested ──
                   _SuggestStep(
@@ -217,7 +216,7 @@ class _NewUserOnboardingScreenState extends State<NewUserOnboardingScreen> {
                     inProgress: _inProgress,
                     onToggleFollow: _toggleFollow,
                     onFinish: _finish,
-                    resolveUrl: _resolve,
+                    resolveUrl: MediaUrl.resolveOrEmpty,
                   ),
                 ],
               ),

@@ -25,6 +25,7 @@ import 'package:riff/features/home/feed/logic/cubit/posts/post_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
 import 'package:riff/features/home/feed/logic/view_tracker.dart';
 import 'package:riff/generated/l10n.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PostItem extends StatefulWidget {
   final Post post;
@@ -203,25 +204,10 @@ class _PostItemState extends State<PostItem>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final shadowColor = isDark ? Colors.transparent : Colors.black.withOpacity(0.05);
+    final post = widget.post;
+    final hasBadge = post.sourcePlatform != null && post.sourceUrl != null;
 
-    return GestureDetector(
-      // Single tap → open full post detail (like tapping a shared post card)
-      onTap: widget.disableTap ? null : () {
-        HomeCubit? homeCubit;
-        try { homeCubit = context.read<HomeCubit>(); } catch (_) {}
-        Navigator.push(
-          context,
-          FadeSlidePageRoute(
-            page: homeCubit != null
-                ? BlocProvider.value(
-                    value: homeCubit,
-                    child: PostDetailScreen(post: widget.post),
-                  )
-                : PostDetailScreen(post: widget.post),
-          ),
-        );
-      },
-      child: Container(
+    return Container(
       margin: EdgeInsets.symmetric(vertical: 6.h),
       decoration: BoxDecoration(
         color: cardColor,
@@ -237,84 +223,215 @@ class _PostItemState extends State<PostItem>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
-          Padding(
-            padding: EdgeInsets.fromLTRB(14.w, 14.h, 8.w, 10.h),
-            child: PostHeader(post: widget.post, onMoreTapped: () {}),
-          ),
-
-          // Shared original post card (only when this post is a share)
-          if (widget.post.originalPost != null)
-            SharedPostCard(
-              originalPost: widget.post.originalPost!,
-              onTap: () {
-                HomeCubit? homeCubit;
-                try {
-                  homeCubit = context.read<HomeCubit>();
-                } catch (_) {}
-                Navigator.push(
-                  context,
-                  FadeSlidePageRoute(
-                    page: homeCubit != null
-                        ? BlocProvider.value(
-                            value: homeCubit,
-                            child: PostDetailScreen(post: widget.post.originalPost!),
-                          )
-                        : PostDetailScreen(post: widget.post.originalPost!),
-                  ),
-                );
-              },
-            ),
-
-          // Content + images (no horizontal padding on images so they go edge to edge)
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 14.w),
-            child: PostContent(
-              post: widget.post,
-              onImageDoubleTap: _toggleLike,
-              showHeartAnimation: showHeart,
-              heartAnimation: _scaleAnimation,
-              onVideoTap: (_) => Navigator.push(
+          // ── Tappable zone (opens post detail) ───────────────────────
+          GestureDetector(
+            onTap: widget.disableTap ? null : () {
+              HomeCubit? homeCubit;
+              try { homeCubit = context.read<HomeCubit>(); } catch (_) {}
+              Navigator.push(
                 context,
-                MaterialPageRoute(
-                  fullscreenDialog: true,
-                  builder: (_) => ReelsScreen(initialPost: widget.post),
+                FadeSlidePageRoute(
+                  page: homeCubit != null
+                      ? BlocProvider.value(
+                          value: homeCubit,
+                          child: PostDetailScreen(post: post),
+                        )
+                      : PostDetailScreen(post: post),
                 ),
-              ),
-            ),
-          ),
-
-          // Divider
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 14.w),
+              );
+            },
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                verticalSpace(12),
-                Divider(
-                  height: 1,
-                  color: Theme.of(context).dividerColor,
+                // Header
+                Padding(
+                  padding: EdgeInsets.fromLTRB(14.w, 14.h, 8.w, 10.h),
+                  child: PostHeader(post: post, onMoreTapped: () {}),
                 ),
-                verticalSpace(10),
+
+                // Shared original post card
+                if (post.originalPost != null)
+                  SharedPostCard(
+                    originalPost: post.originalPost!,
+                    onTap: () {
+                      HomeCubit? homeCubit;
+                      try { homeCubit = context.read<HomeCubit>(); } catch (_) {}
+                      Navigator.push(
+                        context,
+                        FadeSlidePageRoute(
+                          page: homeCubit != null
+                              ? BlocProvider.value(
+                                  value: homeCubit,
+                                  child: PostDetailScreen(post: post.originalPost!),
+                                )
+                              : PostDetailScreen(post: post.originalPost!),
+                        ),
+                      );
+                    },
+                  ),
+
+                // Content + images
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 14.w),
+                  child: PostContent(
+                    post: post,
+                    onImageDoubleTap: _toggleLike,
+                    showHeartAnimation: showHeart,
+                    heartAnimation: _scaleAnimation,
+                    onVideoTap: (_) => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        fullscreenDialog: true,
+                        builder: (_) => ReelsScreen(initialPost: post),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Divider + actions
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 14.w),
+                  child: Column(children: [
+                    verticalSpace(12),
+                    Divider(height: 1, color: Theme.of(context).dividerColor),
+                    verticalSpace(10),
+                  ]),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, hasBadge ? 10.h : 14.h),
+                  child: PostActions(
+                    isLiked: isLiked,
+                    likeCount: likeCount,
+                    commentCount: commentCount,
+                    shareCount: shareCount,
+                    viewsCount: viewsCount,
+                    onLikeTap: _toggleLike,
+                    onCommentTap: () => _openComments(post.id.toString()),
+                    onShareTap: _sharePost,
+                  ),
+                ),
               ],
             ),
           ),
 
-          // Actions
-          Padding(
-            padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 14.h),
-            child: PostActions(
-              isLiked: isLiked,
-              likeCount: likeCount,
-              commentCount: commentCount,
-              shareCount: shareCount,
-              viewsCount: viewsCount,
-              onLikeTap: _toggleLike,
-              onCommentTap: () => _openComments(widget.post.id.toString()),
-              onShareTap: _sharePost,
+          // ── Platform play badge — outside the tap zone so it gets its own press ──
+          if (hasBadge)
+            Padding(
+              padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 14.h),
+              child: _PlatformPlayBadge(
+                platform: post.sourcePlatform!,
+                url: post.sourceUrl!,
+              ),
             ),
-          ),
         ],
       ),
+    );
+  }
+}
+
+// ── Platform play badge ───────────────────────────────────────────────────────
+
+class _PlatformPlayBadge extends StatelessWidget {
+  const _PlatformPlayBadge({required this.platform, required this.url});
+  final String platform;
+  final String url;
+
+  bool get _isInstagram => platform == 'instagram';
+  bool get _isTikTok    => platform == 'tiktok';
+  bool get _isSpotify   => platform == 'spotify';
+
+  String get _label {
+    if (_isInstagram) return 'Play on Instagram';
+    if (_isTikTok)    return 'Play on TikTok';
+    if (_isSpotify)   return 'Play on Spotify';
+    return 'Open link';
+  }
+
+  String get _logoUrl {
+    if (_isInstagram) return 'https://logo.clearbit.com/instagram.com';
+    if (_isTikTok)    return 'https://logo.clearbit.com/tiktok.com';
+    return 'https://logo.clearbit.com/spotify.com';
+  }
+
+  Color _bgColor(bool isDark) {
+    if (_isInstagram) return const Color(0x1FDD2A7B);
+    if (_isTikTok)    return isDark ? const Color(0x1A69C9D0) : const Color(0x12010101);
+    return const Color(0x121DB954);
+  }
+
+  Color _borderColor(bool isDark) {
+    if (_isInstagram) return const Color(0xFFDD2A7B);
+    if (_isTikTok)    return const Color(0xFF69C9D0); // teal always
+    return const Color(0xFF1DB954);
+  }
+
+  Color _textColor(bool isDark) {
+    if (_isInstagram) return const Color(0xFFDD2A7B);
+    if (_isTikTok)    return isDark ? const Color(0xFF69C9D0) : const Color(0xFF010101);
+    return const Color(0xFF1DB954);
+  }
+
+  List<BoxShadow> _glow(bool isDark) {
+    if (_isInstagram) {
+      return [BoxShadow(color: const Color(0x33DD2A7B), blurRadius: 8, spreadRadius: 1)];
+    }
+    if (_isTikTok && isDark) {
+      return [BoxShadow(color: const Color(0x3369C9D0), blurRadius: 8, spreadRadius: 1)];
+    }
+    if (_isSpotify) {
+      return [BoxShadow(color: const Color(0x221DB954), blurRadius: 8, spreadRadius: 1)];
+    }
+    return [];
+  }
+
+  Future<void> _open() async {
+    final uri = Uri.tryParse(url);
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = _borderColor(isDark);
+    return GestureDetector(
+      onTap: _open,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+        decoration: BoxDecoration(
+          color: _bgColor(isDark),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: accent, width: 1),
+          boxShadow: _glow(isDark),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4.r),
+              child: Image.network(
+                _logoUrl,
+                width: 20.r,
+                height: 20.r,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => Icon(
+                  Icons.play_circle_outline_rounded,
+                  size: 20.r,
+                  color: _textColor(isDark),
+                ),
+              ),
+            ),
+            SizedBox(width: 8.w),
+            Text(
+              _label,
+              style: TextStyles.font13SemiBold.copyWith(color: _textColor(isDark)),
+            ),
+            SizedBox(width: 6.w),
+            Icon(Icons.open_in_new_rounded, size: 14.r, color: _textColor(isDark)),
+          ],
+        ),
       ),
     );
   }

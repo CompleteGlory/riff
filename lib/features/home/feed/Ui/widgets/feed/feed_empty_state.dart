@@ -4,7 +4,7 @@ import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:riff/core/di/dependency_injection.dart';
-import 'package:riff/core/networks/api_constants.dart';
+import 'package:riff/core/utils/media_url.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
@@ -123,8 +123,6 @@ class _FeedEmptyStateState extends State<FeedEmptyState>
     if (mounted) setState(() => _inProgress[user.id] = false);
   }
 
-  String _resolveUrl(String url) =>
-      url.startsWith('http') ? url : '${ApiConstants.apiBASEURL}$url';
 
   @override
   Widget build(BuildContext context) {
@@ -177,7 +175,7 @@ class _FeedEmptyStateState extends State<FeedEmptyState>
                   isFollowed: _followed.contains(u.id),
                   inProgress: _inProgress[u.id] == true,
                   onToggle: () => _toggleFollow(u),
-                  resolveUrl: _resolveUrl,
+                  resolveUrl: MediaUrl.resolveOrEmpty,
                 ),
               ),
 
@@ -207,7 +205,7 @@ class _FeedEmptyStateState extends State<FeedEmptyState>
                   isFollowed: _followed.contains(u.id),
                   inProgress: _inProgress[u.id] == true,
                   onToggle: () => _toggleFollow(u),
-                  resolveUrl: _resolveUrl,
+                  resolveUrl: MediaUrl.resolveOrEmpty,
                 ),
               ),
 

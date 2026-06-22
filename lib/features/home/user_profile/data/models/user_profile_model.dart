@@ -1,3 +1,5 @@
+import 'package:riff/core/networks/api_constants.dart';
+
 class UserProfileModel {
   final String id;
   final String fullName;
@@ -36,7 +38,7 @@ class UserProfileModel {
       fullName: json['full_name'] as String? ?? '',
       username: json['username'] as String? ?? '',
       bio: json['bio'] as String?,
-      profileImageUrl: json['profile_image_url'] as String?,
+      profileImageUrl: ApiConstants.resolveUrl(json['profile_image_url'] as String?),
       postsCount: json['postsCount'] as int? ?? 0,
       followersCount: json['followersCount'] as int? ?? 0,
       followingCount: json['followingCount'] as int? ?? 0,

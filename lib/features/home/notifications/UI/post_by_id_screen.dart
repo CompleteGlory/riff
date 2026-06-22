@@ -5,6 +5,7 @@ import 'package:riff/core/di/dependency_injection.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
+import 'package:riff/core/widgets/app_error_widget.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 import 'package:riff/features/home/feed/data/models/comment.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
@@ -143,23 +144,7 @@ class _PostByIdScreenState extends State<PostByIdScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.error_outline,
-                          size: 48.r, color: ColorManager.normalGrey),
-                      SizedBox(height: 12.h),
-                      Text(_error!,
-                          style: TextStyles.font14Medium.copyWith(
-                              color: ColorManager.normalGrey),
-                          textAlign: TextAlign.center),
-                      SizedBox(height: 16.h),
-                      TextButton(
-                          onPressed: _fetchPost, child: Text(S.of(context).retryBtn)),
-                    ],
-                  ),
-                )
+              ? AppErrorWidget(message: _error, onRetry: _fetchPost)
               : _post == null
                   ? Center(
                       child: Text(S.of(context).postNotFoundDeleted,

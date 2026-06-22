@@ -1,9 +1,10 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: unused_element, deprecated_member_use
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/helpers/spacing.dart';
-import 'package:riff/core/networks/api_constants.dart';
+import 'package:riff/core/utils/media_url.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
@@ -25,8 +26,6 @@ class PostContent extends StatelessWidget {
     this.onVideoTap,
   });
 
-  String _resolve(String url) =>
-      url.startsWith('http') ? url : '${ApiConstants.apiBASEURL}$url';
 
   bool _isVideo(String url) {
     final lower = url.toLowerCase();
@@ -39,11 +38,11 @@ class PostContent extends StatelessWidget {
 
   void _handleMediaTap(BuildContext context, List<String> allMedia, int index) {
     if (_isVideo(allMedia[index])) {
-      onVideoTap?.call(_resolve(allMedia[index]));
+      onVideoTap?.call(MediaUrl.resolveOrEmpty(allMedia[index]));
     } else {
       // Build an image-only list for the gallery, keeping the original indices
       final imageUrls =
-          allMedia.where((m) => !_isVideo(m)).map(_resolve).toList();
+          allMedia.where((m) => !_isVideo(m)).map(MediaUrl.resolveOrEmpty).toList();
       final imageIndex =
           allMedia.where((m) => !_isVideo(m)).toList().indexOf(allMedia[index]);
       if (imageUrls.isNotEmpty && imageIndex >= 0) {
@@ -116,7 +115,7 @@ class PostContent extends StatelessWidget {
     bool bottomGap = false,
   }) {
     final raw = allMedia[index];
-    final resolved = _resolve(raw);
+    final resolved = MediaUrl.resolveOrEmpty(raw);
     void onTap() => _handleMediaTap(context, allMedia, index);
 
     if (_isVideo(raw)) {
@@ -216,7 +215,7 @@ class PostContent extends StatelessWidget {
               Expanded(
                 child: extra > 0
                     ? _MoreCell(
-                        url: _resolve(images[3]),
+                        url: MediaUrl.resolveOrEmpty(images[3]),
                         extra: extra,
                         onTap: () => _handleMediaTap(context, images, 3),
                         height: 140.h,
@@ -381,9 +380,13 @@ class _VideoCellState extends State<_VideoCell> {
                   color: Colors.black38,
                   shape: BoxShape.circle,
                 ),
-                padding: EdgeInsets.all(6.r),
-                child: Icon(Icons.play_arrow_rounded,
-                    color: Colors.white, size: 32.r),
+                padding: EdgeInsets.all(10.r),
+                child: SvgPicture.asset(
+                  'assets/svgs/play.svg',
+                  width: 26.r,
+                  height: 26.r,
+                  colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                ),
               ),
             ),
           ],

@@ -1,0 +1,17 @@
+flutter_launcher_icons:
+  # Android
+  android: true
+  # Use the light logo (white on dark bg) as the main icon
+  image_path: "assets/images/riff_logo.png"
+
+  # Android adaptive icon (API 26+)
+  # Foreground uses the light logo; background is the brand dark colour
+  adaptive_icon_foreground: "assets/images/riff_logo.png"
+  adaptive_icon_background: "#111111"
+
+  # iOS
+  ios: true
+  image_path_ios: "assets/images/riff_logo.png"
+
+  # Remove alpha channel warnings (images are RGB, no transparency)
+  remove_alpha_ios: true

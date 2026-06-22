@@ -4,6 +4,40 @@
 <dict>
 	<key>NSContactsUsageDescription</key>
 	<string>Riff uses your contacts to find friends who are already on the app.</string>
+
+	<!-- URL schemes registered so Riff can open TikTok, Instagram, and Spotify -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>tiktok</string>
+		<string>snssdk1233</string>
+		<string>instagram</string>
+		<string>spotify</string>
+	</array>
+
+	<!-- Custom URL scheme so Spotify / other OAuth providers can redirect back to Riff -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.riff.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.riff.app</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- Share extension: allow Riff to appear in the system share sheet -->
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionAttributes</key>
+		<dict>
+			<key>NSExtensionActivationRule</key>
+			<string>TRUEPREDICATE</string>
+		</dict>
+	</dict>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Riff needs microphone access to send voice messages.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

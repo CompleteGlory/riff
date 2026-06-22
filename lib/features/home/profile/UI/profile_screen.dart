@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:riff/core/di/dependency_injection.dart';
-import 'package:riff/core/networks/api_constants.dart';
+import 'package:riff/core/utils/media_url.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/helpers/spacing.dart';
@@ -14,10 +14,12 @@ import 'package:riff/features/home/feed/Ui/post_detail_screen.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/fullscsreen_image.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/core/widgets/shimmer_loading.dart';
+import 'package:riff/core/widgets/app_error_widget.dart';
 import 'package:riff/features/home/follow/UI/follow_list_screen.dart';
 import 'package:riff/features/home/profile/logic/cubit/profile_cubit.dart';
 import 'package:video_player/video_player.dart';
 import 'package:riff/generated/l10n.dart';
+import 'package:riff/features/social_share/UI/widgets/now_playing_card.dart';
 
 // ---------------------------------------------------------------------------
 // Genre assets + accent colors
@@ -151,7 +153,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ? state.imageUrl
         : widget.profile.profileImageUrl;
     if (raw == null || raw.isEmpty) return null;
-    return raw.startsWith('http') ? raw : '${ApiConstants.apiBASEURL}$raw';
+    return MediaUrl.resolve(raw);
   }
 
   Future<void> _pickAndUpload(ImageSource source) async {
@@ -248,6 +250,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 parent: AlwaysScrollableScrollPhysics()),
             slivers: [
               _buildHeader(),
+              _buildNowPlayingSection(),
               if (widget.profile.genres?.isNotEmpty ?? false)
                 _buildGenresSection(widget.profile.genres!),
               if (widget.profile.instruments?.isNotEmpty ?? false)
@@ -450,6 +453,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // ── Now Playing (Spotify) ────────────────────────────────────────────────────
+
+  SliverToBoxAdapter _buildNowPlayingSection() {
+    return const SliverToBoxAdapter(
+      child: NowPlayingCard(isOwnProfile: true),
+    );
+  }
+
   // ── Genres ──────────────────────────────────────────────────────────────────
 
   Widget _buildGenresSection(List<String> genres) {
@@ -515,12 +526,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
 
         if (state is ProfileFailure) {
-          return SliverFillRemaining(
-            child: Center(
-              child: Text(state.message,
-                  style: TextStyles.font14Medium
-                      .copyWith(color: ColorManager.normalGrey),
-                  textAlign: TextAlign.center),
+          return SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.only(
+                top: 32.h,
+                bottom: MediaQuery.paddingOf(context).bottom + 16.h,
+              ),
+              child: AppErrorWidget(
+                message: state.message,
+                onRetry: () => _cubit.loadUserPosts(widget.profile.id),
+              ),
             ),
           );
         }
@@ -677,8 +692,6 @@ class _PostThumbnailState extends State<_PostThumbnail> {
         lower.endsWith('.mkv');
   }
 
-  String _resolve(String url) =>
-      url.startsWith('http') ? url : '${ApiConstants.apiBASEURL}$url';
 
   @override
   void initState() {
@@ -689,7 +702,7 @@ class _PostThumbnailState extends State<_PostThumbnail> {
         : (widget.post.originalPost?.media ?? []).where((m) => m.isNotEmpty).toList();
     final firstMedia = effectiveMedia.isNotEmpty ? effectiveMedia.first : null;
     if (firstMedia != null && _isVideo(firstMedia)) {
-      _loadThumb(_resolve(firstMedia));
+      _loadThumb(MediaUrl.resolveOrEmpty(firstMedia));
     }
   }
 
@@ -772,7 +785,7 @@ class _PostThumbnailState extends State<_PostThumbnail> {
       );
     } else {
       thumbnail = Image.network(
-        _resolve(firstMedia),
+        MediaUrl.resolveOrEmpty(firstMedia),
         fit: BoxFit.cover,
         loadingBuilder: (_, child, progress) =>
             progress == null ? child : Container(color: ColorManager.lighterGrey),

@@ -44,4 +44,23 @@ class ReportRepo {
       return ApiResult.failure(ApiErrorHandler.handle(e));
     }
   }
+
+  Future<ApiResult<void>> reportUser({
+    required String userId,
+    required String reason,
+    String? details,
+  }) async {
+    try {
+      await _dio.post(
+        '${ApiConstants.apiBASEURL}${ApiConstants.reportUser(userId)}',
+        data: {
+          'reason': reason,
+          if (details != null && details.isNotEmpty) 'details': details,
+        },
+      );
+      return const ApiResult.success(null);
+    } catch (e) {
+      return ApiResult.failure(ApiErrorHandler.handle(e));
+    }
+  }
 }

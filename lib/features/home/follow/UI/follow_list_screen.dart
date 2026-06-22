@@ -4,11 +4,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get_it/get_it.dart';
 import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
-import 'package:riff/core/networks/api_constants.dart';
+import 'package:riff/core/utils/media_url.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
-import 'package:riff/features/home/chat/UI/chat_screen.dart';
 import 'package:riff/features/home/follow/data/models/follow_user.dart';
 import 'package:riff/features/home/follow/data/repos/follow_repo.dart';
+import 'package:riff/features/home/chat/data/repos/chat_repo.dart';
+import 'package:riff/features/home/chat/UI/chat_detail_screen.dart';
 import 'package:riff/features/home/follow/logic/cubit/follow_cubit.dart';
 import 'package:riff/features/home/user_profile/ui/user_profile_screen.dart';
 import 'package:riff/generated/l10n.dart';
@@ -306,17 +307,20 @@ class _FollowListScreenState extends State<FollowListScreen> {
                               ),
                             ),
                             onFollow: () => _toggleFollow(u),
-                            onMessage: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ChatScreen(
-                                  userId: u.id,
-                                  username: u.username,
-                                  fullName: u.fullName,
-                                  profileImageUrl: u.profileImageUrl,
-                                ),
-                              ),
-                            ),
+                            onMessage: () async {
+                              try {
+                                final conversation = await GetIt.I<ChatRepo>()
+                                    .startDirectConversation(u.id);
+                                if (!mounted) return;
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ChatDetailScreen(
+                                        conversation: conversation),
+                                  ),
+                                );
+                              } catch (_) {}
+                            },
                           );
                         },
                       ),
@@ -350,8 +354,6 @@ class _UserRow extends StatelessWidget {
     required this.onMessage,
   });
 
-  String _resolve(String url) =>
-      url.startsWith('http') ? url : '${ApiConstants.apiBASEURL}$url';
 
   @override
   Widget build(BuildContext context) {
@@ -375,7 +377,7 @@ class _UserRow extends StatelessWidget {
               child: user.profileImageUrl != null
                   ? ClipOval(
                       child: Image.network(
-                        _resolve(user.profileImageUrl!),
+                        MediaUrl.resolveOrEmpty(user.profileImageUrl!),
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => _Initials(
                             name: user.fullName, isDark: isDark),

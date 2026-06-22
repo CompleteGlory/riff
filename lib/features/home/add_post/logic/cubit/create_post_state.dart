@@ -10,6 +10,7 @@ part 'create_post_state.freezed.dart';
 class CreatePostState with _$CreatePostState {
   const factory CreatePostState.initial() = _Initial;
   const factory CreatePostState.loading() = Loading;
+  const factory CreatePostState.uploading(double progress) = Uploading;
   const factory CreatePostState.success(Post post) = Success;
   const factory CreatePostState.failure(ApiErrorModel apiErrorModel) = Failure;
 }

@@ -1,5 +1,11 @@
+import 'package:riff/core/utils/media_url.dart';
+
 class ApiConstants {
-  static const String apiBASEURL = "http://192.168.1.4:3000";
+  static const String apiBASEURL = "https://riff-production-08f7.up.railway.app";
+
+  /// Resolves a media URL — delegates to [MediaUrl.resolve].
+  /// See lib/core/utils/media_url.dart for the single source of truth.
+  static String? resolveUrl(String? url) => MediaUrl.resolve(url);
   static const String signUp = "/api/auth/sign-up";
   static const String login = "/api/auth/log-in";
   static const String refreshToken = "/api/auth/refresh";
@@ -39,6 +45,11 @@ class ApiConstants {
   // Privacy
   static const String updatePrivacy          = "/api/users/me/privacy";
 
+  // Profile settings
+  static const String updateProfile          = "/api/users/me/profile";
+  static const String checkUsername          = "/api/users/me/check-username";
+  static const String changePassword         = "/api/users/me/change-password";
+
   // Followers / Following lists
   static String userFollowers(String id) => "/api/users/$id/followers";
   static String userFollowing(String id) => "/api/users/$id/following";
@@ -59,8 +70,38 @@ class ApiConstants {
   // Reports (user-submitted)
   static String reportPost(String id)        => "/api/reports/posts/$id";
   static String reportComment(String id)     => "/api/reports/comments/$id";
+  static String reportUser(String id)        => "/api/reports/users/$id";
   static const String reportBug              = "/api/reports/bugs";
   static const String reportFeature          = "/api/reports/features";
+
+  // Chat
+  static const String chatConversations        = '/api/chat/conversations';
+  static const String chatRequests             = '/api/chat/requests';
+  static const String chatDirectConversation   = '/api/chat/conversations/direct';
+  static const String chatGroupConversation    = '/api/chat/conversations/group';
+  static String chatConversation(String id)     => '/api/chat/conversations/$id';
+  static String chatMessages(String id)        => '/api/chat/conversations/$id/messages';
+  static String chatUpload(String id)          => '/api/chat/conversations/$id/messages/upload';
+  static String chatDeleteMessage(String c, String m) => '/api/chat/conversations/$c/messages/$m';
+  static String chatAcceptRequest(String id)   => '/api/chat/requests/$id/accept';
+  static String chatDeclineRequest(String id)  => '/api/chat/requests/$id';
+  static String chatGroupUpdate(String id)     => '/api/chat/conversations/$id/group';
+  static const String chatGroupPhotoUpload     = '/api/chat/group/photo';
+  static String chatAddParticipant(String id)  => '/api/chat/conversations/$id/participants';
+  static String chatRemoveParticipant(String c, String u) => '/api/chat/conversations/$c/participants/$u';
+
+  // Meta / Link preview
+  static String linkPreview(String url) => '/api/meta/link-preview?url=${Uri.encodeComponent(url)}';
+
+  // Spotify
+  static const String spotifyConnect     = '/api/users/me/spotify/connect';
+  static const String spotifyDisconnect  = '/api/users/me/spotify/disconnect';
+  static const String spotifyNowPlaying  = '/api/users/me/spotify/now-playing';
+  static String spotifyNowPlayingForUser(String id) => '/api/users/$id/spotify/now-playing';
+
+  // Blocks
+  static const String blockedUsers             = '/api/blocks';
+  static String blockUser(String id)           => '/api/blocks/$id';
 
   // Admin endpoints
   static const String adminLogin             = "/api/admin/auth/log-in";

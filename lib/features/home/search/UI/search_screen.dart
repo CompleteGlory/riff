@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get_it/get_it.dart';
-import 'package:riff/core/networks/api_constants.dart';
+import 'package:riff/core/utils/media_url.dart';
 import 'package:video_player/video_player.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/features/home/feed/Ui/post_detail_screen.dart';
@@ -13,6 +13,7 @@ import 'package:riff/features/home/search/data/models/search_user.dart';
 import 'package:riff/features/home/search/logic/search_cubit.dart';
 import 'package:riff/features/home/search/logic/search_state.dart';
 import 'package:riff/generated/l10n.dart';
+import 'package:riff/core/widgets/app_error_widget.dart';
 
 // ─── Static filter data ──────────────────────────────────────────────────────
 
@@ -131,7 +132,10 @@ class _SearchBodyState extends State<_SearchBody> {
                       return _ResultsView(state: state, isDark: isDark);
                     }
                     if (state is SearchError) {
-                      return _ErrorView(message: state.message, isDark: isDark);
+                      return AppErrorWidget(
+                        message: state.message,
+                        onRetry: () => context.read<SearchCubit>().loadDiscover(),
+                      );
                     }
                     return const SizedBox.shrink();
                   },
@@ -596,8 +600,6 @@ class _UserTile extends StatelessWidget {
     required this.onTap,
   });
 
-  String _resolve(String url) =>
-      url.startsWith('http') ? url : '${ApiConstants.apiBASEURL}$url';
 
   @override
   Widget build(BuildContext context) {
@@ -620,7 +622,7 @@ class _UserTile extends StatelessWidget {
               child: user.profileImageUrl != null
                   ? ClipOval(
                       child: Image.network(
-                        _resolve(user.profileImageUrl!),
+                        MediaUrl.resolveOrEmpty(user.profileImageUrl!),
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => const Icon(
                           Icons.person,
@@ -701,8 +703,6 @@ class _PostThumbnailState extends State<_PostThumbnail> {
         lower.endsWith('.mkv');
   }
 
-  String _resolve(String url) =>
-      url.startsWith('http') ? url : '${ApiConstants.apiBASEURL}$url';
 
   @override
   void initState() {
@@ -715,7 +715,7 @@ class _PostThumbnailState extends State<_PostThumbnail> {
               .toList();
     final firstMedia = effectiveMedia.isNotEmpty ? effectiveMedia.first : null;
     if (firstMedia != null && _isVideo(firstMedia)) {
-      _loadThumb(_resolve(firstMedia));
+      _loadThumb(MediaUrl.resolveOrEmpty(firstMedia));
     }
   }
 
@@ -800,7 +800,7 @@ class _PostThumbnailState extends State<_PostThumbnail> {
       );
     } else {
       thumbnail = Image.network(
-        _resolve(firstMedia),
+        MediaUrl.resolveOrEmpty(firstMedia),
         fit: BoxFit.cover,
         loadingBuilder: (_, child, progress) => progress == null
             ? child
@@ -987,48 +987,3 @@ class _EmptySearch extends StatelessWidget {
   }
 }
 
-class _ErrorView extends StatelessWidget {
-  final String message;
-  final bool isDark;
-
-  const _ErrorView({required this.message, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.wifi_off_rounded,
-            size: 40,
-            color: isDark ? const Color(0xFF444444) : const Color(0xFFCCCCCC),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Something went wrong',
-            style: TextStyle(
-              fontFamily: 'GeneralSans',
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : ColorManager.black,
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: () => context.read<SearchCubit>().loadDiscover(),
-            child: Text(
-              'Try again',
-              style: TextStyle(
-                fontFamily: 'GeneralSans',
-                fontSize: 14,
-                color: ColorManager.accent,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/features/home/feed/logic/cubit/report/report_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/report/report_state.dart';
@@ -139,9 +140,15 @@ class _ReportCommentScreenState extends State<ReportCommentScreen> {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(Icons.chat_bubble_outline_rounded,
-                                    size: 14.r,
-                                    color: isDark ? const Color(0xFF666666) : const Color(0xFF999999)),
+                                SvgPicture.asset(
+                                  'assets/svgs/Chat.svg',
+                                  width: 14.r,
+                                  height: 14.r,
+                                  colorFilter: ColorFilter.mode(
+                                    isDark ? const Color(0xFF666666) : const Color(0xFF999999),
+                                    BlendMode.srcIn,
+                                  ),
+                                ),
                                 SizedBox(width: 8.w),
                                 Expanded(
                                   child: Text(

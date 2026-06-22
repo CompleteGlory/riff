@@ -1,3 +1,5 @@
+import 'package:riff/core/networks/api_constants.dart';
+
 class FollowUser {
   final String id;
   final String fullName;
@@ -19,7 +21,7 @@ class FollowUser {
         id: json['id'] as String,
         fullName: json['full_name'] as String,
         username: json['username'] as String,
-        profileImageUrl: json['profile_image_url'] as String?,
+        profileImageUrl: ApiConstants.resolveUrl(json['profile_image_url'] as String?),
         isPrivate: json['is_private'] as bool? ?? false,
         followStatus: json['follow_status'] as String? ?? 'not_following',
       );

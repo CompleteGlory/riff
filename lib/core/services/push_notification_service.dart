@@ -13,6 +13,12 @@ import 'package:riff/features/home/notifications/logic/cubit/notifications_cubit
 import 'package:riff/features/home/notifications/UI/notifications_screen.dart';
 import 'package:riff/features/home/notifications/UI/flagged_comment_detail_screen.dart';
 import 'package:riff/features/home/notifications/UI/flagged_post_detail_screen.dart';
+import 'package:riff/features/home/chat/data/repos/chat_repo.dart';
+import 'package:riff/features/home/chat/data/services/chat_socket_service.dart';
+import 'package:riff/features/home/chat/logic/cubit/chat_cubit.dart';
+import 'package:riff/features/home/chat/logic/cubit/chats_list_cubit.dart';
+import 'package:riff/features/home/chat/UI/chat_detail_screen.dart';
+import 'package:riff/features/home/chat/UI/chats_list_screen.dart';
 
 /// Handles FCM token registration and push notification display / routing.
 ///
@@ -196,6 +202,13 @@ class PushNotificationService {
     final type = data['notification_type'] as String?;
     final commentIdStr = data['comment_id'] as String?;
     final postIdStr = data['post_id'] as String?;
+    final conversationId = data['conversation_id'] as String?;
+
+    // Chat message notification → open the specific conversation.
+    if (type == 'chat_message' && conversationId != null) {
+      _navigateToChatConversation(conversationId);
+      return;
+    }
 
     // Flagged comment notification → go straight to the comment detail screen.
     if ((type == 'comment_flagged' || (type == 'admin_notice' && commentIdStr != null))) {
@@ -234,6 +247,36 @@ class PushNotificationService {
         child: const NotificationsScreen(),
       ),
     ));
+  }
+
+  /// Fetch the conversation by ID and open it directly, or fall back to chats list.
+  void _navigateToChatConversation(String conversationId) {
+    final nav = navigatorKey.currentState;
+    if (nav == null) return;
+
+    // First push ChatsListScreen so the back button is sensible.
+    // Then try to open the specific conversation on top.
+    nav.push(MaterialPageRoute(
+      builder: (_) => BlocProvider(
+        create: (_) => getIt<ChatsListCubit>()..load(),
+        child: const ChatsListScreen(),
+      ),
+    ));
+
+    // Asynchronously fetch + push the chat detail
+    getIt<ChatRepo>().getConversationById(conversationId).then((conv) {
+      nav.push(MaterialPageRoute(
+        builder: (_) => MultiBlocProvider(
+          providers: [
+            BlocProvider(create: (_) => getIt<ChatsListCubit>()),
+            BlocProvider(create: (_) => ChatCubit(getIt<ChatRepo>(), getIt<ChatSocketService>())),
+          ],
+          child: ChatDetailScreen(conversation: conv),
+        ),
+      ));
+    }).catchError((_) {
+      // Conv not found or auth error — chats list is already showing, that's fine
+    });
   }
 
   void _navigateToCommentDetail({

@@ -13,4 +13,26 @@ class Routes {
 
   // New user onboarding (after phone verify)
   static const String newUserOnboarding = '/newUserOnboarding';
+
+  // Chat
+  static const String chatsList    = '/chatsList';
+  static const String chatDetail   = '/chatDetail';
+  static const String createGroup  = '/createGroup';
+
+  // Block
+  static const String blockedUsers = '/blockedUsers';
+
+  // Profile settings
+  static const String profileSettings = '/profileSettings';
+
+  // Legal
+  static const String privacyPolicy = '/privacyPolicy';
+  static const String privacyPolicyGate = '/privacyPolicyGate';
+
+  // About
+  static const String aboutUs = '/aboutUs';
+
+  // Account settings
+  static const String accountSettings = '/accountSettings';
+  static const String changePassword = '/changePassword';
 }

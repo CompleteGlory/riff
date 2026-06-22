@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:riff/core/networks/api_constants.dart';
+import 'package:riff/core/utils/media_url.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/helpers/spacing.dart';
@@ -16,8 +16,6 @@ class SharedPostCard extends StatelessWidget {
 
   const SharedPostCard({super.key, required this.originalPost, this.onTap});
 
-  String _resolve(String url) =>
-      url.startsWith('http') ? url : '${ApiConstants.apiBASEURL}$url';
 
   bool _isVideo(String url) {
     final lower = url.toLowerCase();
@@ -60,7 +58,7 @@ class SharedPostCard extends StatelessWidget {
                 CircleAvatar(
                   radius: 14.r,
                   backgroundImage: author?.profileImageUrl != null
-                      ? NetworkImage(_resolve(author!.profileImageUrl!))
+                      ? NetworkImage(MediaUrl.resolveOrEmpty(author!.profileImageUrl!))
                       : null,
                   backgroundColor: isDark
                       ? const Color(0xFF2A2A2A)
@@ -138,7 +136,7 @@ class SharedPostCard extends StatelessWidget {
                       ),
                     )
                   : Image.network(
-                      _resolve(firstMedia),
+                      MediaUrl.resolveOrEmpty(firstMedia),
                       width: double.infinity,
                       height: 160.h,
                       fit: BoxFit.cover,
