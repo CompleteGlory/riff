@@ -9,11 +9,20 @@ import 'package:riff/features/auth/login/logic/cubit/login_state.dart';
 import 'package:riff/generated/l10n.dart';
 
 class LoginBlocListener extends StatelessWidget {
-  const LoginBlocListener({super.key, this.isSignupFlow = false});
+  const LoginBlocListener({
+    super.key,
+    this.isSignupFlow = false,
+    this.onLoginSuccess,
+  });
 
   /// When true, shows an "already linked" dialog if the Google account
   /// already existed (i.e. the user tried to sign UP with an existing Gmail).
   final bool isSignupFlow;
+
+  /// Injectable seam for the post-login side effect (FCM registration) —
+  /// defaults to the real singleton; tests can supply a no-op fake to avoid
+  /// touching real platform channels.
+  final Future<void> Function()? onLoginSuccess;
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +99,7 @@ class LoginBlocListener extends StatelessWidget {
               }
 
               // Register FCM token now that the user is authenticated
-              PushNotificationService.instance.init();
+              (onLoginSuccess ?? PushNotificationService.instance.init).call();
               // Clear the navigation stack and go to Home so user cannot go back
               if (context.mounted) {
                 Navigator.of(context).pushNamedAndRemoveUntil(

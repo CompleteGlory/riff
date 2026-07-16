@@ -9,7 +9,11 @@ import 'google_sign_in_helper.dart';
 import 'package:riff/generated/l10n.dart';
 
 class SocialLogin extends StatefulWidget {
-  const SocialLogin({super.key});
+  const SocialLogin({super.key, this.googleAuthService});
+
+  /// Injectable seam for the Google sign-in call — defaults to the real
+  /// plugin-backed implementation; tests can supply a fake instead.
+  final GoogleAuthService? googleAuthService;
 
   @override
   State<SocialLogin> createState() => _SocialLoginState();
@@ -18,12 +22,14 @@ class SocialLogin extends StatefulWidget {
 class _SocialLoginState extends State<SocialLogin>
     with SingleTickerProviderStateMixin {
   bool _isLoading = false;
+  late final GoogleAuthService _authService;
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
   @override
   void initState() {
     super.initState();
+    _authService = widget.googleAuthService ?? GoogleSignInAuthService();
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
@@ -45,7 +51,7 @@ class _SocialLoginState extends State<SocialLogin>
     _pulseController.repeat(reverse: true);
 
     try {
-      final token = await GoogleSignInHelper.signInAndGetIdToken();
+      final token = await _authService.signInAndGetIdToken();
       if (token == null) {
         debugPrint('Google: Failed to get ID token');
         if (mounted) {

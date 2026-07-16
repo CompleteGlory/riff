@@ -232,6 +232,43 @@ On the Flutter side, always upload via `FormData` with `MultipartFile.fromFile(.
 
 ---
 
+## Testing
+
+Test dependencies: `mockito` (mocking, per the
+[Flutter cookbook mocking guide](https://docs.flutter.dev/cookbook/testing/unit/mocking)),
+`bloc_test` (Cubit/Bloc state-transition assertions), `integration_test` (end-to-end device tests).
+Regenerate mocks with `dart run build_runner build --delete-conflicting-outputs` after changing
+any `@GenerateMocks` target.
+
+### Login module (reference implementation)
+
+`lib/features/auth/login/` has full unit + widget + integration coverage and is the pattern to
+copy for other features. Each test file has a co-located `.md` explaining what it covers, what's
+mocked, and any timing/testability gotchas:
+
+| Layer | Test | Doc |
+| --- | --- | --- |
+| Repo (API calls) | `test/features/auth/login/data/repos/login_repo_test.dart` | [login_repo_test.md](test/features/auth/login/data/repos/login_repo_test.md) |
+| Cubit | `test/features/auth/login/logic/cubit/login_cubit_test.dart` | [login_cubit_test.md](test/features/auth/login/logic/cubit/login_cubit_test.md) |
+| Widget — form fields | `test/features/auth/login/UI/widgets/login_form_fields_test.dart` | [login_form_fields_test.md](test/features/auth/login/UI/widgets/login_form_fields_test.md) |
+| Widget — Google sign-in | `test/features/auth/login/UI/widgets/social_login_test.dart` | [social_login_test.md](test/features/auth/login/UI/widgets/social_login_test.md) |
+| Widget — state → dialogs/nav | `test/features/auth/login/UI/widgets/login_bloc_listener_test.dart` | [login_bloc_listener_test.md](test/features/auth/login/UI/widgets/login_bloc_listener_test.md) |
+| Widget — full screen | `test/features/auth/login/UI/login_screen_test.dart` | [login_screen_test.md](test/features/auth/login/UI/login_screen_test.md) |
+| Integration (whole feature) | `integration_test/login_flow_test.dart` | [login_flow_test.md](integration_test/login_flow_test.md) |
+| Shared helper | `test/helpers/pump_app.dart` | [pump_app.md](test/helpers/pump_app.md) |
+
+Testability patterns established here, worth reusing elsewhere:
+
+- Wrap any static/plugin-backed call (e.g. `google_sign_in`) behind a small injectable interface
+  with a real-implementation default, instead of calling the static helper directly from a widget.
+- Give any widget that triggers a singleton side effect (push notifications, analytics, etc.) an
+  optional constructor callback defaulting to the real singleton call, so tests can no-op it.
+- Don't declare a `Cubit<SomeFreezedUnion>` with the freezed type left generic and unspecified —
+  it silently resolves to `dynamic` and breaks `bloc_test` state matchers even when behavior is
+  correct.
+
+---
+
 ## Known Bugs Fixed
 
 | Bug | Location | Fix |
@@ -240,6 +277,8 @@ On the Flutter side, always upload via `FormData` with `MultipartFile.fromFile(.
 | Voice note appears twice in chat | `ChatCubit.sendMedia()` | Check `msg.id` already in list before prepending (socket can beat HTTP response) |
 | White screen when sharing from TikTok/Spotify | `HomeLayout` + `ShareReceiverService` | Re-call `init()` on app resume; add 300ms delay before navigation; detect `spotify:` URIs; fallback platform detection from text keywords |
 | Group edit crash after saving | `GroupDetailsScreen` | Bottom sheet is now its own `StatefulWidget` |
+| Login token debug-log crash | `LoginRepo._handleLoginResponse`, `DioFactory` interceptor | `accessToken.substring(0, 20)` threw `RangeError` for tokens <20 chars, turning a successful login into a reported failure — guarded with a length check before truncating |
+| `LoginCubit` state stream untyped | `LoginCubit` | Declared as raw `Cubit<LoginState>` (`T` resolved to `dynamic`) instead of `Cubit<LoginState<LoginResponse>>` |
 
 ---
 

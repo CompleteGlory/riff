@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-class GoogleSignInHelper {
-  static final GoogleSignIn googleSignIn = GoogleSignIn(
-  scopes: ['email'],
-  );
+/// Abstraction over the Google sign-in SDK so widgets can depend on an
+/// injectable interface instead of a static plugin call — lets tests supply
+/// a fake without touching the real `google_sign_in` platform channel.
+abstract class GoogleAuthService {
+  Future<String?> signInAndGetIdToken();
+}
 
-  static Future<String?> signInAndGetIdToken() async {
+class GoogleSignInAuthService implements GoogleAuthService {
+  GoogleSignInAuthService({GoogleSignIn? googleSignIn})
+      : _googleSignIn = googleSignIn ?? GoogleSignIn(scopes: ['email']);
+
+  final GoogleSignIn _googleSignIn;
+
+  @override
+  Future<String?> signInAndGetIdToken() async {
     try {
-      final account = await googleSignIn.signIn();
+      final account = await _googleSignIn.signIn();
       if (account == null) return null;
 
       final auth = await account.authentication;
@@ -18,4 +27,13 @@ class GoogleSignInHelper {
       return null;
     }
   }
+}
+
+/// Kept for backwards compatibility with any other call sites; delegates to
+/// [GoogleSignInAuthService].
+class GoogleSignInHelper {
+  static final GoogleAuthService _service = GoogleSignInAuthService();
+
+  static Future<String?> signInAndGetIdToken() =>
+      _service.signInAndGetIdToken();
 }

@@ -6,7 +6,7 @@ import 'package:riff/features/auth/login/data/models/login_response.dart';
 import 'package:riff/features/auth/login/data/repos/login_repo.dart';
 import 'package:riff/features/auth/login/logic/cubit/login_state.dart';
 
-class LoginCubit extends Cubit<LoginState> {
+class LoginCubit extends Cubit<LoginState<LoginResponse>> {
   final LoginRepo _loginRepo;
 
   LoginCubit(this._loginRepo) : super(const LoginState.initial());

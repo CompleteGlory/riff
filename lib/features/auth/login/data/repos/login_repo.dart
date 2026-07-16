@@ -73,7 +73,7 @@ class LoginRepo {
         if (accessToken != null) {
           await SharedPrefHelper.setData(SharedPrefKeys.userToken, accessToken);
           DioFactory.setTokenIntoHeaderAfterLogin(accessToken);
-          debugPrint('✅ Access token saved: ${accessToken.substring(0, 20)}...');
+          debugPrint('✅ Access token saved: ${_truncate(accessToken)}...');
         } else {
           debugPrint('⚠️ No AccessToken found in cookies');
         }
@@ -81,7 +81,7 @@ class LoginRepo {
         // ✅ Save Refresh Token
         if (refreshToken != null) {
           await SharedPrefHelper.setData(SharedPrefKeys.refreshToken, refreshToken);
-          debugPrint('✅ Refresh token saved: ${refreshToken.substring(0, 20)}...');
+          debugPrint('✅ Refresh token saved: ${_truncate(refreshToken)}...');
         } else {
           debugPrint('⚠️ No RefreshToken found in cookies');
         }
@@ -128,6 +128,9 @@ class LoginRepo {
 
     return User(id: id, email: email, fullName: '', username: '');
   }
+
+  String _truncate(String token) =>
+      token.length <= 20 ? token : token.substring(0, 20);
 
   Map<String, dynamic>? _decodeJwtPayload(String token) {
     try {
