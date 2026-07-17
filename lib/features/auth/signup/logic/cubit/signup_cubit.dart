@@ -7,7 +7,7 @@ import 'package:riff/features/auth/signup/data/models/signup_request_body.dart';
 import 'package:riff/features/auth/signup/data/repos/signup_repo.dart';
 import 'package:riff/features/auth/signup/logic/cubit/signup_state.dart';
 
-class SignupCubit extends Cubit<SignupState> {
+class SignupCubit extends Cubit<SignupState<void>> {
   final SignupRepo _signupRepo;
   final LoginRepo _loginRepo;
   SignupCubit(this._signupRepo, this._loginRepo) : super(const SignupState.initial());
@@ -23,7 +23,7 @@ class SignupCubit extends Cubit<SignupState> {
   // Must be true before emitSignupStates() is allowed to proceed.
   bool privacyAccepted = false;
 
-  void emitSignupStates() async {
+  Future<void> emitSignupStates() async {
     emit(const SignupState.loading());
 
     final signupResponse = await _signupRepo.signUp(

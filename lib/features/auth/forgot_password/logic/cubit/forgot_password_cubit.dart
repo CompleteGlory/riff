@@ -28,7 +28,7 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
   String email = "";
   String _resetToken = "";
 
-  void emitForgotPasswordStates() async {
+  Future<void> emitForgotPasswordStates() async {
     email = mailController.text;
     emit(const ForgotPasswordState.loading());
 
@@ -49,7 +49,7 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
     );
   }
 
-  void emitVerifyOtpState() async {
+  Future<void> emitVerifyOtpState() async {
     emit(const ForgotPasswordState.otpVerificationLoading());
 
     final response = await _forgotPasswordRepo.verifyOtp(
@@ -69,7 +69,7 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
     );
   }
 
-  void emitResetPasswordState() async {
+  Future<void> emitResetPasswordState() async {
     emit(const ForgotPasswordState.resetPasswordLoading());
     debugPrint('Debug: Reset token before request: "$_resetToken"');
 
