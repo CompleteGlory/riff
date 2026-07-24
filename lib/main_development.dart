@@ -1,9 +1,8 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:riff/core/helpers/constants.dart';
+import 'package:riff/core/services/firebase_init.dart';
 import 'package:riff/core/services/push_notification_service.dart';
-import 'package:riff/firebase_options.dart';
 import 'package:riff/riff_app.dart';
 import 'core/routing/app_router.dart';
 import 'core/di/dependency_injection.dart';
@@ -13,14 +12,14 @@ import 'core/helpers/shared_pref_helper.dart';
 /// Must be a top-level function (not a method).
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await initFirebaseWithRetry();
   // Background messages are shown as system notifications by the OS automatically.
   // Nothing extra needed here unless you want to update local state.
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await initFirebaseWithRetry();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   setUpGetIt();
@@ -31,13 +30,9 @@ void main() async {
     PushNotificationService.instance.init();
   }
 
-  final privacyAccepted = await SharedPrefHelper.getBool(
-      SharedPrefKeys.privacyPolicyAccepted) as bool;
-
   runApp(RiffApp(
     appRouter: AppRouter(),
     startAtHome: isLoggedIn,
-    needsPrivacyAccept: !privacyAccepted,
   ));
 }
 

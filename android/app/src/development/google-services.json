@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "369305642937-ekepl8hcantp7tbj8l7rgoas81v3u1l4.apps.googleusercontent.com",
+          "client_id": "369305642937-bg0qve7sb6k1h5upbgqpovapqa5k1kse.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.riff",
-            "certificate_hash": "8cca16a6b91aa6c47953360e4e08636c974e697d"
+            "certificate_hash": "3970b7ed29a6e57c7eca7a3adc4198b8fd42710f"
           }
         },
         {
@@ -39,10 +39,10 @@
               "client_type": 3
             },
             {
-              "client_id": "369305642937-s2ev11vudtc2lsfd0ihgj18h5dlfsdi9.apps.googleusercontent.com",
+              "client_id": "369305642937-97h9vfnelael8q8ju33biehaie95gppu.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.riff"
+                "bundle_id": "com.magd.riff.dev"
               }
             }
           ]
@@ -83,10 +83,114 @@
               "client_type": 3
             },
             {
-              "client_id": "369305642937-s2ev11vudtc2lsfd0ihgj18h5dlfsdi9.apps.googleusercontent.com",
+              "client_id": "369305642937-97h9vfnelael8q8ju33biehaie95gppu.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.riff"
+                "bundle_id": "com.magd.riff.dev"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:369305642937:android:333c95925b65d7ec3d7868",
+        "android_client_info": {
+          "package_name": "com.magd.riff"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "369305642937-1k96aa0du2c3haskl7c0448fe2ai8l7g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.magd.riff",
+            "certificate_hash": "3970b7ed29a6e57c7eca7a3adc4198b8fd42710f"
+          }
+        },
+        {
+          "client_id": "369305642937-3kvt060e291tmckifk5fg4ujgbavne49.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.magd.riff",
+            "certificate_hash": "2ba7e31b48a61548ed384270953e87f9e2f48ca1"
+          }
+        },
+        {
+          "client_id": "369305642937-rh8uuhr2cife2hj4rkgqcms1j29mfru9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFgikpygVZRhyf_rHr9Kked7VYQ1bmshw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "369305642937-2mrqkufnmet5r683qkqdmb4u4mg4hsjt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "369305642937-97h9vfnelael8q8ju33biehaie95gppu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.magd.riff.dev"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:369305642937:android:6b7100c943286b2e3d7868",
+        "android_client_info": {
+          "package_name": "com.magd.riff.dev"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "369305642937-5a8g1m066kccg5qabssvtahob69pq498.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.magd.riff.dev",
+            "certificate_hash": "3970b7ed29a6e57c7eca7a3adc4198b8fd42710f"
+          }
+        },
+        {
+          "client_id": "369305642937-uvs02bnqr9rs11hup96ghdgs60t09hci.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.magd.riff.dev",
+            "certificate_hash": "2ba7e31b48a61548ed384270953e87f9e2f48ca1"
+          }
+        },
+        {
+          "client_id": "369305642937-rh8uuhr2cife2hj4rkgqcms1j29mfru9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFgikpygVZRhyf_rHr9Kked7VYQ1bmshw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "369305642937-2mrqkufnmet5r683qkqdmb4u4mg4hsjt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "369305642937-97h9vfnelael8q8ju33biehaie95gppu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.magd.riff.dev"
               }
             }
           ]
