@@ -15,7 +15,10 @@ import 'package:riff/features/auth/login/logic/cubit/login_cubit.dart';
 import 'package:riff/generated/l10n.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.onLoginSuccess});
+
+  /// Forwarded to [LoginBlocListener] — see its doc for why this seam exists.
+  final Future<void> Function()? onLoginSuccess;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -104,7 +107,8 @@ class _LoginScreenState extends State<LoginScreen>
                               child: DonotHaveAnAccountText(),
                             ),
                             verticalSpace(10),
-                            const LoginBlocListener(),
+                            LoginBlocListener(
+                                onLoginSuccess: widget.onLoginSuccess),
                           ],
                         ),
                       ),

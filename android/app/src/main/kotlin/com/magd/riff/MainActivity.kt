@@ -1,4 +1,4 @@
-package com.example.riff
+package com.magd.riff
 
 import io.flutter.embedding.android.FlutterActivity
 

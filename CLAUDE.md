@@ -232,6 +232,80 @@ On the Flutter side, always upload via `FormData` with `MultipartFile.fromFile(.
 
 ---
 
+## Testing
+
+Test dependencies: `mockito` (mocking, per the
+[Flutter cookbook mocking guide](https://docs.flutter.dev/cookbook/testing/unit/mocking)),
+`bloc_test` (Cubit/Bloc state-transition assertions), `integration_test` (end-to-end device tests).
+Regenerate mocks with `dart run build_runner build --delete-conflicting-outputs` after changing
+any `@GenerateMocks` target.
+
+### Login module (reference implementation)
+
+`lib/features/auth/login/` has full unit + widget + integration coverage and is the pattern to
+copy for other features. Each test file has a co-located `.md` explaining what it covers, what's
+mocked, and any timing/testability gotchas:
+
+| Layer | Test | Doc |
+| --- | --- | --- |
+| Repo (API calls) | `test/features/auth/login/data/repos/login_repo_test.dart` | [login_repo_test.md](test/features/auth/login/data/repos/login_repo_test.md) |
+| Cubit | `test/features/auth/login/logic/cubit/login_cubit_test.dart` | [login_cubit_test.md](test/features/auth/login/logic/cubit/login_cubit_test.md) |
+| Widget — form fields | `test/features/auth/login/UI/widgets/login_form_fields_test.dart` | [login_form_fields_test.md](test/features/auth/login/UI/widgets/login_form_fields_test.md) |
+| Widget — Google sign-in | `test/features/auth/login/UI/widgets/social_login_test.dart` | [social_login_test.md](test/features/auth/login/UI/widgets/social_login_test.md) |
+| Widget — state → dialogs/nav | `test/features/auth/login/UI/widgets/login_bloc_listener_test.dart` | [login_bloc_listener_test.md](test/features/auth/login/UI/widgets/login_bloc_listener_test.md) |
+| Widget — full screen | `test/features/auth/login/UI/login_screen_test.dart` | [login_screen_test.md](test/features/auth/login/UI/login_screen_test.md) |
+| Integration (whole feature) | `integration_test/login_flow_test.dart` | [login_flow_test.md](integration_test/login_flow_test.md) |
+| Shared helper | `test/helpers/pump_app.dart` | [pump_app.md](test/helpers/pump_app.md) |
+
+Testability patterns established here, worth reusing elsewhere:
+
+- Wrap any static/plugin-backed call (e.g. `google_sign_in`) behind a small injectable interface
+  with a real-implementation default, instead of calling the static helper directly from a widget.
+- Give any widget that triggers a singleton side effect (push notifications, analytics, etc.) an
+  optional constructor callback defaulting to the real singleton call, so tests can no-op it.
+- Don't declare a `Cubit<SomeFreezedUnion>` with the freezed type left generic and unspecified —
+  it silently resolves to `dynamic` and breaks `bloc_test` state matchers even when behavior is
+  correct.
+- Don't declare a cubit's async emit methods as `void ... async` — widen to `Future<void> ...
+  async`. It's a free, backward-compatible change (existing call sites that don't await it keep
+  working) and it's the only way a test can sequence `await cubit.doThing()` before asserting.
+- Any cubit method with a "recover from SharedPreferences if nothing's in memory" fallback path
+  needs `SharedPreferences.setMockInitialValues({})` in every test that can reach it — even ones
+  that don't otherwise care about persistence. Skipping it doesn't fail the test; the real
+  platform-channel call just never resolves and the test (or the whole `flutter test` process)
+  hangs instead of reporting a clean failure.
+- When a cubit method calls a second repo after the first succeeds (e.g. auto-login after
+  signup), stub *both* mocks in every test that exercises that path — even if a test only cares
+  about the first call's timing. An unstubbed dependent mock throws inside the cubit, silently
+  aborting it before the final state is ever emitted, which surfaces as a `pumpAndSettle() timed
+  out` on an indeterminate loading spinner rather than an obviously-related error.
+- Widget-test a form in the same scroll context production uses it in (e.g. wrap in
+  `SingleChildScrollView` if the real screen does) — pumping a large form bare inside a `Scaffold`
+  can overflow the default test viewport before any assertion runs.
+- Never call `pumpAndSettle()` after a transition onto a screen with a repeating `Timer.periodic`
+  or a looping `AnimationController` (e.g. a countdown, a blinking cursor) — it never settles. Use
+  a bounded `tester.pump(someDuration)` instead.
+
+### Other auth features
+
+The same repo/cubit/widget layering was applied to the rest of `lib/features/auth/`:
+
+| Feature | Repo test | Cubit test | Widget tests |
+| --- | --- | --- | --- |
+| `forgot_password` | [forgot_password_repo_test.md](test/features/auth/forgot_password/data/repos/forgot_password_repo_test.md) | [forgot_password_cubit_test.md](test/features/auth/forgot_password/logic/cubit/forgot_password_cubit_test.md) | [forgot_password_form_field_test.md](test/features/auth/forgot_password/UI/widgets/forgot_password_form_field_test.md), [reset_password_form_fields_test.md](test/features/auth/forgot_password/UI/widgets/reset_password_form_fields_test.md), [forgot_password_bloc_listener_test.md](test/features/auth/forgot_password/UI/widgets/forgot_password_bloc_listener_test.md), [request_otp_bloc_listener_test.md](test/features/auth/forgot_password/UI/widgets/request_otp_bloc_listener_test.md), [reset_password_bloc_listener_test.md](test/features/auth/forgot_password/UI/widgets/reset_password_bloc_listener_test.md) |
+| `signup` | [signup_repo_test.md](test/features/auth/signup/data/repos/signup_repo_test.md) | [signup_cubit_test.md](test/features/auth/signup/logic/cubit/signup_cubit_test.md) | [signup_form_fields_test.md](test/features/auth/signup/UI/widgets/signup_form_fields_test.md), [signup_bloc_listener_test.md](test/features/auth/signup/UI/widgets/signup_bloc_listener_test.md) |
+| `phone_verify` | [phone_verify_repo_test.md](test/features/auth/phone_verify/data/repos/phone_verify_repo_test.md) | [phone_verify_cubit_test.md](test/features/auth/phone_verify/logic/cubit/phone_verify_cubit_test.md) | [phone_verify_screen_test.md](test/features/auth/phone_verify/UI/phone_verify_screen_test.md) |
+| `new_user_onboarding` | [suggested_users_repo_test.md](test/features/auth/new_user_onboarding/data/repos/suggested_users_repo_test.md) | *(no cubit — screen calls the repo directly)* | *(not covered — see below)* |
+
+**Deliberately not covered:** `new_user_onboarding_screen.dart` (reaches into `getIt<...>()`
+directly in field initializers instead of via constructor injection, and drives `image_picker` +
+`flutter_contacts` + `permission_handler`), `onboarding_screen.dart` and the `user-prefrences/`
+genre/instrument screens (static UI or local selection state, no repo/cubit layer). If any of these
+grow real logic worth isolating, apply the same repo/cubit-first approach before reaching for a
+full widget test.
+
+---
+
 ## Known Bugs Fixed
 
 | Bug | Location | Fix |
@@ -240,6 +314,10 @@ On the Flutter side, always upload via `FormData` with `MultipartFile.fromFile(.
 | Voice note appears twice in chat | `ChatCubit.sendMedia()` | Check `msg.id` already in list before prepending (socket can beat HTTP response) |
 | White screen when sharing from TikTok/Spotify | `HomeLayout` + `ShareReceiverService` | Re-call `init()` on app resume; add 300ms delay before navigation; detect `spotify:` URIs; fallback platform detection from text keywords |
 | Group edit crash after saving | `GroupDetailsScreen` | Bottom sheet is now its own `StatefulWidget` |
+| Login token debug-log crash | `LoginRepo._handleLoginResponse`, `DioFactory` interceptor | `accessToken.substring(0, 20)` threw `RangeError` for tokens <20 chars, turning a successful login into a reported failure — guarded with a length check before truncating |
+| `LoginCubit` state stream untyped | `LoginCubit` | Declared as raw `Cubit<LoginState>` (`T` resolved to `dynamic`) instead of `Cubit<LoginState<LoginResponse>>` |
+| `SignupCubit` state stream untyped | `SignupCubit` | Same as above — raw `Cubit<SignupState>` widened to `Cubit<SignupState<void>>` (signup's response payload is never read downstream) |
+| `ForgotPasswordCubit` emit methods un-awaitable | `ForgotPasswordCubit` | `emitForgotPasswordStates`/`emitVerifyOtpState`/`emitResetPasswordState` were declared `void ... async` instead of `Future<void> ... async` — callers (and tests) couldn't `await` completion; widened the return type (backward-compatible, no call site needed to change) |
 
 ---
 
@@ -296,3 +374,4 @@ SPOTIFY_CLIENT_SECRET=
 - [ ] Write DB migration if schema changes needed
 - [ ] Add Cloudinary upload service method if new media type needed
 - [ ] Test dedup logic for any real-time (socket) + HTTP combination
+- [ ] **Tests** — new feature: write unit tests for the repo (mock the API service) and cubit (mock the repo), plus widget tests for the screen/widgets, following the pattern in `lib/features/auth/login/` (see Testing section above). Updating existing code: update whichever of those tests cover the changed behavior instead of leaving them stale or deleting them

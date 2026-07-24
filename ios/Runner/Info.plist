@@ -25,7 +25,20 @@
 				<string>com.riff.app</string>
 			</array>
 		</dict>
+		<!-- Google Sign-In OAuth callback (REVERSED_CLIENT_ID from GoogleService-Info.plist) -->
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>google-signin</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.369305642937-midvt5mj7r6pl9jeodkl6eqji72qs0hf</string>
+			</array>
+		</dict>
 	</array>
+
+	<!-- Google Sign-In client id (CLIENT_ID from GoogleService-Info.plist) -->
+	<key>GIDClientID</key>
+	<string>369305642937-midvt5mj7r6pl9jeodkl6eqji72qs0hf.apps.googleusercontent.com</string>
 
 	<!-- Share extension: allow Riff to appear in the system share sheet -->
 	<key>NSExtension</key>
@@ -40,6 +53,12 @@
 	<string>Riff needs microphone access to send voice messages.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<!-- Allow the app to process push notifications (FCM/APNs) in the background -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+		<string>fetch</string>
+	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -76,9 +95,7 @@
 					<key>UISceneConfigurationName</key>
 					<string>flutter</string>
 					<key>UISceneDelegateClassName</key>
-					<string>FlutterSceneDelegate</string>
-					<key>UISceneStoryboardFile</key>
-					<string>Main</string>
+					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
 				</dict>
 			</array>
 		</dict>
@@ -87,8 +104,6 @@
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
-	<key>UIMainStoryboardFile</key>
-	<string>Main</string>
 	<key>UIStatusBarHidden</key>
 	<false/>
 	<key>UISupportedInterfaceOrientations</key>

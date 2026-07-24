@@ -141,7 +141,10 @@ class DioFactory {
                   requestOptions.headers['Cookie'] = 
                       'AccessToken=$newAccessToken';
                   
-                  debugPrint('✅ New access token set: ${newAccessToken.substring(0, 20)}...');
+                  final preview = newAccessToken.length <= 20
+                      ? newAccessToken
+                      : newAccessToken.substring(0, 20);
+                  debugPrint('✅ New access token set: $preview...');
                 } else {
                   debugPrint('⚠️ No new access token in refresh response');
                   NavigationService.navigateToLoginAndClearStack();

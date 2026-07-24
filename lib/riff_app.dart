@@ -11,15 +11,12 @@ class RiffApp extends StatelessWidget {
     super.key,
     required this.appRouter,
     this.startAtHome = false,
-    this.needsPrivacyAccept = false,
   });
 
   final AppRouter appRouter;
   final bool startAtHome;
-  final bool needsPrivacyAccept;
 
   String get _initialRoute {
-    if (needsPrivacyAccept) return Routes.privacyPolicyGate;
     return startAtHome ? Routes.home : Routes.onBoarding;
   }
 
