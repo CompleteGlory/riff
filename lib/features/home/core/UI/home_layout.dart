@@ -21,6 +21,7 @@ import 'package:riff/features/home/chat/data/models/chat_models.dart';
 import 'package:riff/features/home/chat/data/services/chat_socket_service.dart';
 import 'package:riff/features/home/chat/logic/cubit/chats_list_cubit.dart';
 import 'package:riff/features/home/add_post/logic/cubit/create_post_cubit.dart';
+import 'package:riff/features/home/feed/logic/cubit/feed/feed_cubit.dart';
 import 'package:riff/features/home/add_post/logic/cubit/create_post_state.dart';
 import 'package:riff/features/home/add_post/ui/widgets/create_post_screen.dart';
 import 'package:riff/features/social_share/services/share_receiver_service.dart';
@@ -160,6 +161,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                 initialCaption: content.captionText,
                 sourceUrl: content.isSocialShare ? content.url : null,
                 sourcePlatform: content.isSocialShare ? content.platform : null,
+                popOnSubmit: true, // pushed route → pop to reveal feed on submit
               ),
             ),
           ),
@@ -182,7 +184,10 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => CreatePostWrapper(initialMediaPaths: paths),
+            builder: (_) => CreatePostWrapper(
+              initialMediaPaths: paths,
+              popOnSubmit: true, // pushed route → pop to reveal feed on submit
+            ),
           ),
         );
       });
@@ -253,6 +258,10 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                 content: Text(S.of(ctx).postCreatedSuccessfully),
               ),
             );
+            // Reload the feed now that the post is on the server so it appears
+            // at the top without a manual pull-to-refresh. (The tab switch on
+            // upload-start refreshes too early — before the upload completes.)
+            FeedCubit.requestRefresh();
             getIt<CreatePostCubit>().reset();
           },
           failure: (err) {

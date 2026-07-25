@@ -10,9 +10,17 @@ import 'package:riff/features/home/add_post/ui/widgets/create_post_screen.dart';
 /// Uses [BlocProvider.value] (not [BlocProvider]) so the singleton is never
 /// closed when the user switches tabs or navigates away mid-upload.
 class CreatePostWrapper extends StatefulWidget {
-  const CreatePostWrapper({super.key, this.initialMediaPaths});
+  const CreatePostWrapper({
+    super.key,
+    this.initialMediaPaths,
+    this.popOnSubmit = false,
+  });
 
   final List<String>? initialMediaPaths;
+
+  /// Passed through to [CreatePostScreen]. True when pushed as its own route
+  /// (share flow); false as the Create Post tab. See CreatePostScreen.popOnSubmit.
+  final bool popOnSubmit;
 
   @override
   State<CreatePostWrapper> createState() => _CreatePostWrapperState();
@@ -30,7 +38,10 @@ class _CreatePostWrapperState extends State<CreatePostWrapper> {
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: getIt<CreatePostCubit>(),
-      child: CreatePostScreen(initialMediaPaths: widget.initialMediaPaths),
+      child: CreatePostScreen(
+        initialMediaPaths: widget.initialMediaPaths,
+        popOnSubmit: widget.popOnSubmit,
+      ),
     );
   }
 }

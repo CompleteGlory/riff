@@ -13,6 +13,16 @@ class FeedCubit extends Cubit<FeedState> {
 
   FeedCubit(this._feedRepo) : super(const FeedState.initial());
 
+  /// Broadcast bus used to tell the currently-mounted feed to reload — e.g. after
+  /// a new post finishes uploading. FeedCubit is a factory (each FeedScreen owns
+  /// its own instance), so callers can't reach "the" instance directly; the
+  /// mounted FeedScreen listens to this and refreshes itself.
+  static final _refreshBus = StreamController<void>.broadcast();
+  static Stream<void> get refreshRequests => _refreshBus.stream;
+  static void requestRefresh() {
+    if (!_refreshBus.isClosed) _refreshBus.add(null);
+  }
+
   int page = 1;
   final int limit = 4;
 
