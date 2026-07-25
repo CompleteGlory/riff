@@ -44,13 +44,23 @@ flutter precache --ios
 cd "$CI_PRIMARY_REPOSITORY_PATH"
 flutter pub get
 
+# CFBundleVersion must be unique and increasing for every TestFlight upload, but
+# pubspec's `version: 1.0.12` carries no +buildNumber, so Flutter would stamp
+# every build "1.0.12" and App Store Connect would reject the second one. Xcode
+# Cloud's CI_BUILD_NUMBER increments per build, so use it as the build number
+# and keep 1.0.12 as the user-visible version. Falls back to 1 when the script
+# is run outside Xcode Cloud.
+BUILD_NUMBER="${CI_BUILD_NUMBER:-1}"
+
 # Writes ios/Flutter/Generated.xcconfig pointing at the production entrypoint
 # (there is no lib/main.dart — only main_development.dart/main_production.dart)
 # without compiling anything; xcodebuild does the actual build afterwards.
 # --no-codesign: during ci_post_clone no signing certificates are installed
 # yet (Xcode Cloud injects signing at archive time), so skip Flutter's
 # code-signing checks.
-flutter build ios --config-only --release --no-codesign --flavor production -t lib/main_production.dart
+flutter build ios --config-only --release --no-codesign \
+  --flavor production -t lib/main_production.dart \
+  --build-number="$BUILD_NUMBER"
 
 cd ios
 pod install
