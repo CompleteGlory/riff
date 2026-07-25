@@ -95,6 +95,19 @@ dev_dependencies:
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
+# App icon generation — regenerate with:
+#   dart run flutter_launcher_icons
+# The 1024pt icon this produces is what App Store Connect and TestFlight show
+# for the app, so it must stay opaque: Apple rejects marketing icons with an
+# alpha channel. Android is left out on purpose — it already has a hand-tuned
+# adaptive icon (mipmap-anydpi-v26 + ic_launcher_foreground) that this would
+# overwrite.
+flutter_launcher_icons:
+  ios: true
+  android: false
+  remove_alpha_ios: true
+  image_path: "assets/images/riff logo.png"
+
 # flutter_intl configuration (used by the Flutter Intl VS Code extension)
 flutter_intl:
   enabled: true
