@@ -17,6 +17,7 @@ mixin _$CreatePostState {
 
 
 
+
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is CreatePostState);
@@ -43,6 +44,17 @@ $CreatePostStateCopyWith(CreatePostState _, $Res Function(CreatePostState) __);
 /// Adds pattern-matching-related methods to [CreatePostState].
 extension CreatePostStatePatterns on CreatePostState {
 /// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
 @optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( _Initial value)?  initial,TResult Function( Loading value)?  loading,TResult Function( Uploading value)?  uploading,TResult Function( Success value)?  success,TResult Function( Failure value)?  failure,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
@@ -57,6 +69,18 @@ return failure(_that);case _:
 }
 }
 /// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
 @optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( _Initial value)  initial,required TResult Function( Loading value)  loading,required TResult Function( Uploading value)  uploading,required TResult Function( Success value)  success,required TResult Function( Failure value)  failure,}){
 final _that = this;
 switch (_that) {
@@ -71,6 +95,17 @@ return failure(_that);case _:
 }
 }
 /// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
 @optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( _Initial value)?  initial,TResult? Function( Loading value)?  loading,TResult? Function( Uploading value)?  uploading,TResult? Function( Success value)?  success,TResult? Function( Failure value)?  failure,}){
 final _that = this;
 switch (_that) {
@@ -85,6 +120,17 @@ return failure(_that);case _:
 }
 }
 /// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
 @optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( double progress)?  uploading,TResult Function( Post post)?  success,TResult Function( ApiErrorModel apiErrorModel)?  failure,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
@@ -98,6 +144,18 @@ return failure(_that.apiErrorModel);case _:
 }
 }
 /// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
 @optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( double progress)  uploading,required TResult Function( Post post)  success,required TResult Function( ApiErrorModel apiErrorModel)  failure,}) {final _that = this;
 switch (_that) {
 case _Initial():
@@ -111,6 +169,17 @@ return failure(_that.apiErrorModel);case _:
 }
 }
 /// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
 @optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( double progress)?  uploading,TResult? Function( Post post)?  success,TResult? Function( ApiErrorModel apiErrorModel)?  failure,}) {final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
@@ -131,6 +200,8 @@ return failure(_that.apiErrorModel);case _:
 
 class _Initial implements CreatePostState {
   const _Initial();
+  
+
 
 
 
@@ -161,6 +232,8 @@ String toString() {
 
 class Loading implements CreatePostState {
   const Loading();
+  
+
 
 
 
@@ -191,18 +264,26 @@ String toString() {
 
 class Uploading implements CreatePostState {
   const Uploading(this.progress);
+  
 
-  final double progress;
+ final  double progress;
+
+/// Create a copy of CreatePostState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$UploadingCopyWith<Uploading> get copyWith => _$UploadingCopyWithImpl<Uploading>(this, _$identity);
+
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Uploading&&other.progress == progress);
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Uploading&&(identical(other.progress, progress) || other.progress == progress));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType, progress);
+int get hashCode => Object.hash(runtimeType,progress);
 
 @override
 String toString() {
@@ -212,15 +293,44 @@ String toString() {
 
 }
 
+/// @nodoc
+abstract mixin class $UploadingCopyWith<$Res> implements $CreatePostStateCopyWith<$Res> {
+  factory $UploadingCopyWith(Uploading value, $Res Function(Uploading) _then) = _$UploadingCopyWithImpl;
+@useResult
+$Res call({
+ double progress
+});
 
 
+
+
+}
+/// @nodoc
+class _$UploadingCopyWithImpl<$Res>
+    implements $UploadingCopyWith<$Res> {
+  _$UploadingCopyWithImpl(this._self, this._then);
+
+  final Uploading _self;
+  final $Res Function(Uploading) _then;
+
+/// Create a copy of CreatePostState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? progress = null,}) {
+  return _then(Uploading(
+null == progress ? _self.progress : progress // ignore: cast_nullable_to_non_nullable
+as double,
+  ));
+}
+
+
+}
 
 /// @nodoc
 
 
 class Success implements CreatePostState {
   const Success(this.post);
-
+  
 
  final  Post post;
 
@@ -286,7 +396,7 @@ as Post,
 
 class Failure implements CreatePostState {
   const Failure(this.apiErrorModel);
-
+  
 
  final  ApiErrorModel apiErrorModel;
 
