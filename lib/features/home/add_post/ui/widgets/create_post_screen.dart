@@ -28,12 +28,19 @@ class CreatePostScreen extends StatefulWidget {
   /// Optional media files shared from another app.
   final List<String>? initialMediaPaths;
 
+  /// Whether to `Navigator.pop` after submitting. True only when this screen is
+  /// pushed as its own route (the share flows). When it's the "Create Post" tab
+  /// inside HomeLayout, popping would remove HomeLayout itself and show a blank
+  /// screen — instead HomeLayout switches to the feed tab on upload start.
+  final bool popOnSubmit;
+
   const CreatePostScreen({
     super.key,
     this.initialCaption,
     this.sourceUrl,
     this.sourcePlatform,
     this.initialMediaPaths,
+    this.popOnSubmit = false,
   });
 
   @override
@@ -188,9 +195,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           mediaFiles: _selectedFiles.isEmpty ? null : List.of(_selectedFiles),
         );
 
-    // Navigate back to home immediately — upload continues in the background
-    // and the progress bar in HomeLayout keeps displaying.
-    Navigator.pop(context);
+    // Only pop when this screen was pushed as its own route (share flows).
+    // As the Create Post tab, popping would remove HomeLayout → blank screen;
+    // HomeLayout switches to the feed tab on upload start instead.
+    if (widget.popOnSubmit && Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
   }
 
   @override

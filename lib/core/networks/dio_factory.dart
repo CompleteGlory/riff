@@ -163,6 +163,16 @@ class DioFactory {
                 // Mark as retried to prevent infinite loop
                 requestOptions.extra['retried'] = true;
 
+                // FormData (multipart uploads) is a single-use stream — the first
+                // attempt already consumed it, so it must be re-serialized before
+                // the retry. Without this, retrying an upload after a token refresh
+                // throws, and the catch below turned that into a forced logout —
+                // which is why users got signed out after uploading anything.
+                if (requestOptions.data is FormData) {
+                  requestOptions.data =
+                      (requestOptions.data as FormData).clone();
+                }
+
                 // Retry the original request with new token
                 debugPrint('🔄 Retrying original request...');
                 final retryResponse = await dio!.fetch(requestOptions);

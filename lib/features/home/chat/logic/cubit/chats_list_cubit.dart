@@ -34,25 +34,29 @@ class ChatsListCubit extends Cubit<ChatsListState> {
   void onNewMessage(ChatMessage msg, {String? openConversationId, String? myId}) {
     final cur = state;
     if (cur is! ChatsListLoaded || isClosed) return;
-    final updated = cur.conversations.map((c) {
-      if (c.id == msg.conversationId) {
-        c.latestMessage = msg;
-        // Only increment if the user isn't actively viewing this conversation
-        // AND this message wasn't sent by the current user themselves.
-        final isOwnMessage = myId != null && myId.isNotEmpty && msg.sender?.id == myId;
-        if (c.id != openConversationId && !isOwnMessage) {
-          c.unreadCount = c.unreadCount + 1;
-        }
-        return c;
-      }
-      return c;
-    }).toList()
-      ..sort((a, b) {
-        final aTime = a.latestMessage?.createdAt ?? a.lastMessageAt ?? a.createdAt;
-        final bTime = b.latestMessage?.createdAt ?? b.lastMessageAt ?? b.createdAt;
-        return bTime.compareTo(aTime);
-      });
-    emit(ChatsListLoaded(conversations: updated, requests: cur.requests));
+
+    final idx = cur.conversations.indexWhere((c) => c.id == msg.conversationId);
+    if (idx == -1) return; // Conversation not in the list yet — nothing to move.
+
+    final conv = cur.conversations[idx];
+    conv.latestMessage = msg;
+    // Only increment if the user isn't actively viewing this conversation
+    // AND this message wasn't sent by the current user themselves.
+    final isOwnMessage = myId != null && myId.isNotEmpty && msg.sender?.id == myId;
+    if (conv.id != openConversationId && !isOwnMessage) {
+      conv.unreadCount = conv.unreadCount + 1;
+    }
+
+    // Move the conversation to the top. A new message always makes it the most
+    // recent, so we reorder explicitly rather than sort by timestamp — the socket
+    // and REST payloads can serialize `created_at` with different timezone info
+    // (naive vs. UTC `Z`), which made a timestamp comparison put new messages in
+    // the wrong position and left the list stale until an app restart.
+    final reordered = List<Conversation>.from(cur.conversations)
+      ..removeAt(idx)
+      ..insert(0, conv);
+
+    emit(ChatsListLoaded(conversations: reordered, requests: cur.requests));
   }
 
   /// Zero out the unread count for a conversation instantly (called when user
