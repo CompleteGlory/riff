@@ -17,6 +17,13 @@ set -x
 # "Framework revision"). Update this hash when you upgrade Flutter locally.
 FLUTTER_REVISION=041dc6a9a2d93d3ef9bc2994fd08545903207aee
 
+# CocoaPods must be available BEFORE `flutter build ios --config-only`,
+# because that command runs `pod install` internally.
+if ! command -v pod >/dev/null 2>&1; then
+  HOMEBREW_NO_AUTO_UPDATE=1 brew install cocoapods
+fi
+pod --version
+
 # Blob-less clone: full history + tags (needed for Flutter's version
 # detection, which `flutter pub get` uses to check pubspec constraints)
 # without downloading every historical file.
@@ -33,12 +40,10 @@ flutter pub get
 # Writes ios/Flutter/Generated.xcconfig pointing at the production entrypoint
 # (there is no lib/main.dart — only main_development.dart/main_production.dart)
 # without compiling anything; xcodebuild does the actual build afterwards.
-flutter build ios --config-only --release --flavor production -t lib/main_production.dart
-
-# Xcode Cloud images ship CocoaPods, but install it if that ever changes.
-if ! command -v pod >/dev/null 2>&1; then
-  HOMEBREW_NO_AUTO_UPDATE=1 brew install cocoapods
-fi
+# --no-codesign: during ci_post_clone no signing certificates are installed
+# yet (Xcode Cloud injects signing at archive time), so skip Flutter's
+# code-signing checks.
+flutter build ios --config-only --release --no-codesign --flavor production -t lib/main_production.dart
 
 cd ios
 pod install
