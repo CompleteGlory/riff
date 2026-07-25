@@ -32,6 +32,13 @@ git -C "$HOME/flutter" checkout "$FLUTTER_REVISION"
 export PATH="$HOME/flutter/bin:$PATH"
 
 flutter --version
+
+# Belt and braces: pubspec.yaml already pins enable-swift-package-manager to
+# false, but a fresh Flutter clone defaults it to ON, and Xcode Cloud runs
+# xcodebuild with automatic package resolution disabled — so any SPM
+# integration attempt dies demanding a checked-in Package.resolved.
+flutter config --no-enable-swift-package-manager
+
 flutter precache --ios
 
 cd "$CI_PRIMARY_REPOSITORY_PATH"
