@@ -104,6 +104,16 @@ flutter_intl:
 # The following section is specific to Flutter packages.
 flutter:
 
+  config:
+    # This project integrates its iOS plugins through CocoaPods (see ios/Podfile).
+    # Several dependencies — flutter_appauth, flutter_contacts,
+    # flutter_local_notifications, receive_sharing_intent — have no Swift Package
+    # Manager support, and Xcode Cloud disables automatic package resolution, so
+    # letting Flutter add SPM integration there fails the build asking for a
+    # checked-in Package.resolved. Pinning it here keeps CI matching local
+    # machines instead of depending on each machine's global `flutter config`.
+    enable-swift-package-manager: false
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
