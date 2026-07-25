@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- App uses only standard/exempt encryption (HTTPS/TLS). Declaring this skips
+	     the Export Compliance question on every TestFlight/App Store upload. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSContactsUsageDescription</key>
 	<string>Riff uses your contacts to find friends who are already on the app.</string>
 
@@ -40,17 +44,21 @@
 	<key>GIDClientID</key>
 	<string>369305642937-midvt5mj7r6pl9jeodkl6eqji72qs0hf.apps.googleusercontent.com</string>
 
-	<!-- Share extension: allow Riff to appear in the system share sheet -->
-	<key>NSExtension</key>
-	<dict>
-		<key>NSExtensionAttributes</key>
-		<dict>
-			<key>NSExtensionActivationRule</key>
-			<string>TRUEPREDICATE</string>
-		</dict>
-	</dict>
+	<!--
+	  NSExtension removed: this key is only valid inside an app-extension bundle's
+	  Info.plist, not the main app's. It never functioned as a share extension
+	  (there is no Share Extension target) and caused App Store validation error
+	  90190 ("Invalid Info.plist Key. The key 'NSExtension' ... is not valid").
+	  Sharing INTO Riff is handled by receive_sharing_intent + the custom URL
+	  scheme, not by this key. To support the iOS share sheet properly, add a
+	  dedicated Share Extension target (separate Info.plist) instead.
+	-->
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Riff needs microphone access to send voice messages.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Riff needs access to your photo library so you can share photos and videos in posts and chats and set your profile picture.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Riff needs camera access so you can take photos and videos to share in posts and chats.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<!-- Allow the app to process push notifications (FCM/APNs) in the background -->

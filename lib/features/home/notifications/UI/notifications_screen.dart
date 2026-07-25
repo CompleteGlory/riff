@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:riff/core/helpers/time_ago.dart';
 import 'package:riff/core/networks/api_constants.dart';
@@ -63,10 +64,19 @@ class _NotificationsBodyState extends State<_NotificationsBody>
   }
 
   Future<void> _checkPermission() async {
-    final status = await Permission.notification.status;
+    // Use FirebaseMessaging's authorization status — the source this app actually
+    // requests notification permission through. On iOS, permission_handler's
+    // `Permission.notification.status` can report `denied` even when the user has
+    // authorized notifications (they were granted via FCM, not permission_handler),
+    // which made this banner show incorrectly. `authorized` and `provisional` both
+    // mean notifications are on.
+    final settings =
+        await FirebaseMessaging.instance.getNotificationSettings();
+    final denied =
+        settings.authorizationStatus == AuthorizationStatus.denied ||
+            settings.authorizationStatus == AuthorizationStatus.notDetermined;
     if (mounted) {
-      setState(() =>
-          _notifsDenied = status.isDenied || status.isPermanentlyDenied);
+      setState(() => _notifsDenied = denied);
     }
   }
 
