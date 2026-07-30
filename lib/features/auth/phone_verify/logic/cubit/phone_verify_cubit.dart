@@ -22,10 +22,15 @@ class PhoneVerifyCubit extends Cubit<PhoneVerifyState> {
     result.when(
       success: (_) => emit(PhoneVerifyOtpSent(normalizedPhoneNumber)),
       failure: (err) {
-        final isAlreadyTaken = err.statusCode == 409;
-        emit(PhoneVerifyError(
-          isAlreadyTaken ? 'PHONE_ALREADY_TAKEN' : (err.message ?? 'Failed to send OTP'),
-        ));
+        // Sentinels instead of raw server text, so the UI can localize them.
+        // 503 means the API reached us but WhatsApp itself couldn't deliver.
+        if (err.statusCode == 409) {
+          emit(PhoneVerifyError('PHONE_ALREADY_TAKEN'));
+        } else if (err.statusCode == 503) {
+          emit(PhoneVerifyError('WHATSAPP_UNAVAILABLE'));
+        } else {
+          emit(PhoneVerifyError(err.message ?? 'Failed to send OTP'));
+        }
       },
     );
   }

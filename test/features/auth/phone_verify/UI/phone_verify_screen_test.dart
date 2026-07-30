@@ -76,6 +76,27 @@ void main() {
     expect(find.text(S.current.phoneNumberAlreadyTaken), findsOneWidget);
   });
 
+  testWidgets(
+      'shows the localized WhatsApp-unavailable snackbar for a 503, not the '
+      'server\'s English text', (tester) async {
+    when(mockRepo.sendOtp(any)).thenAnswer(
+      (_) async => ApiResult.failure(
+        ApiErrorModel(
+          statusCode: 503,
+          message: 'WhatsApp is not connected right now.',
+        ),
+      ),
+    );
+    await pumpScreen(tester);
+
+    await cubit.sendOtp('01001234567');
+    await tester.pump(); // build the snackbar
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text(S.current.phoneOtpWhatsappUnavailable), findsOneWidget);
+    expect(find.text('WhatsApp is not connected right now.'), findsNothing);
+  });
+
   testWidgets('shows the raw server message for other failures',
       (tester) async {
     when(mockRepo.sendOtp(any)).thenAnswer(

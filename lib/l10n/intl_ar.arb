@@ -336,6 +336,7 @@
   "reelsTitle": "ريلز",
   "usernameEnglishOnly": "يجب أن يحتوي اسم المستخدم على أحرف إنجليزية وأرقام وشرطات سفلية أو نقاط فقط",
   "phoneNumberAlreadyTaken": "رقم الهاتف هذا مرتبط بحساب آخر بالفعل",
+  "phoneOtpWhatsappUnavailable": "لم نتمكن من إرسال الكود على واتساب الآن. من فضلك حاول مرة أخرى بعد قليل.",
 
   "confirmPassword": "تأكيد كلمة المرور",
   "enterConfirmPassword": "أعد إدخال كلمة المرور",

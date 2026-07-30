@@ -61,6 +61,28 @@ void main() {
     );
 
     blocTest<PhoneVerifyCubit, PhoneVerifyState>(
+      'maps a 503 from the WhatsApp sender to WHATSAPP_UNAVAILABLE',
+      build: () {
+        when(mockRepo.sendOtp(any)).thenAnswer(
+          (_) async => ApiResult.failure(
+            ApiErrorModel(
+              statusCode: 503,
+              message: 'WhatsApp is not connected right now.',
+            ),
+          ),
+        );
+        return cubit;
+      },
+      act: (c) => c.sendOtp('01001234567'),
+      expect: () => [
+        isA<PhoneVerifyLoading>(),
+        // Sentinel, not the server's English text — the screen localizes it.
+        isA<PhoneVerifyError>()
+            .having((s) => s.message, 'message', 'WHATSAPP_UNAVAILABLE'),
+      ],
+    );
+
+    blocTest<PhoneVerifyCubit, PhoneVerifyState>(
       'surfaces the server message for other failures',
       build: () {
         when(mockRepo.sendOtp(any)).thenAnswer(

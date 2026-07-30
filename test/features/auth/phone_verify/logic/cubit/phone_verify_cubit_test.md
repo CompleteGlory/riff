@@ -14,8 +14,15 @@ code and in these tests.
 - Initial state is `PhoneVerifyInitial`.
 - `sendOtp`: normalizes the phone number before calling the repo and before storing it on
   `cubit.phoneNumber`; emits `[loading, otpSent(normalizedNumber)]`. A `409` from the repo maps to
-  the sentinel message `'PHONE_ALREADY_TAKEN'` (matching the UI's special-cased snackbar text);
-  any other failure passes the server's message through as-is.
+  the sentinel message `'PHONE_ALREADY_TAKEN'`, and a `503` maps to `'WHATSAPP_UNAVAILABLE'`
+  (both resolved to localized text by `_localizedError` in `phone_verify_screen.dart`); any other
+  failure passes the server's message through as-is.
+
+  The `503` case is the API reporting that it could not hand the OTP to WhatsApp. It exists
+  because the server used to answer `200 "OTP sent via WhatsApp"` even when its WhatsApp client
+  was disconnected — the code only ever reached a log line, so the app advanced to the code-entry
+  screen for an OTP that was never delivered. The sentinel is asserted here rather than the
+  server's English string precisely so that a regression to raw pass-through text fails.
 - `verifyOtp`: emits `[loading, success]` using the phone number captured by an earlier `sendOtp`
   call (there's no setter — the only way to get a phone number into the cubit from a test is to
   actually call `sendOtp` first); guards against being called with **no** phone number yet (no-op,
