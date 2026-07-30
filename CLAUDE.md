@@ -394,7 +394,25 @@ FIREBASE_SERVICE_ACCOUNT_JSON=
 SPOTIFY_CLIENT_ID=
 SPOTIFY_CLIENT_SECRET=
 
-# WhatsApp (phone OTP delivery, via @whiskeysockets/baileys — WebSocket
+# WhatsApp OTP delivery has TWO transports. SendPhoneOtp prefers Meta's
+# official Business Cloud API whenever its credentials are set, and falls back
+# to the Baileys socket otherwise. The Cloud API is the production path:
+# error 463 ("account restricted or missing tctoken") proved that unofficial
+# clients cannot reliably message cold contacts — which is every OTP recipient.
+
+# ── Cloud API (preferred) ───────────────────────────────────────────────────
+# Permanent System User token from Meta Business settings.
+WHATSAPP_CLOUD_ACCESS_TOKEN=
+# The sender number's "Phone number ID" from the app's WhatsApp > API Setup.
+WHATSAPP_CLOUD_PHONE_NUMBER_ID=
+# Approved AUTHENTICATION-category template name. Default riff_otp.
+WHATSAPP_CLOUD_OTP_TEMPLATE=
+# Template language code, must match the template exactly. Default en.
+WHATSAPP_CLOUD_TEMPLATE_LANG=
+# Graph API version. Default v23.0.
+WHATSAPP_CLOUD_API_VERSION=
+
+# ── Baileys socket (fallback, via @whiskeysockets/baileys — WebSocket
 # protocol, NO Chrome/puppeteer). Credentials live in a baileys/ subdirectory
 # of WHATSAPP_SESSION_PATH; it must point inside the mounted Railway Volume or
 # the linked session is lost on every redeploy.
