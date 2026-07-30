@@ -337,6 +337,9 @@
   "usernameEnglishOnly": "يجب أن يحتوي اسم المستخدم على أحرف إنجليزية وأرقام وشرطات سفلية أو نقاط فقط",
   "phoneNumberAlreadyTaken": "رقم الهاتف هذا مرتبط بحساب آخر بالفعل",
   "phoneOtpWhatsappUnavailable": "لم نتمكن من إرسال الكود على واتساب الآن. من فضلك حاول مرة أخرى بعد قليل.",
+  "confirmPhoneSection": "رقم الهاتف",
+  "confirmPhoneTile": "أكّد رقم هاتفك",
+  "confirmPhoneSub": "تحقق من رقمك بكود يُرسل على واتساب",
 
   "confirmPassword": "تأكيد كلمة المرور",
   "enterConfirmPassword": "أعد إدخال كلمة المرور",

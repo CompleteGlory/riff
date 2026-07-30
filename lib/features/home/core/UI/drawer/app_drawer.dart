@@ -102,18 +102,32 @@ class AppDrawer extends StatelessWidget {
           const SizedBox(height: 4),
 
           // Account Settings
-          _DrawerItem(
-            isDark: isDark,
-            icon: Icons.manage_accounts_outlined,
-            iconColor: const Color(0xFF30B0C7),
-            title: s.accountSettingsDrawer,
-            subtitle: s.accountSettingsSub,
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(
-                context,
-                Routes.accountSettings,
-                arguments: isPrivate,
+          BlocBuilder<HomeCubit, HomeState>(
+            builder: (context, homeState) {
+              // Same source as Profile Settings above: screens[4] is a
+              // ProfileScreen once the user is loaded.
+              final screen = context.read<HomeCubit>().screens[4];
+              final UserProfile? profile =
+                  screen is ProfileScreen ? screen.profile : null;
+
+              return _DrawerItem(
+                isDark: isDark,
+                icon: Icons.manage_accounts_outlined,
+                iconColor: const Color(0xFF30B0C7),
+                title: s.accountSettingsDrawer,
+                subtitle: s.accountSettingsSub,
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(
+                    context,
+                    Routes.accountSettings,
+                    // Treat "profile not loaded yet" as verified: the settings
+                    // screen refetches on open, and guessing false here would
+                    // flash a "confirm your number" prompt at users who have
+                    // already confirmed.
+                    arguments: (isPrivate, profile?.phoneVerified ?? true),
+                  );
+                },
               );
             },
           ),

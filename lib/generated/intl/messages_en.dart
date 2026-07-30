@@ -193,6 +193,13 @@ class MessageLookup extends MessageLookupByLibrary {
       "Confirm New Password",
     ),
     "confirmPassword": MessageLookupByLibrary.simpleMessage("Confirm Password"),
+    "confirmPhoneSection": MessageLookupByLibrary.simpleMessage("Phone number"),
+    "confirmPhoneSub": MessageLookupByLibrary.simpleMessage(
+      "Verify your number with a code sent on WhatsApp",
+    ),
+    "confirmPhoneTile": MessageLookupByLibrary.simpleMessage(
+      "Confirm your phone number",
+    ),
     "contactsSyncedNoneOnRiff": MessageLookupByLibrary.simpleMessage(
       "Contacts synced — none of your contacts are on Riff yet.",
     ),

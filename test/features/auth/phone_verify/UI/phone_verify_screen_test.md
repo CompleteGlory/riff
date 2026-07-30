@@ -30,6 +30,12 @@ special case), and the navigation to `PhoneOtpScreen` on success.
   `_localizedError` maps to ARB strings, so a regression that leaks raw server text fails here.
   Any other failure still shows the server's raw message.
 - Success navigates to `PhoneOtpScreen` with the phone number interpolated into its subtitle.
+- **`onVerified` fork.** Both screens take an optional `onVerified` callback. Left null (the
+  signup path) the OTP screen does `pushNamedAndRemoveUntil` to onboarding; supplied (the account
+  settings path, wired in `app_router.dart`) it runs the callback *instead*, because a user
+  confirming a number mid-session must not be dropped into onboarding. The tests assert the
+  callback fires exactly once on success, that the screen doesn't also run the onboarding push,
+  and that it does not fire while verification is still in flight.
 
 ## Two timing pitfalls this test suite caught
 

@@ -202,9 +202,31 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const AboutUsScreen());
 
       case Routes.accountSettings:
-        final isPrivate = settings.arguments as bool? ?? false;
+        final args = settings.arguments as (bool, bool)?;
         return MaterialPageRoute(
-          builder: (_) => AccountSettingsScreen(initialIsPrivate: isPrivate),
+          builder: (_) => AccountSettingsScreen(
+            initialIsPrivate: args?.$1 ?? false,
+            // Defaults to verified so an unknown state never nags the user.
+            initialPhoneVerified: args?.$2 ?? true,
+          ),
+        );
+
+      case Routes.confirmPhone:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => getIt<PhoneVerifyCubit>(),
+            child: PhoneVerifyScreen(
+              onVerified: (context) {
+                final nav = Navigator.of(context);
+                // The OTP step is pushed unnamed on top of this route, so wind
+                // back to it first, then pop the route itself with `true` —
+                // account settings awaits that to refresh and drop the
+                // "confirm your number" entry.
+                nav.popUntil((r) => r.settings.name == Routes.confirmPhone);
+                nav.pop(true);
+              },
+            ),
+          ),
         );
 
       case Routes.changePassword:

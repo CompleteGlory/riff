@@ -306,6 +306,29 @@ The same repo/cubit/widget layering was applied to the rest of `lib/features/aut
 | `phone_verify` | [phone_verify_repo_test.md](test/features/auth/phone_verify/data/repos/phone_verify_repo_test.md) | [phone_verify_cubit_test.md](test/features/auth/phone_verify/logic/cubit/phone_verify_cubit_test.md) | [phone_verify_screen_test.md](test/features/auth/phone_verify/UI/phone_verify_screen_test.md) |
 | `new_user_onboarding` | [suggested_users_repo_test.md](test/features/auth/new_user_onboarding/data/repos/suggested_users_repo_test.md) | *(no cubit — screen calls the repo directly)* | *(not covered — see below)* |
 
+### Phone confirmation from account settings
+
+The same phone flow is reachable from two places, and the tests are split to match:
+
+| Layer | Test | Doc |
+| --- | --- | --- |
+| Model (`GET /api/users/me` parsing) | `test/features/home/profile/user_profile_phone_fields_test.dart` | [user_profile_phone_fields_test.md](test/features/home/profile/user_profile_phone_fields_test.md) |
+| Widget — conditional entry | `test/features/home/account_settings/UI/account_settings_phone_tile_test.dart` | [account_settings_phone_tile_test.md](test/features/home/account_settings/UI/account_settings_phone_tile_test.md) |
+
+`PhoneVerifyScreen`/`PhoneOtpScreen` are shared between signup and settings rather than
+duplicated. They take an optional `onVerified` callback: null keeps the signup behaviour
+(`pushNamedAndRemoveUntil` to onboarding), and `app_router.dart` passes one for
+`Routes.confirmPhone` that pops back with `true` so account settings can retire the entry. This is
+the same optional-callback-with-a-real-default pattern used for the plugin-backed calls above.
+
+Two things worth knowing before touching this area:
+
+- `phone_verified` missing from the `me` payload parses as **true**, not false. Absent means
+  "unknown", and unknown must stay quiet — defaulting to false would prompt every user on a
+  client running against an older API.
+- `_SectionHeader` in `account_settings_screen.dart` renders `title.toUpperCase()`, so widget
+  tests must match the uppercased string, not the raw ARB value.
+
 **Deliberately not covered:** `new_user_onboarding_screen.dart` (reaches into `getIt<...>()`
 directly in field initializers instead of via constructor injection, and drives `image_picker` +
 `flutter_contacts` + `permission_handler`), `onboarding_screen.dart` and the `user-prefrences/`

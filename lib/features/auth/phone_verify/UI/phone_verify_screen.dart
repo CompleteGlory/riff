@@ -31,7 +31,15 @@ String _localizedError(BuildContext context, String message) {
 
 /// Step 1 — enter phone number and receive WhatsApp OTP
 class PhoneVerifyScreen extends StatefulWidget {
-  const PhoneVerifyScreen({super.key});
+  const PhoneVerifyScreen({super.key, this.onVerified});
+
+  /// What to do once the OTP is confirmed, forwarded to [PhoneOtpScreen].
+  ///
+  /// Defaults to the signup behaviour (clear the stack and continue to
+  /// onboarding). Account settings passes a callback that pops back instead —
+  /// a user confirming a number from settings is mid-session, and sending them
+  /// through onboarding would be wrong.
+  final void Function(BuildContext context)? onVerified;
 
   @override
   State<PhoneVerifyScreen> createState() => _PhoneVerifyScreenState();
@@ -57,7 +65,10 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen> {
                 MaterialPageRoute(
                   builder: (_) => BlocProvider.value(
                     value: context.read<PhoneVerifyCubit>(),
-                    child: PhoneOtpScreen(phoneNumber: state.phoneNumber),
+                    child: PhoneOtpScreen(
+                      phoneNumber: state.phoneNumber,
+                      onVerified: widget.onVerified,
+                    ),
                   ),
                 ),
               );
@@ -220,7 +231,16 @@ class WhatsAppIcon extends StatelessWidget {
 
 class PhoneOtpScreen extends StatefulWidget {
   final String phoneNumber;
-  const PhoneOtpScreen({super.key, required this.phoneNumber});
+
+  /// What to do once the OTP is confirmed. Defaults to the signup behaviour:
+  /// clear the stack and continue to onboarding. See [PhoneVerifyScreen].
+  final void Function(BuildContext context)? onVerified;
+
+  const PhoneOtpScreen({
+    super.key,
+    required this.phoneNumber,
+    this.onVerified,
+  });
 
   @override
   State<PhoneOtpScreen> createState() => _PhoneOtpScreenState();
@@ -306,11 +326,16 @@ class _PhoneOtpScreenState extends State<PhoneOtpScreen> {
         child: BlocConsumer<PhoneVerifyCubit, PhoneVerifyState>(
           listener: (context, state) {
             if (state is PhoneVerifySuccess) {
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                Routes.newUserOnboarding,
-                (r) => false,
-              );
+              final onVerified = widget.onVerified;
+              if (onVerified != null) {
+                onVerified(context);
+              } else {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  Routes.newUserOnboarding,
+                  (r) => false,
+                );
+              }
             } else if (state is PhoneVerifyError) {
               _hiddenCtl.clear();
               WidgetsBinding.instance.addPostFrameCallback((_) {

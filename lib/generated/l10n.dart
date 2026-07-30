@@ -2684,6 +2684,36 @@ class S {
     );
   }
 
+  /// `Phone number`
+  String get confirmPhoneSection {
+    return Intl.message(
+      'Phone number',
+      name: 'confirmPhoneSection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Confirm your phone number`
+  String get confirmPhoneTile {
+    return Intl.message(
+      'Confirm your phone number',
+      name: 'confirmPhoneTile',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Verify your number with a code sent on WhatsApp`
+  String get confirmPhoneSub {
+    return Intl.message(
+      'Verify your number with a code sent on WhatsApp',
+      name: 'confirmPhoneSub',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Confirm Password`
   String get confirmPassword {
     return Intl.message(
