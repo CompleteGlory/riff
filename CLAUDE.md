@@ -353,6 +353,7 @@ full widget test.
 | Phone OTP never arrived on WhatsApp, but the API reported success | `WhatsAppService` (API), `PhoneVerifyCubit`, `phone_verify_screen.dart` | Two separate bugs. **(1) Silent-success lie:** `sendMessage()` logged the OTP and `return`ed normally when the client wasn't ready, so `POST /api/auth/phone/send-otp` answered `200 {message:'OTP sent via WhatsApp'}` and the app advanced to the code-entry screen for a code that only existed in a Railway log line. It now throws `ServiceUnavailableException` (503) → cubit emits the `WHATSAPP_UNAVAILABLE` sentinel → localized snackbar. **(2) Client wedged after auth:** Chrome ran without `--disable-dev-shm-usage`, so the 64MB `/dev/shm` in the container starved WhatsApp Web's initial app-state sync and the renderer stalled *after* `authenticated`. `ready` is emitted from the same `exposeFunction` callback as `authenticated` in whatsapp-web.js, so the throw between them was swallowed by Puppeteer and never logged — the only symptom was `AUTHENTICATED` with no `READY`, forever. Added the container Chrome flags, a `READY_TIMEOUT_MS` watchdog that logs page/connection diagnostics and rebuilds the client, `disconnected` auto-restart with bounded backoff, and `getNumberId()` + `message_ack` so a send is verified rather than assumed |
 | Chrome's cache filling the WhatsApp session volume | `WhatsAppService` (API) | `LocalAuth`'s directory doubles as Chrome's `user-data-dir`, so every cached byte landed on the same 500MB Railway volume holding the linked session — it hit 274MB, and a full volume unlinks WhatsApp and forces a QR rescan. Pointed `--disk-cache-dir` at ephemeral container disk (`/tmp`) so the volume only carries session state, and added a boot-time prune of the disposable cache dirs to reclaim what had already accumulated (`--disk-cache-size` alone capped the rate but not the destination, and never covered the GPU/shader caches Chrome writes into the profile regardless). The prune is a strict allowlist, never a glob: the same profile holds WhatsApp's login state in `IndexedDB`/`Local Storage`/`Local State`, so a glob would unlink the account. It runs before Chrome launches and never throws — failing to reclaim disk must not take OTP delivery down |
 | `puppeteer.executablePath()` await dropped | `WhatsAppService.initializeClient` | Chrome got the literal path `[object Promise]` and never launched (`Browser was not found at the configured executablePath`). puppeteer 25 resolves a Promise here, but types `executablePath` as an overloaded callable loose enough that the missing `await` type-checks clean and only fails at runtime — `tsc` and eslint both passed. Restored the `await` plus an assert that the resolved value is a non-empty string |
+| OTP sends silently dead for LID-migrated WhatsApp accounts | `WhatsAppService` (API) — resolved by migrating to Baileys | whatsapp-web.js resolved recipients to privacy Linked IDs (`<digits>@lid`) and its injected send path returned **no message id** for them — for both the `@lid` and phone-form `@c.us` routes. 1.34.7 was the latest release, main had no fix, and the wa-version mirror had pruned every compatible web build, killing the pin escape hatch. Migrated the service to `@whiskeysockets/baileys` (WebSocket protocol, no Chrome, native LID handling), same public interface — which also permanently retired the whole Chrome-in-container problem class above (`/dev/shm`, profile locks, volume-filling caches, the ~150MB Chrome download every deploy). Linking is by pairing code (`WHATSAPP_PAIR_PHONE_NUMBER`) with QR fallback |
 
 ---
 
@@ -393,36 +394,30 @@ FIREBASE_SERVICE_ACCOUNT_JSON=
 SPOTIFY_CLIENT_ID=
 SPOTIFY_CLIENT_SECRET=
 
-# WhatsApp (phone OTP delivery, via whatsapp-web.js + headless Chrome)
-# Must point inside the mounted Railway Volume, or the linked session is lost
-# on every redeploy and the QR has to be rescanned.
+# WhatsApp (phone OTP delivery, via @whiskeysockets/baileys — WebSocket
+# protocol, NO Chrome/puppeteer). Credentials live in a baileys/ subdirectory
+# of WHATSAPP_SESSION_PATH; it must point inside the mounted Railway Volume or
+# the linked session is lost on every redeploy.
+#
+# History: this ran on whatsapp-web.js + headless Chrome until July 2026, when
+# WhatsApp's LID (privacy Linked ID) migration broke its send path terminally —
+# sends returned no message id for LID-resolved accounts on the latest release,
+# with no fix on main and no compatible web-version pin left in the wa-version
+# mirror. Do not migrate back.
 WHATSAPP_SESSION_PATH=/data/.whatsapp-session
-# Optional. Seconds-to-ready watchdog before the client is declared wedged
-# and rebuilt. Default 120000.
-WHATSAPP_READY_TIMEOUT_MS=
-# Optional. How long a send waits for a still-starting client. Default 20000.
-WHATSAPP_SEND_WAIT_MS=
-# Optional. Bounded client rebuild attempts. Default 3.
-WHATSAPP_MAX_RESTARTS=
 # The sending WhatsApp account's own number, digits only, international form.
-# Setting it links by 8-character PAIRING CODE instead of QR — the only
-# workable mode on a hosted service. WhatsApp rotates a QR every ~20s, which is
-# less time than it takes to copy the payload out of a log viewer, render it and
-# scan it, so QR relinking presents as "corrupt/unscannable" codes. Unset it to
-# fall back to QR.
+# Setting it links by 8-character PAIRING CODE typed into the phone (WhatsApp >
+# Linked Devices > "Link with phone number instead") — far more reliable from a
+# hosted log viewer than a QR that rotates every ~20s. Unset = QR fallback.
 WHATSAPP_PAIR_PHONE_NUMBER=
-# Optional. Where Chrome's HTTP cache goes. Default /tmp/wwebjs-chrome-cache.
-# Must stay OFF the mounted volume: the LocalAuth dir doubles as Chrome's
-# user-data-dir, so a cache pointed at /data fills the volume that holds the
-# linked session, and a full volume forces a QR rescan.
-WHATSAPP_CHROME_CACHE_DIR=
-# Optional escape hatch. Pin a specific WhatsApp Web build from the wa-version
-# mirror (e.g. 2.3000.1023204620) when the version whatsapp-web.js defaults to
-# stops reaching `ready`.
-WHATSAPP_WEB_VERSION=
+# Optional. How long a send waits for a still-starting socket. Default 20000.
+WHATSAPP_SEND_WAIT_MS=
+# Optional. Bounded socket reconnect attempts. Default 3. (A post-pairing
+# restartRequired close is protocol, not failure, and doesn't consume one.)
+WHATSAPP_MAX_RESTARTS=
 # LOCAL DEV ONLY. 'true' logs the OTP instead of sending it, so the flow can be
-# tested without a linked phone. Never enable in production — it puts live OTP
-# codes in the logs.
+# tested without a linked account. Never enable in production — it puts live
+# OTP codes in the logs.
 WHATSAPP_LOG_OTP=
 ```
 
