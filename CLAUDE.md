@@ -381,6 +381,13 @@ WHATSAPP_READY_TIMEOUT_MS=
 WHATSAPP_SEND_WAIT_MS=
 # Optional. Bounded client rebuild attempts. Default 3.
 WHATSAPP_MAX_RESTARTS=
+# The sending WhatsApp account's own number, digits only, international form.
+# Setting it links by 8-character PAIRING CODE instead of QR — the only
+# workable mode on a hosted service. WhatsApp rotates a QR every ~20s, which is
+# less time than it takes to copy the payload out of a log viewer, render it and
+# scan it, so QR relinking presents as "corrupt/unscannable" codes. Unset it to
+# fall back to QR.
+WHATSAPP_PAIR_PHONE_NUMBER=
 # Optional. Where Chrome's HTTP cache goes. Default /tmp/wwebjs-chrome-cache.
 # Must stay OFF the mounted volume: the LocalAuth dir doubles as Chrome's
 # user-data-dir, so a cache pointed at /data fills the volume that holds the
