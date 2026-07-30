@@ -15,6 +15,20 @@ import 'package:riff/features/auth/phone_verify/logic/cubit/phone_verify_cubit.d
 import 'package:riff/features/auth/phone_verify/logic/cubit/phone_verify_state.dart';
 import 'package:riff/generated/l10n.dart';
 
+/// The cubit emits sentinels rather than server text for the failures we have
+/// translations for, so they can be localized here. Anything else is already a
+/// human-readable message and passes through unchanged.
+String _localizedError(BuildContext context, String message) {
+  switch (message) {
+    case 'PHONE_ALREADY_TAKEN':
+      return S.of(context).phoneNumberAlreadyTaken;
+    case 'WHATSAPP_UNAVAILABLE':
+      return S.of(context).phoneOtpWhatsappUnavailable;
+    default:
+      return message;
+  }
+}
+
 /// Step 1 — enter phone number and receive WhatsApp OTP
 class PhoneVerifyScreen extends StatefulWidget {
   const PhoneVerifyScreen({super.key});
@@ -50,7 +64,7 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen> {
             } else if (state is PhoneVerifyError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(state.message == 'PHONE_ALREADY_TAKEN' ? S.of(context).phoneNumberAlreadyTaken : state.message),
+                  content: Text(_localizedError(context, state.message)),
                   backgroundColor: Colors.red,
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -304,7 +318,7 @@ class _PhoneOtpScreenState extends State<PhoneOtpScreen> {
               });
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(state.message == 'PHONE_ALREADY_TAKEN' ? S.of(context).phoneNumberAlreadyTaken : state.message),
+                  content: Text(_localizedError(context, state.message)),
                   backgroundColor: Colors.red,
                   behavior: SnackBarBehavior.floating,
                 ),

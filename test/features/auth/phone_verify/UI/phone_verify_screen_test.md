@@ -23,8 +23,12 @@ special case), and the navigation to `PhoneOtpScreen` on success.
 
 - Renders the initial "Send OTP via WhatsApp" button.
 - Shows the "Sending…" label while the cubit is `Loading`.
-- A `409` (phone already taken) shows the localized "already taken" snackbar; any other failure
-  shows the server's raw message.
+- A `409` (phone already taken) shows the localized "already taken" snackbar, and a `503`
+  (the API could not hand the OTP to WhatsApp) shows the localized
+  `phoneOtpWhatsappUnavailable` snackbar. The `503` test also asserts the server's English
+  message is **not** rendered — the cubit converts both statuses to sentinels that
+  `_localizedError` maps to ARB strings, so a regression that leaks raw server text fails here.
+  Any other failure still shows the server's raw message.
 - Success navigates to `PhoneOtpScreen` with the phone number interpolated into its subtitle.
 
 ## Two timing pitfalls this test suite caught

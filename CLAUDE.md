@@ -77,7 +77,16 @@ lib/core/
 ### How it works
 - ARB files: `lib/l10n/intl_en.arb` (English) and `lib/l10n/intl_ar.arb` (Arabic)
 - Generated class: `lib/generated/l10n.dart` — `S` class, accessed via `S.of(context).keyName`
-- Run `flutter gen-l10n` after editing ARB files to regenerate
+- Regenerate after editing ARB files with:
+
+  ```bash
+  dart run intl_utils:generate
+  ```
+
+  **Not** `flutter gen-l10n`. This project generates the `S` class with `intl_utils` (configured
+  under `flutter_intl:` in `pubspec.yaml`, output to `lib/generated/`), and `flutter:
+  generate: true` is deliberately not set — `flutter gen-l10n` just fails with "Attempted to
+  generate localizations code without having the flutter: generate flag turned on."
 
 ### Adding a new string
 1. Add the key + English value to `lib/l10n/intl_en.arb`
@@ -318,6 +327,7 @@ full widget test.
 | `LoginCubit` state stream untyped | `LoginCubit` | Declared as raw `Cubit<LoginState>` (`T` resolved to `dynamic`) instead of `Cubit<LoginState<LoginResponse>>` |
 | `SignupCubit` state stream untyped | `SignupCubit` | Same as above — raw `Cubit<SignupState>` widened to `Cubit<SignupState<void>>` (signup's response payload is never read downstream) |
 | `ForgotPasswordCubit` emit methods un-awaitable | `ForgotPasswordCubit` | `emitForgotPasswordStates`/`emitVerifyOtpState`/`emitResetPasswordState` were declared `void ... async` instead of `Future<void> ... async` — callers (and tests) couldn't `await` completion; widened the return type (backward-compatible, no call site needed to change) |
+| Phone OTP never arrived on WhatsApp, but the API reported success | `WhatsAppService` (API), `PhoneVerifyCubit`, `phone_verify_screen.dart` | Two separate bugs. **(1) Silent-success lie:** `sendMessage()` logged the OTP and `return`ed normally when the client wasn't ready, so `POST /api/auth/phone/send-otp` answered `200 {message:'OTP sent via WhatsApp'}` and the app advanced to the code-entry screen for a code that only existed in a Railway log line. It now throws `ServiceUnavailableException` (503) → cubit emits the `WHATSAPP_UNAVAILABLE` sentinel → localized snackbar. **(2) Client wedged after auth:** Chrome ran without `--disable-dev-shm-usage`, so the 64MB `/dev/shm` in the container starved WhatsApp Web's initial app-state sync and the renderer stalled *after* `authenticated`. `ready` is emitted from the same `exposeFunction` callback as `authenticated` in whatsapp-web.js, so the throw between them was swallowed by Puppeteer and never logged — the only symptom was `AUTHENTICATED` with no `READY`, forever. Added the container Chrome flags, a `READY_TIMEOUT_MS` watchdog that logs page/connection diagnostics and rebuilds the client, `disconnected` auto-restart with bounded backoff, disk-cache caps (the LocalAuth dir *is* Chrome's user-data-dir inside the 500MB Railway volume), and `getNumberId()` + `message_ack` so a send is verified rather than assumed |
 
 ---
 
@@ -357,6 +367,26 @@ FIREBASE_SERVICE_ACCOUNT_JSON=
 # Spotify
 SPOTIFY_CLIENT_ID=
 SPOTIFY_CLIENT_SECRET=
+
+# WhatsApp (phone OTP delivery, via whatsapp-web.js + headless Chrome)
+# Must point inside the mounted Railway Volume, or the linked session is lost
+# on every redeploy and the QR has to be rescanned.
+WHATSAPP_SESSION_PATH=/data/.whatsapp-session
+# Optional. Seconds-to-ready watchdog before the client is declared wedged
+# and rebuilt. Default 120000.
+WHATSAPP_READY_TIMEOUT_MS=
+# Optional. How long a send waits for a still-starting client. Default 20000.
+WHATSAPP_SEND_WAIT_MS=
+# Optional. Bounded client rebuild attempts. Default 3.
+WHATSAPP_MAX_RESTARTS=
+# Optional escape hatch. Pin a specific WhatsApp Web build from the wa-version
+# mirror (e.g. 2.3000.1023204620) when the version whatsapp-web.js defaults to
+# stops reaching `ready`.
+WHATSAPP_WEB_VERSION=
+# LOCAL DEV ONLY. 'true' logs the OTP instead of sending it, so the flow can be
+# tested without a linked phone. Never enable in production — it puts live OTP
+# codes in the logs.
+WHATSAPP_LOG_OTP=
 ```
 
 ---

@@ -366,6 +366,7 @@
   "reelsTitle": "Reels",
   "usernameEnglishOnly": "Username must contain only English letters, numbers, underscores or dots",
   "phoneNumberAlreadyTaken": "This phone number is already linked to another account",
+  "phoneOtpWhatsappUnavailable": "We couldn't send your code on WhatsApp right now. Please try again in a moment.",
 
   "confirmPassword": "Confirm Password",
   "enterConfirmPassword": "Re-enter your password",
