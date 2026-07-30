@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
@@ -27,12 +28,15 @@ void main() {
 
   tearDown(() => cubit.close());
 
-  Future<void> pumpScreen(WidgetTester tester) async {
+  Future<void> pumpScreen(
+    WidgetTester tester, {
+    void Function(BuildContext context)? onVerified,
+  }) async {
     await pumpApp(
       tester,
       BlocProvider<PhoneVerifyCubit>.value(
         value: cubit,
-        child: const PhoneVerifyScreen(),
+        child: PhoneVerifyScreen(onVerified: onVerified),
       ),
     );
   }
@@ -126,5 +130,61 @@ void main() {
 
     expect(find.byType(PhoneOtpScreen), findsOneWidget);
     expect(find.text(S.current.weSentWhatsAppTo('01001234567')), findsOneWidget);
+  });
+
+  group('onVerified', () {
+    // The signup flow leaves this null and gets pushNamedAndRemoveUntil to
+    // onboarding. Account settings passes a callback that pops back instead,
+    // because a user confirming a number mid-session must not be dropped into
+    // onboarding. These cover the fork rather than the destination.
+
+    testWidgets('is forwarded to the OTP step and invoked on success',
+        (tester) async {
+      when(mockRepo.sendOtp(any))
+          .thenAnswer((_) async => const ApiResult.success(null));
+      when(mockRepo.verifyOtp(any, any))
+          .thenAnswer((_) async => const ApiResult.success(null));
+
+      var called = 0;
+      await pumpScreen(tester, onVerified: (_) => called++);
+
+      await cubit.sendOtp('01001234567');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(PhoneOtpScreen), findsOneWidget);
+
+      await cubit.verifyOtp('123456');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(called, 1);
+      // Still on the OTP screen: the callback owns navigation, so the screen
+      // must not also run the onboarding push.
+      expect(find.byType(PhoneOtpScreen), findsOneWidget);
+    });
+
+    testWidgets('is not invoked while the OTP is still being verified',
+        (tester) async {
+      when(mockRepo.sendOtp(any))
+          .thenAnswer((_) async => const ApiResult.success(null));
+      when(mockRepo.verifyOtp(any, any)).thenAnswer((_) async {
+        await Future.delayed(const Duration(milliseconds: 300));
+        return const ApiResult.success(null);
+      });
+
+      var called = 0;
+      await pumpScreen(tester, onVerified: (_) => called++);
+
+      await cubit.sendOtp('01001234567');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      cubit.verifyOtp('123456'); // deliberately not awaited
+      await tester.pump();
+      expect(called, 0, reason: 'still loading — no success state yet');
+
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(called, 1);
+    });
   });
 }

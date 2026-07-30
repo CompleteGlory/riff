@@ -35,4 +35,8 @@ class Routes {
   // Account settings
   static const String accountSettings = '/accountSettings';
   static const String changePassword = '/changePassword';
+
+  /// Same phone flow as [phoneVerify], entered from account settings instead of
+  /// signup: it pops back on success rather than continuing to onboarding.
+  static const String confirmPhone = '/confirmPhone';
 }

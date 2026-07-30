@@ -87,6 +87,11 @@ class UserProfile {
   final String? profileImageUrl;
   final int followersCount;
   final int followingCount;
+  final String? phoneNumber;
+
+  /// False until the number has been confirmed by OTP. Account settings shows
+  /// the "confirm your phone number" entry only while this is false.
+  final bool phoneVerified;
 
   const UserProfile({
     required this.id,
@@ -100,6 +105,8 @@ class UserProfile {
     this.profileImageUrl,
     this.followersCount = 0,
     this.followingCount = 0,
+    this.phoneNumber,
+    this.phoneVerified = false,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -114,6 +121,10 @@ class UserProfile {
         profileImageUrl: json['profile_image_url'],
         followersCount: json['followersCount'] as int? ?? 0,
         followingCount: json['followingCount'] as int? ?? 0,
+        phoneNumber: json['phone_number'] as String?,
+        // Defaults to true when the key is absent, so a client running against
+        // an older API doesn't nag every user to confirm a number it can't see.
+        phoneVerified: json['phone_verified'] as bool? ?? true,
       );
 }
 

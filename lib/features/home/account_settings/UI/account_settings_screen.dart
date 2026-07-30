@@ -11,7 +11,17 @@ import 'package:riff/generated/l10n.dart';
 
 class AccountSettingsScreen extends StatefulWidget {
   final bool initialIsPrivate;
-  const AccountSettingsScreen({super.key, this.initialIsPrivate = false});
+
+  /// Whether the user's phone number has already been confirmed by OTP. The
+  /// "confirm your phone number" entry is shown only while this is false.
+  /// Defaults to true so an unknown state never nags the user.
+  final bool initialPhoneVerified;
+
+  const AccountSettingsScreen({
+    super.key,
+    this.initialIsPrivate = false,
+    this.initialPhoneVerified = true,
+  });
 
   @override
   State<AccountSettingsScreen> createState() => _AccountSettingsScreenState();
@@ -19,12 +29,27 @@ class AccountSettingsScreen extends StatefulWidget {
 
 class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
   late bool _isPrivate;
+  late bool _phoneVerified;
   bool _privacyLoading = false;
 
   @override
   void initState() {
     super.initState();
     _isPrivate = widget.initialIsPrivate;
+    _phoneVerified = widget.initialPhoneVerified;
+  }
+
+  Future<void> _openConfirmPhone() async {
+    final confirmed = await Navigator.pushNamed<Object?>(
+      context,
+      Routes.confirmPhone,
+    );
+
+    // The flow pops `true` once the OTP is accepted, which is what retires the
+    // entry — without this the tile would linger until the next app launch.
+    if (confirmed == true && mounted) {
+      setState(() => _phoneVerified = true);
+    }
   }
 
   Future<void> _togglePrivacy() async {
@@ -143,6 +168,63 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
           ],
 
           SizedBox(height: 24.h),
+
+          // ── Phone confirmation ────────────────────────────────────────────
+          // Only while unconfirmed — once the number is verified by OTP there
+          // is nothing left to do here, so the whole section goes away.
+          if (!_phoneVerified) ...[
+            _SectionHeader(s.confirmPhoneSection),
+            SizedBox(height: 8.h),
+            Container(
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(14.r),
+                boxShadow: shadow,
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14.r),
+                onTap: _openConfirmPhone,
+                child: Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                  child: Row(children: [
+                    Container(
+                      width: 36.r,
+                      height: 36.r,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF34C759).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(9.r),
+                      ),
+                      child: const Icon(Icons.phone_android_rounded,
+                          color: Color(0xFF34C759), size: 20),
+                    ),
+                    SizedBox(width: 14.w),
+                    Expanded(
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(s.confirmPhoneTile,
+                                style: TextStyles.font14semiBold.copyWith(
+                                    color: isDark
+                                        ? Colors.white
+                                        : ColorManager.primaryBlack)),
+                            SizedBox(height: 2.h),
+                            Text(s.confirmPhoneSub,
+                                style: TextStyles.font12Medium
+                                    .copyWith(color: ColorManager.normalGrey)),
+                          ]),
+                    ),
+                    Icon(Icons.arrow_forward_ios_rounded,
+                        size: 14,
+                        color: isDark
+                            ? const Color(0xFF555555)
+                            : const Color(0xFFBBBBBB)),
+                  ]),
+                ),
+              ),
+            ),
+            SizedBox(height: 24.h),
+          ],
 
           // ── Security ──────────────────────────────────────────────────────
           _SectionHeader(s.changePasswordTitle),

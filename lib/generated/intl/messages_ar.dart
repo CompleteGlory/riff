@@ -192,6 +192,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "confirmPassword": MessageLookupByLibrary.simpleMessage(
       "تأكيد كلمة المرور",
     ),
+    "confirmPhoneSection": MessageLookupByLibrary.simpleMessage("رقم الهاتف"),
+    "confirmPhoneSub": MessageLookupByLibrary.simpleMessage(
+      "تحقق من رقمك بكود يُرسل على واتساب",
+    ),
+    "confirmPhoneTile": MessageLookupByLibrary.simpleMessage("أكّد رقم هاتفك"),
     "contactsSyncedNoneOnRiff": MessageLookupByLibrary.simpleMessage(
       "تمت المزامنة — لا توجد جهات اتصال على Riff بعد.",
     ),
