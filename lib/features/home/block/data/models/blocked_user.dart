@@ -1,3 +1,5 @@
+import 'package:riff/core/helpers/app_date_time.dart';
+
 class BlockedUser {
   final String id;
   final String username;
@@ -18,6 +20,6 @@ class BlockedUser {
         username: j['username'] as String,
         fullName: j['full_name'] as String,
         profileImageUrl: j['profile_image_url'] as String?,
-        blockedAt: DateTime.tryParse(j['blocked_at'] as String? ?? '') ?? DateTime.now(),
+        blockedAt: parseServerDateTimeOr(j['blocked_at'] as String?),
       );
 }

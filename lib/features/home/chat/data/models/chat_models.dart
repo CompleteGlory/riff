@@ -1,4 +1,5 @@
 // Chat data models — Conversation, Message, ChatParticipant
+import 'package:riff/core/helpers/app_date_time.dart';
 import 'package:riff/core/networks/api_constants.dart';
 
 class ChatParticipant {
@@ -52,9 +53,7 @@ class ConversationOtherUser {
         fullName: j['full_name'] as String?,
         profileImageUrl: ApiConstants.resolveUrl(j['profile_image_url'] as String?),
         isOnline: j['is_online'] as bool? ?? false,
-        lastSeen: j['last_seen'] != null
-            ? DateTime.tryParse(j['last_seen'] as String)
-            : null,
+        lastSeen: parseServerDateTime(j['last_seen'] as String?),
       );
 
   ConversationOtherUser copyWith({bool? isOnline, DateTime? lastSeen}) =>
@@ -104,10 +103,8 @@ class Conversation {
         description: j['description'] as String?,
         imageUrl: j['image_url'] as String?,
         isRequest: j['is_request'] as bool? ?? false,
-        lastMessageAt: j['last_message_at'] != null
-            ? DateTime.tryParse(j['last_message_at'] as String)
-            : null,
-        createdAt: DateTime.tryParse(j['created_at'] as String) ?? DateTime.now(),
+        lastMessageAt: parseServerDateTime(j['last_message_at'] as String?),
+        createdAt: parseServerDateTimeOr(j['created_at'] as String?),
         participants: (j['participants'] as List<dynamic>? ?? [])
             .map((p) => ChatParticipant.fromJson(p as Map<String, dynamic>))
             .toList(),
@@ -250,7 +247,7 @@ class ChatMessage {
         fileName: j['file_name'] as String?,
         duration: j['duration'] as int?,
         isDeleted: j['is_deleted'] as bool? ?? false,
-        createdAt: DateTime.tryParse(j['created_at'] as String) ?? DateTime.now(),
+        createdAt: parseServerDateTimeOr(j['created_at'] as String?),
         sender: j['sender'] != null
             ? MessageSender.fromJson(j['sender'] as Map<String, dynamic>)
             : null,

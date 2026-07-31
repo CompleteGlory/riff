@@ -197,7 +197,16 @@ class _ChatsListScreenState extends State<ChatsListScreen>
     );
   }
 
+  /// Guards against a second `POST /conversations/direct` going out while the
+  /// first is still in flight. The endpoint checks for an existing conversation
+  /// and creates one if absent, so two concurrent calls both find nothing and
+  /// both create — which is how a user ends up listed twice, once with the
+  /// history and once empty.
+  bool _startingChat = false;
+
   Future<void> _startChat(SearchUser user) async {
+    if (_startingChat) return;
+    _startingChat = true;
     try {
       final conv = await getIt<ChatRepo>().startDirectConversation(user.id);
       if (!mounted) return;
@@ -208,6 +217,8 @@ class _ChatsListScreenState extends State<ChatsListScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_friendlyError(e.toString()))),
       );
+    } finally {
+      _startingChat = false;
     }
   }
 

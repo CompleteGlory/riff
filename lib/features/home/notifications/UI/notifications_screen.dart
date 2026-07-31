@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:riff/core/helpers/time_ago.dart';
+import 'package:riff/core/helpers/app_date_time.dart';
 import 'package:riff/core/networks/api_constants.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
@@ -504,7 +504,7 @@ class _NotificationTile extends StatelessWidget {
                               ),
                               SizedBox(width: 6.w),
                               Text(
-                                timeAgo(notification.createdAt.toString()),
+                                timeAgoFrom(notification.createdAt),
                                 style: TextStyles.font12Medium.copyWith(
                                     color: ColorManager.normalGrey),
                               ),
@@ -631,7 +631,7 @@ class _NotificationTile extends StatelessWidget {
                               ),
                               SizedBox(width: 6.w),
                               Text(
-                                timeAgo(notification.createdAt.toString()),
+                                timeAgoFrom(notification.createdAt),
                                 style: TextStyles.font12Medium.copyWith(
                                     color: ColorManager.normalGrey),
                               ),
@@ -755,7 +755,7 @@ class _NotificationTile extends StatelessWidget {
                               ),
                               SizedBox(width: 6.w),
                               Text(
-                                timeAgo(notification.createdAt.toString()),
+                                timeAgoFrom(notification.createdAt),
                                 style: TextStyles.font12Medium.copyWith(
                                     color: ColorManager.normalGrey),
                               ),
@@ -840,7 +840,7 @@ class _NotificationTile extends StatelessWidget {
                   style: TextStyles.font12Medium.copyWith(
                       color: ColorManager.normalGrey)),
               SizedBox(height: 3.h),
-              Text(timeAgo(notification.createdAt.toString()),
+              Text(timeAgoFrom(notification.createdAt),
                   style: TextStyles.font12Medium.copyWith(
                       color: ColorManager.normalGrey)),
             ]),
@@ -913,7 +913,7 @@ class _NotificationTile extends StatelessWidget {
                                 ),
                                 SizedBox(width: 6.w),
                                 Text(
-                                  timeAgo(notification.createdAt.toString()),
+                                  timeAgoFrom(notification.createdAt),
                                   style: TextStyles.font12Medium.copyWith(
                                       color: ColorManager.normalGrey),
                                 ),
@@ -1029,7 +1029,7 @@ class _NotificationTile extends StatelessWidget {
               ]),
             ),
             SizedBox(height: 3.h),
-            Text(timeAgo(notification.createdAt.toString()),
+            Text(timeAgoFrom(notification.createdAt),
                 style: TextStyles.font12Medium.copyWith(
                     color: ColorManager.normalGrey)),
           ]),

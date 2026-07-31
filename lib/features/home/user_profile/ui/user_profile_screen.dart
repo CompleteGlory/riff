@@ -631,7 +631,12 @@ class _MessageButtonState extends State<_MessageButton> {
   bool _loading = false;
 
   Future<void> _openChat() async {
-    setState(() => _loading = true);
+    // Synchronous guard, not just the setState flag: two taps in the same frame
+    // both see the old _loading and both fire, and the endpoint creates a second
+    // conversation when two calls race.
+    if (_loading) return;
+    _loading = true;
+    setState(() {});
     try {
       final conv = await getIt<ChatRepo>().startDirectConversation(widget.profile.id);
       if (!mounted) return;
@@ -665,7 +670,8 @@ class _MessageButtonState extends State<_MessageButton> {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(msg)));
     } finally {
-      if (mounted) setState(() => _loading = false);
+      _loading = false;
+      if (mounted) setState(() {});
     }
   }
 

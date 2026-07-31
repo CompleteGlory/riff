@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:riff/core/logic/app_scoped_cubit.dart';
 import '../../data/models/chat_models.dart';
 import '../../data/repos/chat_repo.dart';
+import 'conversation_dedupe.dart';
 
 part 'chats_list_state.dart';
 
@@ -22,7 +23,14 @@ class ChatsListCubit extends Cubit<ChatsListState>
     try {
       final convs = await _repo.getConversations();
       final reqs  = await _repo.getMessageRequests();
-      if (!isClosed) emit(ChatsListLoaded(conversations: convs, requests: reqs));
+      if (!isClosed) {
+        // Collapse the duplicate direct conversations some accounts already
+        // have on the server — see conversation_dedupe.dart.
+        emit(ChatsListLoaded(
+          conversations: dedupeConversations(convs),
+          requests: dedupeConversations(reqs),
+        ));
+      }
     } catch (e) {
       if (!isClosed) emit(ChatsListError(e.toString()));
     }
@@ -78,7 +86,12 @@ class ChatsListCubit extends Cubit<ChatsListState>
     final list = cur is ChatsListLoaded ? cur.conversations : <Conversation>[];
     final reqs  = cur is ChatsListLoaded ? cur.requests    : <Conversation>[];
     if (list.any((c) => c.id == conv.id)) return;
-    emit(ChatsListLoaded(conversations: [conv, ...list], requests: reqs));
+    // dedupe, not just an id check: starting a chat with someone already in the
+    // list must not add a second row for them.
+    emit(ChatsListLoaded(
+      conversations: dedupeConversations([conv, ...list]),
+      requests: reqs,
+    ));
   }
 
   void removeRequest(String conversationId) {
@@ -108,8 +121,10 @@ class ChatsListCubit extends Cubit<ChatsListState>
   void acceptRequest(Conversation conv) {
     final cur = state;
     if (cur is! ChatsListLoaded || isClosed) return;
+    // An accepted request can already be in the list if a refresh landed first;
+    // without the dedupe that showed the same person twice.
     emit(ChatsListLoaded(
-      conversations: [conv, ...cur.conversations],
+      conversations: dedupeConversations([conv, ...cur.conversations]),
       requests: cur.requests.where((c) => c.id != conv.id).toList(),
     ));
   }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:riff/core/helpers/app_date_time.dart';
 import '../../data/models/chat_models.dart';
 import '../../data/repos/chat_repo.dart';
 import '../../data/services/chat_socket_service.dart';
@@ -135,7 +136,7 @@ class ChatCubit extends Cubit<ChatState> {
       if (cur is! ChatLoaded || isClosed) return;
       final online = data['is_online'] as bool? ?? false;
       final lastSeenStr = data['last_seen'] as String?;
-      final lastSeen = lastSeenStr != null ? DateTime.tryParse(lastSeenStr) : null;
+      final lastSeen = parseServerDateTime(lastSeenStr);
       emit(cur.copyWith(
         conversation: cur.conversation.withOtherUserPresence(online, lastSeen: lastSeen),
       ));
