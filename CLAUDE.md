@@ -77,7 +77,16 @@ lib/core/
 ### How it works
 - ARB files: `lib/l10n/intl_en.arb` (English) and `lib/l10n/intl_ar.arb` (Arabic)
 - Generated class: `lib/generated/l10n.dart` — `S` class, accessed via `S.of(context).keyName`
-- Run `flutter gen-l10n` after editing ARB files to regenerate
+- Regenerate after editing ARB files with:
+
+  ```bash
+  dart run intl_utils:generate
+  ```
+
+  **Not** `flutter gen-l10n`. This project generates the `S` class with `intl_utils` (configured
+  under `flutter_intl:` in `pubspec.yaml`, output to `lib/generated/`), and `flutter:
+  generate: true` is deliberately not set — `flutter gen-l10n` just fails with "Attempted to
+  generate localizations code without having the flutter: generate flag turned on."
 
 ### Adding a new string
 1. Add the key + English value to `lib/l10n/intl_en.arb`
@@ -294,12 +303,62 @@ The same repo/cubit/widget layering was applied to the rest of `lib/features/aut
 | --- | --- | --- | --- |
 | `forgot_password` | [forgot_password_repo_test.md](test/features/auth/forgot_password/data/repos/forgot_password_repo_test.md) | [forgot_password_cubit_test.md](test/features/auth/forgot_password/logic/cubit/forgot_password_cubit_test.md) | [forgot_password_form_field_test.md](test/features/auth/forgot_password/UI/widgets/forgot_password_form_field_test.md), [reset_password_form_fields_test.md](test/features/auth/forgot_password/UI/widgets/reset_password_form_fields_test.md), [forgot_password_bloc_listener_test.md](test/features/auth/forgot_password/UI/widgets/forgot_password_bloc_listener_test.md), [request_otp_bloc_listener_test.md](test/features/auth/forgot_password/UI/widgets/request_otp_bloc_listener_test.md), [reset_password_bloc_listener_test.md](test/features/auth/forgot_password/UI/widgets/reset_password_bloc_listener_test.md) |
 | `signup` | [signup_repo_test.md](test/features/auth/signup/data/repos/signup_repo_test.md) | [signup_cubit_test.md](test/features/auth/signup/logic/cubit/signup_cubit_test.md) | [signup_form_fields_test.md](test/features/auth/signup/UI/widgets/signup_form_fields_test.md), [signup_bloc_listener_test.md](test/features/auth/signup/UI/widgets/signup_bloc_listener_test.md) |
-| `phone_verify` | [phone_verify_repo_test.md](test/features/auth/phone_verify/data/repos/phone_verify_repo_test.md) | [phone_verify_cubit_test.md](test/features/auth/phone_verify/logic/cubit/phone_verify_cubit_test.md) | [phone_verify_screen_test.md](test/features/auth/phone_verify/UI/phone_verify_screen_test.md) |
 | `new_user_onboarding` | [suggested_users_repo_test.md](test/features/auth/new_user_onboarding/data/repos/suggested_users_repo_test.md) | *(no cubit — screen calls the repo directly)* | *(not covered — see below)* |
+
+### Session, navigation & notification routing
+
+The cross-cutting auth/navigation layer has its own suite. Same convention — each
+test file has a co-located `.md` explaining coverage, mocks and gotchas:
+
+| Area | Test | Doc |
+| --- | --- | --- |
+| Push payload → destination (pure) | `test/core/services/notification_route_test.dart` | [notification_route_test.md](test/core/services/notification_route_test.md) |
+| Token refresh, expiry, sign-out | `test/core/services/session_manager_test.dart` | [session_manager_test.md](test/core/services/session_manager_test.md) |
+| Notification-tap navigation | `test/core/services/push_notification_service_test.dart` | [push_notification_service_test.md](test/core/services/push_notification_service_test.md) |
+| Context-free navigation | `test/core/routing/navigation_service_test.dart` | [navigation_service_test.md](test/core/routing/navigation_service_test.md) |
+| Route table + singleton providers | `test/core/routing/app_router_test.dart` | [app_router_test.md](test/core/routing/app_router_test.md) |
+| App-lifetime cubit lifecycle | `test/core/logic/app_scoped_cubit_test.dart` | [app_scoped_cubit_test.md](test/core/logic/app_scoped_cubit_test.md) |
+| Mark-all-read + singleton survival | `test/features/home/notifications/logic/cubit/notifications_cubit_test.dart` | [notifications_cubit_test.md](test/features/home/notifications/logic/cubit/notifications_cubit_test.md) |
+| Chat socket lifecycle + send result | `test/features/home/chat/logic/cubit/chat_cubit_test.dart` | [chat_cubit_test.md](test/features/home/chat/logic/cubit/chat_cubit_test.md) |
+| API timestamp parsing (the 3-hour shift) | `test/core/helpers/app_date_time_test.dart` | [app_date_time_test.md](test/core/helpers/app_date_time_test.md) |
+| Chat model timestamp normalisation | `test/features/home/chat/data/models/chat_models_test.dart` | [chat_models_test.md](test/features/home/chat/data/models/chat_models_test.md) |
+| Duplicate-conversation collapsing | `test/features/home/chat/logic/cubit/conversation_dedupe_test.dart` | [conversation_dedupe_test.md](test/features/home/chat/logic/cubit/conversation_dedupe_test.md) |
+| Chats list dedupe wiring | `test/features/home/chat/logic/cubit/chats_list_cubit_test.dart` | [chats_list_cubit_test.md](test/features/home/chat/logic/cubit/chats_list_cubit_test.md) |
+| Mark-all-read renders instantly | `test/features/home/notifications/UI/notifications_screen_test.dart` | [notifications_screen_test.md](test/features/home/notifications/UI/notifications_screen_test.md) |
+
+Patterns worth reusing from these:
+
+- **Assert on route names, not screens.** Pump a `MaterialApp` wired to
+  `NavigationService.navigatorKey` with a catch-all `onGenerateRoute` that builds
+  a stand-in per route name, and record pushes with a `NavigatorObserver`. You get
+  real navigation semantics (order, arguments, stack clearing) without booting
+  screens that want Firebase and the network.
+- **Anything that polls on a real `Timer` must be awaited inside
+  `tester.runAsync`.** Under the default fake-async clock the poll never fires and
+  the test *hangs* instead of failing — `NavigationService.waitUntilReady` is the
+  one to watch. Its `readyTimeout` is `@visibleForTesting` mutable so the
+  no-navigator path doesn't sit for 10 seconds.
+- **`route.builder(context)` builds a screen widget without mounting it**, so you
+  can assert on constructor arguments (`postId`, `commentId`, …) cheaply. To check
+  *which* cubit instance a `BlocProvider` shares, mount only the provider around a
+  probe child via `SingleChildStatelessWidget.buildWithChild`.
+- **Cubits with `AppScopedCubit` ignore `close()`** — use `disposePermanently()`
+  in `tearDown`, or a pending `Timer.periodic` will fail the test binding.
+- **Use `pumpAndSettle()`, not a single `pump()`, after emitting** — a cubit's
+  state stream is asynchronous and one frame can land before `BlocBuilder` sees it.
+
+The NestJS side has unit specs too — run them with `npx jest <path>` (plain
+`npm test` also wants a live test database). `ConversationRepository` is covered
+by
+[conversation.repository.spec.md](/Users/magd/apis/riff/src/modules/chat/repositories/conversation.repository.spec.md).
+Timestamps are worth calling out across both repos: **every** API timestamp
+column is PostgreSQL `TIMESTAMP` holding UTC, and the wire format is not
+consistent about saying so — parse server dates through
+`parseServerDateTime`, never `DateTime.parse` directly.
 
 **Deliberately not covered:** `new_user_onboarding_screen.dart` (reaches into `getIt<...>()`
 directly in field initializers instead of via constructor injection, and drives `image_picker` +
-`flutter_contacts` + `permission_handler`), `onboarding_screen.dart` and the `user-prefrences/`
+`permission_handler`), `onboarding_screen.dart` and the `user-prefrences/`
 genre/instrument screens (static UI or local selection state, no repo/cubit layer). If any of these
 grow real logic worth isolating, apply the same repo/cubit-first approach before reaching for a
 full widget test.
@@ -317,7 +376,26 @@ full widget test.
 | Login token debug-log crash | `LoginRepo._handleLoginResponse`, `DioFactory` interceptor | `accessToken.substring(0, 20)` threw `RangeError` for tokens <20 chars, turning a successful login into a reported failure — guarded with a length check before truncating |
 | `LoginCubit` state stream untyped | `LoginCubit` | Declared as raw `Cubit<LoginState>` (`T` resolved to `dynamic`) instead of `Cubit<LoginState<LoginResponse>>` |
 | `SignupCubit` state stream untyped | `SignupCubit` | Same as above — raw `Cubit<SignupState>` widened to `Cubit<SignupState<void>>` (signup's response payload is never read downstream) |
+| Phone OTP + contacts sync removed (2026-07-31) | `WhatsAppService`, `SendPhoneOtp`, `FindContacts` (API); `phone_verify`, onboarding contacts step, feed empty-state sync (Flutter) | Both features were deleted rather than fixed. WhatsApp OTP went through whatsapp-web.js → Baileys → Meta Cloud API and never reached a working state: unofficial clients hit error 463 (`account restricted or missing tctoken`) on every message to a contact with no prior conversation — which is every OTP recipient — and the official Cloud API cannot create an AUTHENTICATION template until the Meta business portfolio is verified. Contacts sync went with it because matching depended on verified phone numbers. Signup now goes straight to `newUserOnboarding`. The `users` table keeps its `phone_number`/`phone_verified`/`phone_otp*` columns (dropping them is destructive and unnecessary); re-adding the feature means restoring from git history plus a verified Meta portfolio. |
 | `ForgotPasswordCubit` emit methods un-awaitable | `ForgotPasswordCubit` | `emitForgotPasswordStates`/`emitVerifyOtpState`/`emitResetPasswordState` were declared `void ... async` instead of `Future<void> ... async` — callers (and tests) couldn't `await` completion; widened the return type (backward-compatible, no call site needed to change) |
+| Randomly signed out (often right after posting a comment) | `DioFactory` interceptor → `SessionManager` | `/auth/refresh` rotates the refresh token and stores only a hash of the newest one. The interceptor refreshed once **per failed request**, so a burst of 401s (comment + feed + chat list + the 30 s notification poll, against a 15-minute access token) fired several refreshes with the same token — the first rotated it, the rest came back 401 and were treated as "session over", and a loser could write an already-dead refresh token back to storage. `SessionManager.refreshAccessToken()` is now single-flight |
+| A failed retry counted as an auth failure | `DioFactory` interceptor | The whole refresh-and-retry block sat in one `try`, so a retried request failing for its own reasons (404, 500, timeout) fell into the forced-logout branch |
+| Forced sign-out never reached the login screen | `NavigationService` / `RiffMaterialApp` | `MaterialApp` was built with `PushNotificationService.navigatorKey` while the 401 handler pushed through `NavigationService.navigatorKey` — a key attached to nothing, so `currentState` was always null and the redirect silently did nothing. One key now |
+| "Mark all as read" worked until you'd opened the notifications screen once | `AppRouter`, `PushNotificationService` | Both provided the `NotificationsCubit` **singleton** with `BlocProvider(create:)`, which closes it when the route pops. A closed cubit can never emit again and GetIt keeps returning it, so every later `markAllRead()` hit `if (!isClosed)` and did nothing, with no error. All singleton providers are `.value`, and the cubits carry `AppScopedCubit` so a future `create:` can't reintroduce it |
+| Chat list frozen / can't message after opening a chat from a notification | `PushNotificationService`, `user_profile_screen` | Same closed-singleton bug, on `ChatsListCubit` |
+| Can't send messages after opening the app from a message notification | `ChatSocketService`, `ChatCubit`, `HomeLayout` | `ChatGateway.handleConnection` verifies the access token and disconnects on failure. Access tokens live 15 minutes, so opening from a push — by definition after a pause — handshook with a dead token. HTTP recovered via the 401 interceptor (history loaded, screen looked fine), the socket never did, and every `send_message` emit vanished until restart. Sockets now connect through `SessionManager.validAccessToken()` and reconnect on `onAccessTokenRefreshed` |
+| Duplicate socket handlers after every app resume | `ChatSocketService.connect` | `io.io()` multiplexes on the URI and returns the *same* Socket for a namespace it already knows; re-calling it on resume without disposing stacked another full set of `on(...)` handlers, so messages arrived several times over |
+| Notification tap dropped on a slow cold start | `PushNotificationService` | A fixed `Future.delayed(800ms)` guess before navigating; now waits for the navigator via `NavigationService.waitUntilReady()` |
+| Notification tap opened a blank/authenticated screen while signed out | `PushNotificationService` | Taps are parked and replayed from `HomeLayout` after login |
+| Flagged-comment push with no `comment_id` crashed the tap handler | `PushNotificationService` → `NotificationRoute` | `int.tryParse(commentIdStr!)` ran as soon as the type matched; routing is now a pure, total function |
+| `setUpGetIt()` not awaited in `main()` | `main_development.dart`, `main_production.dart` | It awaits `DioFactory.getDio()` internally while `HomeLayout.initState` resolves singletons — a fast first frame could reach GetIt before registration finished |
+| `post.g.dart` couldn't be regenerated | `Post.commentsCount` | `@JsonKey(defaultValue: 0)` on a `String?` field made json_serializable emit `as String? ?? 0`, which doesn't compile; the checked-in `.g.dart` had been hand-patched, so any `build_runner` run broke the build |
+| Everything displayed ~3 hours early (UTC+3) | `app_date_time.dart`, chat/notification models | Two causes, both landing on the same symptom. Timestamps **with** `Z`: `DateTime.parse` returns `isUtc == true`, and the chat bubble / chat list / last-seen formatters read `.hour`/`.minute` straight off it without converting to local. Timestamps **without** a designator (the API sends both shapes): `DateTime.parse` reads them as local, so UTC digits became the wrong instant — and `timeAgo` then called `.toUtc()` on the result, shifting it again. Now normalised once at the parsing boundary: interpret as UTC, return local |
+| A user appears twice in chats — one thread with messages, one empty | `chat.controller.ts`, `conversation.repository.ts`, `conversation_dedupe.dart` | `POST /chat/conversations/direct` checked for an existing conversation and created one if absent as two separate awaits, so two racing requests both created one. Declining a message request deleted only the recipient's participant row, leaving a one-sided conversation `findDirect` could no longer match, so the next message started a fresh one. Fixed with an advisory-locked atomic find-or-create, decline deleting the whole direct conversation, orphans filtered out of the listings, and a client-side dedupe for accounts that already have the duplicated rows. Migration `1790500000000` cleans up production data |
+| Direct conversation picked at random when duplicates exist | `ConversationRepository.findDirect` | Unordered `getOne()` — the same pair could land in the thread with their history one time and the empty one the next. Now ordered by most recent activity, then oldest |
+| No API unit spec could run | `package.json` jest block | Missing `moduleNameMapper` for the `src/...` path alias, so every spec failed to resolve its imports; only the e2e config worked |
+| "Mark all as read" needed a manual refresh before the rows looked read | `NotificationsCubit` | Two causes. It emitted only *after* awaiting the request and swallowed every error, so a failure looked like a success that hadn't happened yet — now optimistic, with rollback and a reported result. And a fetch already in flight (the 30 s poll, or the `silentRefresh()` HomeLayout runs on returning from the screen) could land between the optimistic update and the server commit and repaint every row unread. Local changes now bump an epoch counter; a fetch that started before the bump discards its result |
+| `NotificationsScreen` untestable | `NotificationsScreen` | Called `FirebaseMessaging.instance.getNotificationSettings()` directly in `initState`; now an injectable `notificationsDenied` callback defaulting to the real call, per the pattern in the login tests |
 
 ---
 
@@ -357,6 +435,7 @@ FIREBASE_SERVICE_ACCOUNT_JSON=
 # Spotify
 SPOTIFY_CLIENT_ID=
 SPOTIFY_CLIENT_SECRET=
+
 ```
 
 ---

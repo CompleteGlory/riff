@@ -1,13 +1,15 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:riff/core/logic/app_scoped_cubit.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/services/upload_progress_service.dart';
 import 'package:riff/features/home/add_post/data/models/create_post_request_model.dart';
 import 'package:riff/features/home/add_post/data/repos/create_post_repo.dart';
 import 'package:riff/features/home/add_post/logic/cubit/create_post_state.dart';
 
-class CreatePostCubit extends Cubit<CreatePostState> {
+class CreatePostCubit extends Cubit<CreatePostState>
+    with AppScopedCubit<CreatePostState> {
   final CreatePostRepo _createPostRepo;
 
   CreatePostCubit(this._createPostRepo) : super(const CreatePostState.initial());

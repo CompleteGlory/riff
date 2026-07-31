@@ -32,7 +32,7 @@ class SignupBlocListener extends StatelessWidget {
             success: (signupResponse) {
               Navigator.of(context).pop(); // Close loading dialog
               Navigator.of(context).pushNamedAndRemoveUntil(
-                Routes.phoneVerify,
+                Routes.newUserOnboarding,
                 ModalRoute.withName(Routes.login),
               );
             },

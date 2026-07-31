@@ -11,6 +11,7 @@ import 'package:riff/generated/l10n.dart';
 
 class AccountSettingsScreen extends StatefulWidget {
   final bool initialIsPrivate;
+
   const AccountSettingsScreen({super.key, this.initialIsPrivate = false});
 
   @override
@@ -26,6 +27,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
     super.initState();
     _isPrivate = widget.initialIsPrivate;
   }
+
 
   Future<void> _togglePrivacy() async {
     setState(() => _privacyLoading = true);

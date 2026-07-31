@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:riff/core/helpers/time_ago.dart';
+import 'package:riff/core/helpers/app_date_time.dart';
 import 'package:riff/core/networks/api_constants.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
@@ -23,18 +23,41 @@ import 'package:riff/features/home/notifications/UI/post_by_id_screen.dart';
 import 'package:riff/features/home/notifications/UI/flagged_comment_detail_screen.dart';
 import 'package:riff/generated/l10n.dart';
 
+/// Reports whether the OS has notifications turned off for this app.
+typedef NotificationsDeniedCheck = Future<bool> Function();
+
+Future<bool> _firebaseNotificationsDenied() async {
+  // Use FirebaseMessaging's authorization status — the source this app actually
+  // requests notification permission through. On iOS, permission_handler's
+  // `Permission.notification.status` can report `denied` even when the user has
+  // authorized notifications (they were granted via FCM, not permission_handler),
+  // which made this banner show incorrectly. `authorized` and `provisional` both
+  // mean notifications are on.
+  final settings = await FirebaseMessaging.instance.getNotificationSettings();
+  return settings.authorizationStatus == AuthorizationStatus.denied ||
+      settings.authorizationStatus == AuthorizationStatus.notDetermined;
+}
+
 class NotificationsScreen extends StatelessWidget {
-  const NotificationsScreen({super.key});
+  const NotificationsScreen({
+    super.key,
+    this.notificationsDenied = _firebaseNotificationsDenied,
+  });
+
+  /// Injectable so widget tests don't need a live Firebase.
+  final NotificationsDeniedCheck notificationsDenied;
 
   @override
   Widget build(BuildContext context) {
     // Cubit already provided via BlocProvider.value from HomeLayout
-    return const _NotificationsBody();
+    return _NotificationsBody(notificationsDenied: notificationsDenied);
   }
 }
 
 class _NotificationsBody extends StatefulWidget {
-  const _NotificationsBody();
+  const _NotificationsBody({required this.notificationsDenied});
+
+  final NotificationsDeniedCheck notificationsDenied;
 
   @override
   State<_NotificationsBody> createState() => _NotificationsBodyState();
@@ -64,17 +87,7 @@ class _NotificationsBodyState extends State<_NotificationsBody>
   }
 
   Future<void> _checkPermission() async {
-    // Use FirebaseMessaging's authorization status — the source this app actually
-    // requests notification permission through. On iOS, permission_handler's
-    // `Permission.notification.status` can report `denied` even when the user has
-    // authorized notifications (they were granted via FCM, not permission_handler),
-    // which made this banner show incorrectly. `authorized` and `provisional` both
-    // mean notifications are on.
-    final settings =
-        await FirebaseMessaging.instance.getNotificationSettings();
-    final denied =
-        settings.authorizationStatus == AuthorizationStatus.denied ||
-            settings.authorizationStatus == AuthorizationStatus.notDetermined;
+    final denied = await widget.notificationsDenied();
     if (mounted) {
       setState(() => _notifsDenied = denied);
     }
@@ -93,7 +106,18 @@ class _NotificationsBodyState extends State<_NotificationsBody>
         ),
         actions: [
           TextButton(
-            onPressed: () => context.read<NotificationsCubit>().markAllRead(),
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              final failedMessage = S.of(context).markAllReadFailed;
+              final ok = await context.read<NotificationsCubit>().markAllRead();
+              // A silent no-op used to be indistinguishable from success, which
+              // is what "sometimes it works, sometimes it doesn't" looked like.
+              if (!ok) {
+                messenger.showSnackBar(
+                  SnackBar(content: Text(failedMessage)),
+                );
+              }
+            },
             child: Text(S.of(context).markAllRead,
                 style: TextStyles.font12Medium.copyWith(
                     color: isDark ? Colors.white70 : ColorManager.primaryBlack)),
@@ -493,7 +517,7 @@ class _NotificationTile extends StatelessWidget {
                               ),
                               SizedBox(width: 6.w),
                               Text(
-                                timeAgo(notification.createdAt.toString()),
+                                timeAgoFrom(notification.createdAt),
                                 style: TextStyles.font12Medium.copyWith(
                                     color: ColorManager.normalGrey),
                               ),
@@ -620,7 +644,7 @@ class _NotificationTile extends StatelessWidget {
                               ),
                               SizedBox(width: 6.w),
                               Text(
-                                timeAgo(notification.createdAt.toString()),
+                                timeAgoFrom(notification.createdAt),
                                 style: TextStyles.font12Medium.copyWith(
                                     color: ColorManager.normalGrey),
                               ),
@@ -744,7 +768,7 @@ class _NotificationTile extends StatelessWidget {
                               ),
                               SizedBox(width: 6.w),
                               Text(
-                                timeAgo(notification.createdAt.toString()),
+                                timeAgoFrom(notification.createdAt),
                                 style: TextStyles.font12Medium.copyWith(
                                     color: ColorManager.normalGrey),
                               ),
@@ -829,7 +853,7 @@ class _NotificationTile extends StatelessWidget {
                   style: TextStyles.font12Medium.copyWith(
                       color: ColorManager.normalGrey)),
               SizedBox(height: 3.h),
-              Text(timeAgo(notification.createdAt.toString()),
+              Text(timeAgoFrom(notification.createdAt),
                   style: TextStyles.font12Medium.copyWith(
                       color: ColorManager.normalGrey)),
             ]),
@@ -902,7 +926,7 @@ class _NotificationTile extends StatelessWidget {
                                 ),
                                 SizedBox(width: 6.w),
                                 Text(
-                                  timeAgo(notification.createdAt.toString()),
+                                  timeAgoFrom(notification.createdAt),
                                   style: TextStyles.font12Medium.copyWith(
                                       color: ColorManager.normalGrey),
                                 ),
@@ -1018,7 +1042,7 @@ class _NotificationTile extends StatelessWidget {
               ]),
             ),
             SizedBox(height: 3.h),
-            Text(timeAgo(notification.createdAt.toString()),
+            Text(timeAgoFrom(notification.createdAt),
                 style: TextStyles.font12Medium.copyWith(
                     color: ColorManager.normalGrey)),
           ]),

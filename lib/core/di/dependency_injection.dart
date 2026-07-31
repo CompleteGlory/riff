@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:riff/core/networks/api_services.dart';
 import 'package:riff/core/networks/dio_factory.dart';
+import 'package:riff/core/services/push_notification_service.dart';
+import 'package:riff/core/services/session_manager.dart';
 import 'package:riff/features/auth/forgot_password/data/repos/forgot_pasword_repo.dart';
 import 'package:riff/features/auth/forgot_password/logic/cubit/forgot_password_cubit.dart';
 import 'package:riff/features/auth/login/data/repos/login_repo.dart';
@@ -36,8 +38,6 @@ import 'package:riff/features/home/user_profile/logic/cubit/user_profile_cubit.d
 import 'package:riff/features/commercial/data/repos/ad_repo.dart';
 import 'package:riff/features/home/search/data/repos/search_repo.dart';
 import 'package:riff/features/home/search/logic/search_cubit.dart';
-import 'package:riff/features/auth/phone_verify/data/repos/phone_verify_repo.dart';
-import 'package:riff/features/auth/phone_verify/logic/cubit/phone_verify_cubit.dart';
 import 'package:riff/features/auth/new_user_onboarding/data/repos/suggested_users_repo.dart';
 import 'package:riff/features/home/core/data/repos/feedback_repo.dart';
 import 'package:riff/features/home/feed/data/repos/report_repo.dart';
@@ -138,8 +138,6 @@ Future<void> setUpGetIt() async {
       () => NotificationsCubit(getIt(), getIt()));
 
   // phone verification
-  getIt.registerLazySingleton<PhoneVerifyRepo>(() => PhoneVerifyRepo(dio));
-  getIt.registerFactory<PhoneVerifyCubit>(() => PhoneVerifyCubit(getIt()));
 
   // onboarding — suggested users
   getIt.registerLazySingleton<SuggestedUsersRepo>(() => SuggestedUsersRepo(dio));
@@ -174,4 +172,23 @@ Future<void> setUpGetIt() async {
   // account settings — change password
   getIt.registerFactory<ChangePasswordCubit>(
       () => ChangePasswordCubit(getIt()));
+
+  _registerSessionEndHooks();
+}
+
+/// Wipes the per-user state held by app-lifetime singletons when the session
+/// ends (manual logout or an expired refresh token).
+///
+/// Registered here rather than inside [SessionManager] so that class stays free
+/// of DI imports and remains unit-testable.
+void _registerSessionEndHooks() {
+  final session = SessionManager.instance;
+  if (session.sessionEndHooks.isNotEmpty) return;
+  session.sessionEndHooks.addAll([
+    () => getIt<NotificationsCubit>().reset(),
+    () => getIt<ChatsListCubit>().reset(),
+    () => getIt<ChatSocketService>().disconnect(),
+    () => getIt<CreatePostCubit>().reset(),
+    () => PushNotificationService.instance.reset(),
+  ]);
 }

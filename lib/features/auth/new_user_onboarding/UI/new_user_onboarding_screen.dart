@@ -1,13 +1,10 @@
 // ignore_for_file: use_build_context_synchronously, deprecated_member_use
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:riff/core/di/dependency_injection.dart';
 import 'package:riff/core/helpers/spacing.dart';
-import 'package:riff/core/networks/api_constants.dart';
 import 'package:riff/core/utils/media_url.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/routing/routes.dart';
@@ -18,7 +15,6 @@ import 'package:riff/features/auth/new_user_onboarding/data/repos/suggested_user
 import 'package:riff/features/home/follow/logic/cubit/follow_cubit.dart';
 import 'package:riff/features/home/profile/logic/cubit/profile_cubit.dart';
 import 'package:riff/features/home/search/data/models/search_user.dart';
-import 'package:dio/dio.dart';
 import 'package:riff/generated/l10n.dart';
 
 class NewUserOnboardingScreen extends StatefulWidget {
@@ -31,18 +27,13 @@ class NewUserOnboardingScreen extends StatefulWidget {
 
 class _NewUserOnboardingScreenState extends State<NewUserOnboardingScreen> {
   final PageController _page = PageController(keepPage: false);
-  int _currentStep = 0; // 0, 1, 2
+  int _currentStep = 0; // 0, 1
 
   // Step 1 — photo
   File? _photo;
   bool _uploadingPhoto = false;
 
-  // Step 2 — contacts
-  bool _contactsSynced = false;
-  bool _syncingContacts = false;
-  List<SearchUser> _contactMatches = [];
-
-  // Step 3 — suggested users
+  // Step 2 — suggested users
   List<SearchUser> _suggested = [];
   bool _loadingSuggested = true;
 
@@ -51,7 +42,6 @@ class _NewUserOnboardingScreenState extends State<NewUserOnboardingScreen> {
 
   final ProfileCubit _profileCubit = getIt<ProfileCubit>();
   final SuggestedUsersRepo _suggestedRepo = getIt<SuggestedUsersRepo>();
-  final Dio _dio = getIt<Dio>(); // used only for contacts sync (no cubit exists)
 
   @override
   void initState() {
@@ -98,41 +88,6 @@ class _NewUserOnboardingScreenState extends State<NewUserOnboardingScreen> {
 
   // ── Step 2 actions ────────────────────────────────────────────────────────
 
-  Future<void> _syncContacts() async {
-    if (_syncingContacts) return;
-    setState(() => _syncingContacts = true);
-
-    final status = await Permission.contacts.request();
-    if (!status.isGranted) {
-      setState(() => _syncingContacts = false);
-      return;
-    }
-
-    final contacts = await FlutterContacts.getContacts(withProperties: true);
-    final phones = contacts
-        .expand((c) => c.phones)
-        .map((p) => p.number.replaceAll(RegExp(r'\s|-|\(|\)'), ''))
-        .where((p) => p.isNotEmpty)
-        .toList();
-
-    if (phones.isNotEmpty) {
-      try {
-        final resp = await _dio.post(
-          '${ApiConstants.apiBASEURL}${ApiConstants.findContacts}',
-          data: {'phone_numbers': phones},
-        );
-        final list = (resp.data as List? ?? [])
-            .map((e) => SearchUser.fromJson(e as Map<String, dynamic>))
-            .toList();
-        setState(() => _contactMatches = list);
-      } catch (_) {}
-    }
-
-    setState(() {
-      _contactsSynced = true;
-      _syncingContacts = false;
-    });
-  }
 
   // ── Navigation ─────────────────────────────────────────────────────────────
 
@@ -194,20 +149,7 @@ class _NewUserOnboardingScreenState extends State<NewUserOnboardingScreen> {
                     onNext: _uploadAndNext,
                     onSkip: () => _goTo(1),
                   ),
-                  // ── Step 2: Contacts ──
-                  _ContactsStep(
-                    isDark: isDark,
-                    synced: _contactsSynced,
-                    syncing: _syncingContacts,
-                    matches: _contactMatches,
-                    followed: _followed,
-                    inProgress: _inProgress,
-                    onSync: _syncContacts,
-                    onToggleFollow: _toggleFollow,
-                    onNext: () => _goTo(2),
-                    resolveUrl: MediaUrl.resolveOrEmpty,
-                  ),
-                  // ── Step 3: Suggested ──
+                  // ── Step 2: Suggested ──
                   _SuggestStep(
                     isDark: isDark,
                     users: _suggested,
@@ -238,7 +180,7 @@ class _StepBar extends StatelessWidget {
 
   const _StepBar({required this.current, required this.isDark});
 
-  static const _labels = ['Photo', 'Contacts', 'Follow'];
+  static const _labels = ['Photo', 'Follow'];
 
   @override
   Widget build(BuildContext context) {
@@ -460,192 +402,7 @@ class _PhotoStep extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// Step 2 — Sync contacts
-// ══════════════════════════════════════════════════════════════════════════════
-
-class _ContactsStep extends StatelessWidget {
-  final bool isDark;
-  final bool synced;
-  final bool syncing;
-  final List<SearchUser> matches;
-  final Set<String> followed;
-  final Map<String, bool> inProgress;
-  final VoidCallback onSync;
-  final void Function(SearchUser) onToggleFollow;
-  final VoidCallback onNext;
-  final String Function(String) resolveUrl;
-
-  const _ContactsStep({
-    required this.isDark,
-    required this.synced,
-    required this.syncing,
-    required this.matches,
-    required this.followed,
-    required this.inProgress,
-    required this.onSync,
-    required this.onToggleFollow,
-    required this.onNext,
-    required this.resolveUrl,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final s = S.of(context);
-    return Column(
-      children: [
-        Padding(
-          padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(s.seeWhichContactsOnRiff, style: TextStyles.font28Bold),
-              verticalSpace(6),
-              Text(
-                s.seeWhichContactsOnRiff,
-                style: TextStyles.font16Medium.copyWith(
-                  color: ColorManager.lightGrey,
-                ),
-              ),
-              verticalSpace(20),
-            ],
-          ),
-        ),
-
-        if (!synced) ...[
-          // Sync prompt card
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: GestureDetector(
-              onTap: syncing ? null : onSync,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-                  borderRadius: BorderRadius.circular(20.r),
-                  border: Border.all(
-                    color: isDark
-                        ? const Color(0xFF2A2A2A)
-                        : const Color(0xFFEEEEEE),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 52.r,
-                      height: 52.r,
-                      decoration: BoxDecoration(
-                        color: ColorManager.accent.withOpacity(0.12),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.contacts_rounded,
-                        color: ColorManager.accent,
-                        size: 26.r,
-                      ),
-                    ),
-                    SizedBox(width: 16.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            s.syncContactsBtn,
-                            style: TextStyle(
-                              fontFamily: 'GeneralSans',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white : ColorManager.black,
-                            ),
-                          ),
-                          SizedBox(height: 3.h),
-                          Text(
-                            s.wellMatchContacts,
-                            style: TextStyle(
-                              fontFamily: 'GeneralSans',
-                              fontSize: 13,
-                              color: const Color(0xFF888888),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(width: 10.w),
-                    syncing
-                        ? SizedBox(
-                            width: 20.r,
-                            height: 20.r,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: ColorManager.accent,
-                            ),
-                          )
-                        : Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            size: 16.r,
-                            color: isDark
-                                ? const Color(0xFF666666)
-                                : const Color(0xFFAAAAAA),
-                          ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ] else if (matches.isEmpty) ...[
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.check_circle_outline_rounded,
-                  color: ColorManager.accent,
-                  size: 20.r,
-                ),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: Text(
-                    s.contactsSyncedNoneOnRiff,
-                    style: TextStyles.font14Medium.copyWith(
-                      color: ColorManager.normalGrey,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ] else ...[
-          Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              itemCount: matches.length,
-              itemBuilder: (_, i) => _UserTile(
-                user: matches[i],
-                isDark: isDark,
-                isFollowed: followed.contains(matches[i].id),
-                inProgress: inProgress[matches[i].id] == true,
-                onToggle: () => onToggleFollow(matches[i]),
-                resolveUrl: resolveUrl,
-              ),
-            ),
-          ),
-        ],
-
-        const Spacer(),
-        Padding(
-          padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 24.h),
-          child: AppButton(
-            text: synced ? s.continueBtn : s.skipBtn,
-            isWhite: false,
-            onPressed: onNext,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// Step 3 — Suggested users
+// Step 2 — Suggested users
 // ══════════════════════════════════════════════════════════════════════════════
 
 class _SuggestStep extends StatelessWidget {

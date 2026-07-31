@@ -10,6 +10,7 @@ import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/features/home/chat/logic/cubit/chat_cubit.dart';
+import 'package:riff/generated/l10n.dart';
 
 class ChatInputBar extends StatefulWidget {
   final ChatCubit cubit;
@@ -53,13 +54,24 @@ class _ChatInputBarState extends State<ChatInputBar> {
     }
   }
 
-  void _sendText() {
+  Future<void> _sendText() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
-    widget.cubit.sendText(text);
     _controller.clear();
     _typingTimer?.cancel();
     widget.cubit.stopTyping();
+
+    final sent = await widget.cubit.sendText(text);
+    if (sent || !mounted) return;
+
+    // Couldn't reach the server — put the text back rather than letting the
+    // user believe a message was delivered when nothing left the device.
+    _controller.text = text;
+    _controller.selection =
+        TextSelection.collapsed(offset: _controller.text.length);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(S.of(context).messageNotSent)),
+    );
   }
 
   Future<void> _pickImage() async {

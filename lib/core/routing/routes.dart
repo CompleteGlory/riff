@@ -8,9 +8,6 @@ class Routes {
   static const String resetPassword = '/resetPassword';
   static const String home = '/home';
 
-  // Phone verification (after signup)
-  static const String phoneVerify = '/phoneVerify';
-
   // New user onboarding (after phone verify)
   static const String newUserOnboarding = '/newUserOnboarding';
 
@@ -18,6 +15,11 @@ class Routes {
   static const String chatsList    = '/chatsList';
   static const String chatDetail   = '/chatDetail';
   static const String createGroup  = '/createGroup';
+
+  // Notifications
+  static const String notifications   = '/notifications';
+  static const String flaggedComment  = '/flaggedComment';
+  static const String flaggedPost     = '/flaggedPost';
 
   // Block
   static const String blockedUsers = '/blockedUsers';
