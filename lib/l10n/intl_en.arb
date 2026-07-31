@@ -1,12 +1,9 @@
 {
   "@@locale": "en",
-
   "appTitle": "Riff",
-
   "defineYourself": "Define Yourself\nin Your Unique Way.",
   "shareYourSound": "Share your sound. Find your people.",
   "getStarted": "Get Started",
-
   "loginTitle": "Login To your account",
   "itsGreatToSeeYouAgain": "It's great to see you again!",
   "emailLabel": "Email",
@@ -24,7 +21,6 @@
   "signingIn": "Signing in…",
   "dontHaveAnAccount": "Don't have an account?",
   "joinBtn": "Join",
-
   "createAnAccount": "Create an account",
   "letsCreateYourAccount": "let's create your account.",
   "fullName": "Full Name",
@@ -37,15 +33,12 @@
   "termsAndConditions": "Terms and conditions.",
   "alreadyHaveAnAccount": "Already have an account?",
   "loginLink": "login",
-
   "forgotPasswordTitle": "Forgot Password",
   "forgotPasswordSubtitle": "Enter your email for the verification process. We will send 4 digits code to your email.",
   "sendCodeBtn": "Send Code",
-
   "enterCodeSubtitle": "Enter 6 digit code that you've received on your email address.",
   "continueBtn": "Continue",
   "resendCode": "Resend code",
-
   "resetPasswordTitle": "Reset Password",
   "resetPasswordSubtitle": "Set the new password for your account so you can login and access all the features.",
   "resetPasswordBtn": "Reset Password",
@@ -58,49 +51,21 @@
   "passwordUpdatedSuccessfully": "Password updated successfully.\nPlease login to continue.",
   "proceedToLogin": "Proceed to Login",
   "tryAgainBtn": "Try Again",
-
   "step1Of2": "Step 1 of 2",
   "selectInstruments": "Select the instruments you play.\nPick as many as you like.",
   "step2Of2": "Step 2 of 2",
   "selectGenres": "Select the genres you love.\nThis helps us find your people.",
-
   "skipBtn": "Skip",
-  "verifyYourPhoneNumber": "Verify your\nphone number",
-  "wellSendWhatsApp": "We'll send a WhatsApp message with a 6-digit code.",
-  "phoneNumberLabel": "Phone Number",
-  "sendOTPViaWhatsApp": "Send OTP via WhatsApp",
-  "sendingOTP": "Sending…",
-  "codeWillBeSentViaWhatsApp": "Code will be sent via WhatsApp",
-  "weSentWhatsAppTo": "We sent a WhatsApp message to\n{phoneNumber}",
-  "@weSentWhatsAppTo": {
-    "placeholders": {
-      "phoneNumber": { "type": "String" }
-    }
-  },
-  "verifyBtn": "Verify",
-  "resendCodeIn": "Resend code in {seconds}s",
-  "@resendCodeIn": {
-    "placeholders": {
-      "seconds": { "type": "int" }
-    }
-  },
-  "resendViaWhatsApp": "Resend via WhatsApp",
   "skipForNow": "Skip for now",
-
   "helpFriendsRecogniseYou": "Help your friends recognise you.\nYou can always change this later.",
   "changePhoto": "Change photo",
   "chooseFromGallery": "Choose from gallery",
   "savingBtn": "Saving…",
   "saveAndContinue": "Save & Continue",
-  "seeWhichContactsOnRiff": "See which of your contacts are already on Riff.",
-  "syncContactsBtn": "Sync Contacts",
-  "wellMatchContacts": "We'll match your contacts with Riff users.",
-  "contactsSyncedNoneOnRiff": "Contacts synced — none of your contacts are on Riff yet.",
   "followArtistsToFillFeed": "Follow artists and musicians to fill your feed.",
   "noSuggestionsYet": "No suggestions yet",
   "followingStatus": "Following",
   "followBtn": "Follow",
-
   "yourMusicSocialFeed": "Your music social feed",
   "settingsDrawer": "App Settings",
   "privacyAppearance": "Appearance & language",
@@ -126,7 +91,6 @@
   "requestAFeatureDrawer": "Request a Feature",
   "shareYourIdeas": "Share your ideas",
   "logOut": "Log out",
-
   "settingsTitle": "Settings",
   "appearanceSection": "Appearance",
   "darkMode": "Dark Mode",
@@ -141,12 +105,10 @@
   "languageSection": "Language",
   "appLanguage": "App Language",
   "currentLanguageName": "English",
-
   "exitAppTitle": "Exit App",
   "doYouWantToExit": "Do you want to exit the app?",
   "cancelBtn": "Cancel",
   "exitBtn": "Exit",
-
   "noPostsLoaded": "No posts loaded",
   "failedToLoadMorePosts": "Failed to load more posts",
   "retryBtn": "Retry",
@@ -155,22 +117,18 @@
   "serverError": "Server Error",
   "checkYourConnection": "Check your connection, then pull down to refresh.",
   "gotItBtn": "Got it",
-
   "editPostOption": "Edit Post",
   "deletePostOption": "Delete Post",
   "reportPostOption": "Report Post",
-
   "commentsLabel": "Comments",
   "failedToLoadComments": "Failed to load comments",
   "postScreenTitle": "Post",
-
   "deletePostDialogTitle": "Delete Post?",
   "deletePostDialogContent": "Are you sure you want to delete this post? This action cannot be undone.",
   "postDeletedSuccessfully": "Post deleted successfully!",
   "failedToDeletePost": "Failed to delete post.",
   "failedToUpdatePost": "Failed to update post.",
   "deleteBtn": "Delete",
-
   "whatsOnYourMind": "What's on your mind?",
   "shareYourMusicRiff": "Share your latest music riff, thoughts, or gear...",
   "addCaptionToShare": "Add a caption to your share…",
@@ -185,13 +143,14 @@
   "maximumFilesAllowed": "Maximum {max} files allowed.",
   "@maximumFilesAllowed": {
     "placeholders": {
-      "max": { "type": "int" }
+      "max": {
+        "type": "int"
+      }
     }
   },
   "saveChangesBtn": "Save Changes",
   "pleaseEnterContentBeforeUpdating": "Please enter content before updating.",
   "failedToCreatePost": "Failed to create post.",
-
   "youLabel": "You",
   "failedToSendComment": "Failed to send comment",
   "failedToUpdateLike": "Failed to update like",
@@ -210,13 +169,10 @@
   "beFirstToSaySomething": "Be the first to say something!",
   "unlike": "Unlike",
   "likeBtn": "Like",
-
   "writeCaption": "Write a caption… (optional)",
   "shareBtn": "Share",
-
   "unknown": "Unknown",
   "videoLabel": "Video",
-
   "searchHint": "Search people or posts…",
   "genresFilter": "Genres",
   "instrumentsFilter": "Instruments",
@@ -226,7 +182,9 @@
   "noPostsInCategory": "No posts in \"{filterLabel}\" yet",
   "@noPostsInCategory": {
     "placeholders": {
-      "filterLabel": { "type": "String" }
+      "filterLabel": {
+        "type": "String"
+      }
     }
   },
   "nothingToDiscoverYet": "Nothing to discover yet",
@@ -235,11 +193,12 @@
   "noResultsForQuery": "No results for \"{query}\"",
   "@noResultsForQuery": {
     "placeholders": {
-      "query": { "type": "String" }
+      "query": {
+        "type": "String"
+      }
     }
   },
   "tryDifferentName": "Try a different name\nor search term.",
-
   "notificationsTitle": "Notifications",
   "markAllRead": "Mark all read",
   "noNotificationsYet": "No notifications yet",
@@ -251,7 +210,6 @@
   "likedYourPost": "liked your post.",
   "commentedOnYourPost": "commented on your post.",
   "loadingPost": "Loading post…",
-
   "reportPostTitle": "Report Post",
   "whyReportingPost": "Why are you reporting this post?",
   "additionalDetails": "Additional details (optional)",
@@ -269,10 +227,8 @@
   "falseInformation": "False information",
   "intellectualPropertyViolation": "Intellectual property violation",
   "otherReason": "Other",
-
   "reportCommentTitle": "Report Comment",
   "whyReportingComment": "Why are you reporting this comment?",
-
   "chooseFromGalleryProfile": "Choose from Gallery",
   "profilePhotoUpdated": "Profile photo updated",
   "postsLabel": "Posts",
@@ -280,13 +236,11 @@
   "followersLabel": "Followers",
   "followingLabel": "Following",
   "noPostsYet": "No posts yet",
-
   "unfollowBtn": "Unfollow",
   "requestedBtn": "Requested",
   "requestBtn": "Request",
   "genresSection": "Genres",
   "instrumentsSection": "Instruments",
-
   "followersTitle": "Followers",
   "followingTitle": "Following",
   "failedToLoad": "Failed to load",
@@ -294,16 +248,16 @@
   "noResultsForQueryShort": "No results for \"{query}\"",
   "@noResultsForQueryShort": {
     "placeholders": {
-      "query": { "type": "String" }
+      "query": {
+        "type": "String"
+      }
     }
   },
   "noFollowersYet": "No followers yet",
   "notFollowingAnyone": "Not following anyone",
   "whenSomeonFollows": "When someone follows this account,\nthey'll appear here.",
   "accountsFollowed": "Accounts followed\nwill appear here.",
-
   "noReelsYet": "No reels yet.\nPost a video to get started!",
-
   "reportABugTitle": "Report a Bug",
   "bugTitleLabel": "Title",
   "shortSummaryOfBug": "Short summary of the bug",
@@ -321,7 +275,6 @@
   "failedToSubmit": "Failed to submit. Please try again.",
   "pleaseAddTitle": "Please add a title",
   "pleaseDescribeBug": "Please describe the bug",
-
   "featureRequestTitle": "Feature Request",
   "shareYourIdeaWithRiff": "Share your idea with the Riff team",
   "featureTitleLabel": "Feature title",
@@ -333,13 +286,10 @@
   "submitRequestBtn": "Submit Request",
   "featureRequestSubmitted": "Feature request submitted. Thank you!",
   "pleaseDescribeFeature": "Please describe your feature request",
-
   "messagesComingSoon": "Messages coming soon",
   "directMessagingBeingBuilt": "Direct messaging is being built.\nCheck back in the next update.",
   "messageHint": "Message…",
-
   "sponsored": "Sponsored",
-
   "postUpdatedSuccessfully": "Post updated successfully!",
   "postCreatedSuccessfully": "Post created successfully!",
   "yourCaption": "Your caption",
@@ -351,7 +301,6 @@
   "postNotFoundDeleted": "Post not found or was deleted.",
   "flaggedComment": "Flagged Comment",
   "flaggedPost": "Flagged Post",
-  "enterTheCode": "Enter the code",
   "addAProfilePhoto": "Add a profile photo",
   "whatDoYouListenTo": "What do you listen to?",
   "whatDoYouPlay": "What do you play?",
@@ -360,17 +309,10 @@
   "removeFollowerTitle": "Remove Follower?",
   "keepBtn": "Keep",
   "removeBtn": "Remove",
-
   "feedTitle": "Feed",
   "searchTitle": "Search",
   "reelsTitle": "Reels",
   "usernameEnglishOnly": "Username must contain only English letters, numbers, underscores or dots",
-  "phoneNumberAlreadyTaken": "This phone number is already linked to another account",
-  "phoneOtpWhatsappUnavailable": "We couldn't send your code on WhatsApp right now. Please try again in a moment.",
-  "confirmPhoneSection": "Phone number",
-  "confirmPhoneTile": "Confirm your phone number",
-  "confirmPhoneSub": "Verify your number with a code sent on WhatsApp",
-
   "confirmPassword": "Confirm Password",
   "enterConfirmPassword": "Re-enter your password",
   "passwordStrengthWeak": "Weak",
@@ -388,7 +330,6 @@
   "googleSignInFailed": "Google sign-in was cancelled or failed. Please try again.",
   "gmailAlreadyLinked": "This Gmail is already linked to an account. Logging you in...",
   "gmailAlreadyLinkedTitle": "Account Found",
-
   "chatMessagesTitle": "Messages",
   "chatTabChats": "Chats",
   "chatTabRequests": "Requests",
@@ -397,7 +338,6 @@
   "noMessageRequests": "No message requests",
   "conversationsSectionLabel": "Conversations",
   "messageBtn": "Message",
-
   "newGroupTitle": "New Group",
   "createGroupBtn": "Create",
   "groupNameHint": "Group name",
@@ -407,40 +347,58 @@
   "groupMemberRequired": "Add at least one member",
   "groupCreationError": "Error: {message}",
   "@groupCreationError": {
-    "placeholders": { "message": { "type": "String" } }
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
   },
   "groupDetailsTitle": "Group Info",
   "groupMembersSection": "Members",
   "groupAdminBadge": "Admin",
   "groupDescriptionLabel": "Description",
   "groupNoDescription": "No description",
-
   "deleteForEveryoneBtn": "Delete for everyone",
   "deleteConversationTitle": "Delete conversation?",
   "deleteConversationContent": "This will permanently delete all messages for everyone in this chat.",
   "conversationDeleted": "Conversation deleted",
   "couldNotDeleteConversation": "Could not delete conversation.",
   "deleteMessageOption": "Delete message",
-
   "acceptBtn": "Accept",
   "declineBtn": "Decline",
   "presenceOnline": "Online",
   "presenceLastSeenJustNow": "Last seen just now",
   "presenceLastSeenMinutes": "Last seen {n}m ago",
   "@presenceLastSeenMinutes": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "presenceLastSeenTodayAt": "Last seen today at {time}",
   "@presenceLastSeenTodayAt": {
-    "placeholders": { "time": { "type": "String" } }
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
   },
   "presenceLastSeenYesterdayAt": "Last seen yesterday at {time}",
   "@presenceLastSeenYesterdayAt": {
-    "placeholders": { "time": { "type": "String" } }
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
   },
   "presenceLastSeenDate": "Last seen {date}",
   "@presenceLastSeenDate": {
-    "placeholders": { "date": { "type": "String" } }
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
   },
   "sendingPhoto": "Sending photo…",
   "sendingVideo": "Sending video…",
@@ -448,18 +406,19 @@
   "sendingFile": "Sending file…",
   "requestInfoMessage": "{name} wants to send you a message.\nThey can't see that you've viewed this request.",
   "@requestInfoMessage": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
-
   "blockedUsersDrawer": "Blocked Users",
   "manageBlockedUsers": "Manage who you have blocked",
   "privacyPolicyDrawer": "Privacy Policy",
   "howWeHandleData": "How we handle your data",
-
   "privacyPolicyConsentPrefix": "I have read and agree to the ",
   "privacyPolicyLinkText": "Privacy Policy",
   "privacyPolicyRequiredSnackbar": "Please read and accept the Privacy Policy to continue.",
-
   "privacyPolicyScreenTitle": "Privacy Policy",
   "privacyPolicyHeaderTitle": "Riff Privacy Policy",
   "privacyPolicyHeaderSubtitle": "Your privacy matters to us. Read how we collect, use, and protect your data.",
@@ -485,7 +444,6 @@
   "ppSection10Body": "We may update this Privacy Policy from time to time. When we make significant changes, we will notify you via in-app notification or email. Continued use of Riff after changes are posted constitutes your acceptance of the updated policy.\n\nLast updated: June 2026.",
   "ppSection11Title": "11. Contact Us",
   "ppSection11Body": "If you have questions, concerns, or requests regarding this Privacy Policy or your personal data, please contact us at:\n\nEmail: magddevf@gmail.com\n",
-
   "profileSettingsDrawer": "Profile Settings",
   "editYourProfile": "Edit your profile info",
   "profileSettingsTitle": "Profile Settings",
@@ -509,7 +467,6 @@
   "googleAccountEmailNote": "Email cannot be changed for Google accounts",
   "noGenresSelected": "Select at least one genre",
   "selectGenresTitle": "Select Genres",
-
   "aboutUsDrawer": "About Riff",
   "aboutUsDrawerSubtitle": "Our story and the team",
   "aboutUsTitle": "About Riff",

@@ -519,96 +519,6 @@ class S {
     return Intl.message('Skip', name: 'skipBtn', desc: '', args: []);
   }
 
-  /// `Verify your\nphone number`
-  String get verifyYourPhoneNumber {
-    return Intl.message(
-      'Verify your\nphone number',
-      name: 'verifyYourPhoneNumber',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `We'll send a WhatsApp message with a 6-digit code.`
-  String get wellSendWhatsApp {
-    return Intl.message(
-      'We\'ll send a WhatsApp message with a 6-digit code.',
-      name: 'wellSendWhatsApp',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Phone Number`
-  String get phoneNumberLabel {
-    return Intl.message(
-      'Phone Number',
-      name: 'phoneNumberLabel',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Send OTP via WhatsApp`
-  String get sendOTPViaWhatsApp {
-    return Intl.message(
-      'Send OTP via WhatsApp',
-      name: 'sendOTPViaWhatsApp',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Sending…`
-  String get sendingOTP {
-    return Intl.message('Sending…', name: 'sendingOTP', desc: '', args: []);
-  }
-
-  /// `Code will be sent via WhatsApp`
-  String get codeWillBeSentViaWhatsApp {
-    return Intl.message(
-      'Code will be sent via WhatsApp',
-      name: 'codeWillBeSentViaWhatsApp',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `We sent a WhatsApp message to\n{phoneNumber}`
-  String weSentWhatsAppTo(String phoneNumber) {
-    return Intl.message(
-      'We sent a WhatsApp message to\n$phoneNumber',
-      name: 'weSentWhatsAppTo',
-      desc: '',
-      args: [phoneNumber],
-    );
-  }
-
-  /// `Verify`
-  String get verifyBtn {
-    return Intl.message('Verify', name: 'verifyBtn', desc: '', args: []);
-  }
-
-  /// `Resend code in {seconds}s`
-  String resendCodeIn(int seconds) {
-    return Intl.message(
-      'Resend code in ${seconds}s',
-      name: 'resendCodeIn',
-      desc: '',
-      args: [seconds],
-    );
-  }
-
-  /// `Resend via WhatsApp`
-  String get resendViaWhatsApp {
-    return Intl.message(
-      'Resend via WhatsApp',
-      name: 'resendViaWhatsApp',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Skip for now`
   String get skipForNow {
     return Intl.message('Skip for now', name: 'skipForNow', desc: '', args: []);
@@ -654,46 +564,6 @@ class S {
     return Intl.message(
       'Save & Continue',
       name: 'saveAndContinue',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `See which of your contacts are already on Riff.`
-  String get seeWhichContactsOnRiff {
-    return Intl.message(
-      'See which of your contacts are already on Riff.',
-      name: 'seeWhichContactsOnRiff',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Sync Contacts`
-  String get syncContactsBtn {
-    return Intl.message(
-      'Sync Contacts',
-      name: 'syncContactsBtn',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `We'll match your contacts with Riff users.`
-  String get wellMatchContacts {
-    return Intl.message(
-      'We\'ll match your contacts with Riff users.',
-      name: 'wellMatchContacts',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Contacts synced — none of your contacts are on Riff yet.`
-  String get contactsSyncedNoneOnRiff {
-    return Intl.message(
-      'Contacts synced — none of your contacts are on Riff yet.',
-      name: 'contactsSyncedNoneOnRiff',
       desc: '',
       args: [],
     );
@@ -2559,16 +2429,6 @@ class S {
     );
   }
 
-  /// `Enter the code`
-  String get enterTheCode {
-    return Intl.message(
-      'Enter the code',
-      name: 'enterTheCode',
-      desc: '',
-      args: [],
-    );
-  }
-
   /// `Add a profile photo`
   String get addAProfilePhoto {
     return Intl.message(
@@ -2659,56 +2519,6 @@ class S {
     return Intl.message(
       'Username must contain only English letters, numbers, underscores or dots',
       name: 'usernameEnglishOnly',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `This phone number is already linked to another account`
-  String get phoneNumberAlreadyTaken {
-    return Intl.message(
-      'This phone number is already linked to another account',
-      name: 'phoneNumberAlreadyTaken',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `We couldn't send your code on WhatsApp right now. Please try again in a moment.`
-  String get phoneOtpWhatsappUnavailable {
-    return Intl.message(
-      'We couldn\'t send your code on WhatsApp right now. Please try again in a moment.',
-      name: 'phoneOtpWhatsappUnavailable',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Phone number`
-  String get confirmPhoneSection {
-    return Intl.message(
-      'Phone number',
-      name: 'confirmPhoneSection',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Confirm your phone number`
-  String get confirmPhoneTile {
-    return Intl.message(
-      'Confirm your phone number',
-      name: 'confirmPhoneTile',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Verify your number with a code sent on WhatsApp`
-  String get confirmPhoneSub {
-    return Intl.message(
-      'Verify your number with a code sent on WhatsApp',
-      name: 'confirmPhoneSub',
       desc: '',
       args: [],
     );

@@ -303,35 +303,11 @@ The same repo/cubit/widget layering was applied to the rest of `lib/features/aut
 | --- | --- | --- | --- |
 | `forgot_password` | [forgot_password_repo_test.md](test/features/auth/forgot_password/data/repos/forgot_password_repo_test.md) | [forgot_password_cubit_test.md](test/features/auth/forgot_password/logic/cubit/forgot_password_cubit_test.md) | [forgot_password_form_field_test.md](test/features/auth/forgot_password/UI/widgets/forgot_password_form_field_test.md), [reset_password_form_fields_test.md](test/features/auth/forgot_password/UI/widgets/reset_password_form_fields_test.md), [forgot_password_bloc_listener_test.md](test/features/auth/forgot_password/UI/widgets/forgot_password_bloc_listener_test.md), [request_otp_bloc_listener_test.md](test/features/auth/forgot_password/UI/widgets/request_otp_bloc_listener_test.md), [reset_password_bloc_listener_test.md](test/features/auth/forgot_password/UI/widgets/reset_password_bloc_listener_test.md) |
 | `signup` | [signup_repo_test.md](test/features/auth/signup/data/repos/signup_repo_test.md) | [signup_cubit_test.md](test/features/auth/signup/logic/cubit/signup_cubit_test.md) | [signup_form_fields_test.md](test/features/auth/signup/UI/widgets/signup_form_fields_test.md), [signup_bloc_listener_test.md](test/features/auth/signup/UI/widgets/signup_bloc_listener_test.md) |
-| `phone_verify` | [phone_verify_repo_test.md](test/features/auth/phone_verify/data/repos/phone_verify_repo_test.md) | [phone_verify_cubit_test.md](test/features/auth/phone_verify/logic/cubit/phone_verify_cubit_test.md) | [phone_verify_screen_test.md](test/features/auth/phone_verify/UI/phone_verify_screen_test.md) |
 | `new_user_onboarding` | [suggested_users_repo_test.md](test/features/auth/new_user_onboarding/data/repos/suggested_users_repo_test.md) | *(no cubit — screen calls the repo directly)* | *(not covered — see below)* |
-
-### Phone confirmation from account settings
-
-The same phone flow is reachable from two places, and the tests are split to match:
-
-| Layer | Test | Doc |
-| --- | --- | --- |
-| Model (`GET /api/users/me` parsing) | `test/features/home/profile/user_profile_phone_fields_test.dart` | [user_profile_phone_fields_test.md](test/features/home/profile/user_profile_phone_fields_test.md) |
-| Widget — conditional entry | `test/features/home/account_settings/UI/account_settings_phone_tile_test.dart` | [account_settings_phone_tile_test.md](test/features/home/account_settings/UI/account_settings_phone_tile_test.md) |
-
-`PhoneVerifyScreen`/`PhoneOtpScreen` are shared between signup and settings rather than
-duplicated. They take an optional `onVerified` callback: null keeps the signup behaviour
-(`pushNamedAndRemoveUntil` to onboarding), and `app_router.dart` passes one for
-`Routes.confirmPhone` that pops back with `true` so account settings can retire the entry. This is
-the same optional-callback-with-a-real-default pattern used for the plugin-backed calls above.
-
-Two things worth knowing before touching this area:
-
-- `phone_verified` missing from the `me` payload parses as **true**, not false. Absent means
-  "unknown", and unknown must stay quiet — defaulting to false would prompt every user on a
-  client running against an older API.
-- `_SectionHeader` in `account_settings_screen.dart` renders `title.toUpperCase()`, so widget
-  tests must match the uppercased string, not the raw ARB value.
 
 **Deliberately not covered:** `new_user_onboarding_screen.dart` (reaches into `getIt<...>()`
 directly in field initializers instead of via constructor injection, and drives `image_picker` +
-`flutter_contacts` + `permission_handler`), `onboarding_screen.dart` and the `user-prefrences/`
+`permission_handler`), `onboarding_screen.dart` and the `user-prefrences/`
 genre/instrument screens (static UI or local selection state, no repo/cubit layer). If any of these
 grow real logic worth isolating, apply the same repo/cubit-first approach before reaching for a
 full widget test.
@@ -349,11 +325,8 @@ full widget test.
 | Login token debug-log crash | `LoginRepo._handleLoginResponse`, `DioFactory` interceptor | `accessToken.substring(0, 20)` threw `RangeError` for tokens <20 chars, turning a successful login into a reported failure — guarded with a length check before truncating |
 | `LoginCubit` state stream untyped | `LoginCubit` | Declared as raw `Cubit<LoginState>` (`T` resolved to `dynamic`) instead of `Cubit<LoginState<LoginResponse>>` |
 | `SignupCubit` state stream untyped | `SignupCubit` | Same as above — raw `Cubit<SignupState>` widened to `Cubit<SignupState<void>>` (signup's response payload is never read downstream) |
+| Phone OTP + contacts sync removed (2026-07-31) | `WhatsAppService`, `SendPhoneOtp`, `FindContacts` (API); `phone_verify`, onboarding contacts step, feed empty-state sync (Flutter) | Both features were deleted rather than fixed. WhatsApp OTP went through whatsapp-web.js → Baileys → Meta Cloud API and never reached a working state: unofficial clients hit error 463 (`account restricted or missing tctoken`) on every message to a contact with no prior conversation — which is every OTP recipient — and the official Cloud API cannot create an AUTHENTICATION template until the Meta business portfolio is verified. Contacts sync went with it because matching depended on verified phone numbers. Signup now goes straight to `newUserOnboarding`. The `users` table keeps its `phone_number`/`phone_verified`/`phone_otp*` columns (dropping them is destructive and unnecessary); re-adding the feature means restoring from git history plus a verified Meta portfolio. |
 | `ForgotPasswordCubit` emit methods un-awaitable | `ForgotPasswordCubit` | `emitForgotPasswordStates`/`emitVerifyOtpState`/`emitResetPasswordState` were declared `void ... async` instead of `Future<void> ... async` — callers (and tests) couldn't `await` completion; widened the return type (backward-compatible, no call site needed to change) |
-| Phone OTP never arrived on WhatsApp, but the API reported success | `WhatsAppService` (API), `PhoneVerifyCubit`, `phone_verify_screen.dart` | Two separate bugs. **(1) Silent-success lie:** `sendMessage()` logged the OTP and `return`ed normally when the client wasn't ready, so `POST /api/auth/phone/send-otp` answered `200 {message:'OTP sent via WhatsApp'}` and the app advanced to the code-entry screen for a code that only existed in a Railway log line. It now throws `ServiceUnavailableException` (503) → cubit emits the `WHATSAPP_UNAVAILABLE` sentinel → localized snackbar. **(2) Client wedged after auth:** Chrome ran without `--disable-dev-shm-usage`, so the 64MB `/dev/shm` in the container starved WhatsApp Web's initial app-state sync and the renderer stalled *after* `authenticated`. `ready` is emitted from the same `exposeFunction` callback as `authenticated` in whatsapp-web.js, so the throw between them was swallowed by Puppeteer and never logged — the only symptom was `AUTHENTICATED` with no `READY`, forever. Added the container Chrome flags, a `READY_TIMEOUT_MS` watchdog that logs page/connection diagnostics and rebuilds the client, `disconnected` auto-restart with bounded backoff, and `getNumberId()` + `message_ack` so a send is verified rather than assumed |
-| Chrome's cache filling the WhatsApp session volume | `WhatsAppService` (API) | `LocalAuth`'s directory doubles as Chrome's `user-data-dir`, so every cached byte landed on the same 500MB Railway volume holding the linked session — it hit 274MB, and a full volume unlinks WhatsApp and forces a QR rescan. Pointed `--disk-cache-dir` at ephemeral container disk (`/tmp`) so the volume only carries session state, and added a boot-time prune of the disposable cache dirs to reclaim what had already accumulated (`--disk-cache-size` alone capped the rate but not the destination, and never covered the GPU/shader caches Chrome writes into the profile regardless). The prune is a strict allowlist, never a glob: the same profile holds WhatsApp's login state in `IndexedDB`/`Local Storage`/`Local State`, so a glob would unlink the account. It runs before Chrome launches and never throws — failing to reclaim disk must not take OTP delivery down |
-| `puppeteer.executablePath()` await dropped | `WhatsAppService.initializeClient` | Chrome got the literal path `[object Promise]` and never launched (`Browser was not found at the configured executablePath`). puppeteer 25 resolves a Promise here, but types `executablePath` as an overloaded callable loose enough that the missing `await` type-checks clean and only fails at runtime — `tsc` and eslint both passed. Restored the `await` plus an assert that the resolved value is a non-empty string |
-| OTP sends silently dead for LID-migrated WhatsApp accounts | `WhatsAppService` (API) — resolved by migrating to Baileys | whatsapp-web.js resolved recipients to privacy Linked IDs (`<digits>@lid`) and its injected send path returned **no message id** for them — for both the `@lid` and phone-form `@c.us` routes. 1.34.7 was the latest release, main had no fix, and the wa-version mirror had pruned every compatible web build, killing the pin escape hatch. Migrated the service to `@whiskeysockets/baileys` (WebSocket protocol, no Chrome, native LID handling), same public interface — which also permanently retired the whole Chrome-in-container problem class above (`/dev/shm`, profile locks, volume-filling caches, the ~150MB Chrome download every deploy). Linking is by pairing code (`WHATSAPP_PAIR_PHONE_NUMBER`) with QR fallback |
 
 ---
 
@@ -394,49 +367,6 @@ FIREBASE_SERVICE_ACCOUNT_JSON=
 SPOTIFY_CLIENT_ID=
 SPOTIFY_CLIENT_SECRET=
 
-# WhatsApp OTP delivery has TWO transports. SendPhoneOtp prefers Meta's
-# official Business Cloud API whenever its credentials are set, and falls back
-# to the Baileys socket otherwise. The Cloud API is the production path:
-# error 463 ("account restricted or missing tctoken") proved that unofficial
-# clients cannot reliably message cold contacts — which is every OTP recipient.
-
-# ── Cloud API (preferred) ───────────────────────────────────────────────────
-# Permanent System User token from Meta Business settings.
-WHATSAPP_CLOUD_ACCESS_TOKEN=
-# The sender number's "Phone number ID" from the app's WhatsApp > API Setup.
-WHATSAPP_CLOUD_PHONE_NUMBER_ID=
-# Approved AUTHENTICATION-category template name. Default riff_otp.
-WHATSAPP_CLOUD_OTP_TEMPLATE=
-# Template language code, must match the template exactly. Default en.
-WHATSAPP_CLOUD_TEMPLATE_LANG=
-# Graph API version. Default v23.0.
-WHATSAPP_CLOUD_API_VERSION=
-
-# ── Baileys socket (fallback, via @whiskeysockets/baileys — WebSocket
-# protocol, NO Chrome/puppeteer). Credentials live in a baileys/ subdirectory
-# of WHATSAPP_SESSION_PATH; it must point inside the mounted Railway Volume or
-# the linked session is lost on every redeploy.
-#
-# History: this ran on whatsapp-web.js + headless Chrome until July 2026, when
-# WhatsApp's LID (privacy Linked ID) migration broke its send path terminally —
-# sends returned no message id for LID-resolved accounts on the latest release,
-# with no fix on main and no compatible web-version pin left in the wa-version
-# mirror. Do not migrate back.
-WHATSAPP_SESSION_PATH=/data/.whatsapp-session
-# The sending WhatsApp account's own number, digits only, international form.
-# Setting it links by 8-character PAIRING CODE typed into the phone (WhatsApp >
-# Linked Devices > "Link with phone number instead") — far more reliable from a
-# hosted log viewer than a QR that rotates every ~20s. Unset = QR fallback.
-WHATSAPP_PAIR_PHONE_NUMBER=
-# Optional. How long a send waits for a still-starting socket. Default 20000.
-WHATSAPP_SEND_WAIT_MS=
-# Optional. Bounded socket reconnect attempts. Default 3. (A post-pairing
-# restartRequired close is protocol, not failure, and doesn't consume one.)
-WHATSAPP_MAX_RESTARTS=
-# LOCAL DEV ONLY. 'true' logs the OTP instead of sending it, so the flow can be
-# tested without a linked account. Never enable in production — it puts live
-# OTP codes in the logs.
-WHATSAPP_LOG_OTP=
 ```
 
 ---

@@ -41,11 +41,6 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m9(name) =>
       "${name} wants to send you a message.\nThey can\'t see that you\'ve viewed this request.";
 
-  static String m10(seconds) => "Resend code in ${seconds}s";
-
-  static String m11(phoneNumber) =>
-      "We sent a WhatsApp message to\n${phoneNumber}";
-
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "aboutUsContactEmail": MessageLookupByLibrary.simpleMessage(
@@ -168,9 +163,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "choosePhotos": MessageLookupByLibrary.simpleMessage("Choose Photos"),
     "chooseVideo": MessageLookupByLibrary.simpleMessage("Choose Video"),
     "clearFilter": MessageLookupByLibrary.simpleMessage("Clear"),
-    "codeWillBeSentViaWhatsApp": MessageLookupByLibrary.simpleMessage(
-      "Code will be sent via WhatsApp",
-    ),
     "commentCannotBeEmpty": MessageLookupByLibrary.simpleMessage(
       "Comment cannot be empty",
     ),
@@ -193,16 +185,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Confirm New Password",
     ),
     "confirmPassword": MessageLookupByLibrary.simpleMessage("Confirm Password"),
-    "confirmPhoneSection": MessageLookupByLibrary.simpleMessage("Phone number"),
-    "confirmPhoneSub": MessageLookupByLibrary.simpleMessage(
-      "Verify your number with a code sent on WhatsApp",
-    ),
-    "confirmPhoneTile": MessageLookupByLibrary.simpleMessage(
-      "Confirm your phone number",
-    ),
-    "contactsSyncedNoneOnRiff": MessageLookupByLibrary.simpleMessage(
-      "Contacts synced — none of your contacts are on Riff yet.",
-    ),
     "continueBtn": MessageLookupByLibrary.simpleMessage("Continue"),
     "continueWithGoogle": MessageLookupByLibrary.simpleMessage(
       "Continue with Google",
@@ -310,7 +292,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "enterNewPassword": MessageLookupByLibrary.simpleMessage(
       "Enter your new password",
     ),
-    "enterTheCode": MessageLookupByLibrary.simpleMessage("Enter the code"),
     "enterYourEmailAddress": MessageLookupByLibrary.simpleMessage(
       "Enter your email address",
     ),
@@ -579,13 +560,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Passwords do not match",
     ),
     "peopleSection": MessageLookupByLibrary.simpleMessage("People"),
-    "phoneNumberAlreadyTaken": MessageLookupByLibrary.simpleMessage(
-      "This phone number is already linked to another account",
-    ),
-    "phoneNumberLabel": MessageLookupByLibrary.simpleMessage("Phone Number"),
-    "phoneOtpWhatsappUnavailable": MessageLookupByLibrary.simpleMessage(
-      "We couldn\'t send your code on WhatsApp right now. Please try again in a moment.",
-    ),
     "pleaseAddTitle": MessageLookupByLibrary.simpleMessage(
       "Please add a title",
     ),
@@ -773,10 +747,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "requested to follow you.",
     ),
     "resendCode": MessageLookupByLibrary.simpleMessage("Resend code"),
-    "resendCodeIn": m10,
-    "resendViaWhatsApp": MessageLookupByLibrary.simpleMessage(
-      "Resend via WhatsApp",
-    ),
     "resetPasswordBtn": MessageLookupByLibrary.simpleMessage("Reset Password"),
     "resetPasswordSubtitle": MessageLookupByLibrary.simpleMessage(
       "Set the new password for your account so you can login and access all the features.",
@@ -801,9 +771,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "searchHintFollow": MessageLookupByLibrary.simpleMessage("Search"),
     "searchTitle": MessageLookupByLibrary.simpleMessage("Search"),
     "searchUsersHint": MessageLookupByLibrary.simpleMessage("Search users…"),
-    "seeWhichContactsOnRiff": MessageLookupByLibrary.simpleMessage(
-      "See which of your contacts are already on Riff.",
-    ),
     "selectGenres": MessageLookupByLibrary.simpleMessage(
       "Select the genres you love.\nThis helps us find your people.",
     ),
@@ -812,11 +779,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Select the instruments you play.\nPick as many as you like.",
     ),
     "sendCodeBtn": MessageLookupByLibrary.simpleMessage("Send Code"),
-    "sendOTPViaWhatsApp": MessageLookupByLibrary.simpleMessage(
-      "Send OTP via WhatsApp",
-    ),
     "sendingFile": MessageLookupByLibrary.simpleMessage("Sending file…"),
-    "sendingOTP": MessageLookupByLibrary.simpleMessage("Sending…"),
     "sendingPhoto": MessageLookupByLibrary.simpleMessage("Sending photo…"),
     "sendingVideo": MessageLookupByLibrary.simpleMessage("Sending video…"),
     "sendingVoice": MessageLookupByLibrary.simpleMessage("Sending voice…"),
@@ -866,7 +829,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "submitReportBtn": MessageLookupByLibrary.simpleMessage("Submit Report"),
     "submitRequestBtn": MessageLookupByLibrary.simpleMessage("Submit Request"),
     "successTitle": MessageLookupByLibrary.simpleMessage("Success!"),
-    "syncContactsBtn": MessageLookupByLibrary.simpleMessage("Sync Contacts"),
     "takeAPhoto": MessageLookupByLibrary.simpleMessage("Take a Photo"),
     "tapToAddPhotosOrVideos": MessageLookupByLibrary.simpleMessage(
       "Tap to add photos or videos",
@@ -907,20 +869,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "usernameUnchanged": MessageLookupByLibrary.simpleMessage(
       "This is your current username",
     ),
-    "verifyBtn": MessageLookupByLibrary.simpleMessage("Verify"),
-    "verifyYourPhoneNumber": MessageLookupByLibrary.simpleMessage(
-      "Verify your\nphone number",
-    ),
     "videoLabel": MessageLookupByLibrary.simpleMessage("Video"),
     "violenceOrDangerous": MessageLookupByLibrary.simpleMessage(
       "Violence or dangerous content",
-    ),
-    "weSentWhatsAppTo": m11,
-    "wellMatchContacts": MessageLookupByLibrary.simpleMessage(
-      "We\'ll match your contacts with Riff users.",
-    ),
-    "wellSendWhatsApp": MessageLookupByLibrary.simpleMessage(
-      "We\'ll send a WhatsApp message with a 6-digit code.",
     ),
     "whatDoYouListenTo": MessageLookupByLibrary.simpleMessage(
       "What do you listen to?",

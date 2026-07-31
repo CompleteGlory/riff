@@ -6,8 +6,6 @@
 	     the Export Compliance question on every TestFlight/App Store upload. -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	<key>NSContactsUsageDescription</key>
-	<string>Riff uses your contacts to find friends who are already on the app.</string>
 
 	<!-- URL schemes registered so Riff can open TikTok, Instagram, and Spotify -->
 	<key>LSApplicationQueriesSchemes</key>

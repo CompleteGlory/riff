@@ -60,11 +60,8 @@ class ApiConstants {
   static const String discoverPosts = "/api/discover/posts";
 
   // Phone OTP
-  static const String sendPhoneOtp   = "/api/auth/phone/send-otp";
-  static const String verifyPhoneOtp = "/api/auth/phone/verify-otp";
 
   // Contacts & suggested
-  static const String findContacts   = "/api/users/me/contacts";
   static const String discoverUsers  = "/api/discover/users";
 
   // Reports (user-submitted)

@@ -41,10 +41,6 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m9(name) =>
       "${name} يريد إرسال رسالة إليك.\nلا يمكنه رؤية أنك اطلعت على هذا الطلب.";
 
-  static String m10(seconds) => "إعادة الإرسال خلال ${seconds} ث";
-
-  static String m11(phoneNumber) => "أرسلنا رسالة واتساب إلى\n${phoneNumber}";
-
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "aboutUsContactEmail": MessageLookupByLibrary.simpleMessage(
@@ -165,9 +161,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "choosePhotos": MessageLookupByLibrary.simpleMessage("اختيار صور"),
     "chooseVideo": MessageLookupByLibrary.simpleMessage("اختيار فيديو"),
     "clearFilter": MessageLookupByLibrary.simpleMessage("مسح"),
-    "codeWillBeSentViaWhatsApp": MessageLookupByLibrary.simpleMessage(
-      "سيتم إرسال الرمز عبر واتساب",
-    ),
     "commentCannotBeEmpty": MessageLookupByLibrary.simpleMessage(
       "لا يمكن أن يكون التعليق فارغاً",
     ),
@@ -191,14 +184,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "confirmPassword": MessageLookupByLibrary.simpleMessage(
       "تأكيد كلمة المرور",
-    ),
-    "confirmPhoneSection": MessageLookupByLibrary.simpleMessage("رقم الهاتف"),
-    "confirmPhoneSub": MessageLookupByLibrary.simpleMessage(
-      "تحقق من رقمك بكود يُرسل على واتساب",
-    ),
-    "confirmPhoneTile": MessageLookupByLibrary.simpleMessage("أكّد رقم هاتفك"),
-    "contactsSyncedNoneOnRiff": MessageLookupByLibrary.simpleMessage(
-      "تمت المزامنة — لا توجد جهات اتصال على Riff بعد.",
     ),
     "continueBtn": MessageLookupByLibrary.simpleMessage("متابعة"),
     "continueWithGoogle": MessageLookupByLibrary.simpleMessage(
@@ -295,7 +280,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "enterNewPassword": MessageLookupByLibrary.simpleMessage(
       "أدخل كلمة مرورك الجديدة",
     ),
-    "enterTheCode": MessageLookupByLibrary.simpleMessage("أدخل الرمز"),
     "enterYourEmailAddress": MessageLookupByLibrary.simpleMessage(
       "أدخل بريدك الإلكتروني",
     ),
@@ -570,13 +554,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "كلمتا المرور غير متطابقتين",
     ),
     "peopleSection": MessageLookupByLibrary.simpleMessage("أشخاص"),
-    "phoneNumberAlreadyTaken": MessageLookupByLibrary.simpleMessage(
-      "رقم الهاتف هذا مرتبط بحساب آخر بالفعل",
-    ),
-    "phoneNumberLabel": MessageLookupByLibrary.simpleMessage("رقم الهاتف"),
-    "phoneOtpWhatsappUnavailable": MessageLookupByLibrary.simpleMessage(
-      "لم نتمكن من إرسال الكود على واتساب الآن. من فضلك حاول مرة أخرى بعد قليل.",
-    ),
     "pleaseAddTitle": MessageLookupByLibrary.simpleMessage("يرجى إضافة عنوان"),
     "pleaseConfirmPassword": MessageLookupByLibrary.simpleMessage(
       "يرجى تأكيد كلمة المرور",
@@ -760,10 +737,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "طلب متابعتك.",
     ),
     "resendCode": MessageLookupByLibrary.simpleMessage("إعادة إرسال الرمز"),
-    "resendCodeIn": m10,
-    "resendViaWhatsApp": MessageLookupByLibrary.simpleMessage(
-      "إعادة الإرسال عبر واتساب",
-    ),
     "resetPasswordBtn": MessageLookupByLibrary.simpleMessage("إعادة تعيين"),
     "resetPasswordSubtitle": MessageLookupByLibrary.simpleMessage(
       "قم بتعيين كلمة مرور جديدة لحسابك حتى تتمكن من تسجيل الدخول والوصول إلى جميع الميزات.",
@@ -790,9 +763,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "searchUsersHint": MessageLookupByLibrary.simpleMessage(
       "ابحث عن مستخدمين…",
     ),
-    "seeWhichContactsOnRiff": MessageLookupByLibrary.simpleMessage(
-      "تعرف على جهات الاتصال الموجودة على Riff.",
-    ),
     "selectGenres": MessageLookupByLibrary.simpleMessage(
       "اختر الأنواع الموسيقية التي تحبها.\nهذا يساعدنا في إيجاد مجتمعك.",
     ),
@@ -803,11 +773,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "اختر الآلات الموسيقية التي تعزف عليها.\nيمكنك اختيار أكثر من واحدة.",
     ),
     "sendCodeBtn": MessageLookupByLibrary.simpleMessage("إرسال الرمز"),
-    "sendOTPViaWhatsApp": MessageLookupByLibrary.simpleMessage(
-      "إرسال رمز التحقق عبر واتساب",
-    ),
     "sendingFile": MessageLookupByLibrary.simpleMessage("جارٍ إرسال الملف…"),
-    "sendingOTP": MessageLookupByLibrary.simpleMessage("جارٍ الإرسال…"),
     "sendingPhoto": MessageLookupByLibrary.simpleMessage("جارٍ إرسال الصورة…"),
     "sendingVideo": MessageLookupByLibrary.simpleMessage("جارٍ إرسال الفيديو…"),
     "sendingVoice": MessageLookupByLibrary.simpleMessage("جارٍ إرسال الصوت…"),
@@ -855,9 +821,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "submitReportBtn": MessageLookupByLibrary.simpleMessage("إرسال التقرير"),
     "submitRequestBtn": MessageLookupByLibrary.simpleMessage("إرسال الطلب"),
     "successTitle": MessageLookupByLibrary.simpleMessage("تم بنجاح!"),
-    "syncContactsBtn": MessageLookupByLibrary.simpleMessage(
-      "مزامنة جهات الاتصال",
-    ),
     "takeAPhoto": MessageLookupByLibrary.simpleMessage("التقاط صورة"),
     "tapToAddPhotosOrVideos": MessageLookupByLibrary.simpleMessage(
       "اضغط لإضافة صور أو مقاطع فيديو",
@@ -898,20 +861,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "usernameUnchanged": MessageLookupByLibrary.simpleMessage(
       "هذا هو اسم المستخدم الحالي",
     ),
-    "verifyBtn": MessageLookupByLibrary.simpleMessage("تحقق"),
-    "verifyYourPhoneNumber": MessageLookupByLibrary.simpleMessage(
-      "تحقق من\nرقم هاتفك",
-    ),
     "videoLabel": MessageLookupByLibrary.simpleMessage("فيديو"),
     "violenceOrDangerous": MessageLookupByLibrary.simpleMessage(
       "عنف أو محتوى خطير",
-    ),
-    "weSentWhatsAppTo": m11,
-    "wellMatchContacts": MessageLookupByLibrary.simpleMessage(
-      "سنطابق جهات اتصالك مع مستخدمي Riff.",
-    ),
-    "wellSendWhatsApp": MessageLookupByLibrary.simpleMessage(
-      "سنرسل رسالة واتساب برمز مكون من 6 أرقام.",
     ),
     "whatDoYouListenTo": MessageLookupByLibrary.simpleMessage("ماذا تستمع؟"),
     "whatDoYouPlay": MessageLookupByLibrary.simpleMessage("ماذا تعزف؟"),

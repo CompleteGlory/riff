@@ -97,39 +97,4 @@ void main() {
     });
   });
 
-  group('findContacts', () {
-    test('posts the phone numbers and parses the matches', () async {
-      when(mockDio.post(any, data: anyNamed('data'))).thenAnswer(
-        (_) async => Response(
-          requestOptions: RequestOptions(path: '/contacts'),
-          statusCode: 200,
-          data: [userJson('4')],
-        ),
-      );
-
-      final result = await repo.findContacts(['+201001234567']);
-
-      result.when(
-        success: (users) => expect(users.single.id, '4'),
-        failure: (_) => fail('expected success'),
-      );
-      final captured =
-          verify(mockDio.post(any, data: captureAnyNamed('data'))).captured.single
-              as Map<String, dynamic>;
-      expect(captured['phone_numbers'], ['+201001234567']);
-    });
-
-    test('returns failure when the request throws', () async {
-      when(mockDio.post(any, data: anyNamed('data'))).thenThrow(
-        DioException(
-          requestOptions: RequestOptions(path: '/contacts'),
-          type: DioExceptionType.connectionError,
-        ),
-      );
-
-      final result = await repo.findContacts(['0100']);
-
-      expect(result, isA<Failure<List<dynamic>>>());
-    });
-  });
 }
