@@ -23,18 +23,41 @@ import 'package:riff/features/home/notifications/UI/post_by_id_screen.dart';
 import 'package:riff/features/home/notifications/UI/flagged_comment_detail_screen.dart';
 import 'package:riff/generated/l10n.dart';
 
+/// Reports whether the OS has notifications turned off for this app.
+typedef NotificationsDeniedCheck = Future<bool> Function();
+
+Future<bool> _firebaseNotificationsDenied() async {
+  // Use FirebaseMessaging's authorization status — the source this app actually
+  // requests notification permission through. On iOS, permission_handler's
+  // `Permission.notification.status` can report `denied` even when the user has
+  // authorized notifications (they were granted via FCM, not permission_handler),
+  // which made this banner show incorrectly. `authorized` and `provisional` both
+  // mean notifications are on.
+  final settings = await FirebaseMessaging.instance.getNotificationSettings();
+  return settings.authorizationStatus == AuthorizationStatus.denied ||
+      settings.authorizationStatus == AuthorizationStatus.notDetermined;
+}
+
 class NotificationsScreen extends StatelessWidget {
-  const NotificationsScreen({super.key});
+  const NotificationsScreen({
+    super.key,
+    this.notificationsDenied = _firebaseNotificationsDenied,
+  });
+
+  /// Injectable so widget tests don't need a live Firebase.
+  final NotificationsDeniedCheck notificationsDenied;
 
   @override
   Widget build(BuildContext context) {
     // Cubit already provided via BlocProvider.value from HomeLayout
-    return const _NotificationsBody();
+    return _NotificationsBody(notificationsDenied: notificationsDenied);
   }
 }
 
 class _NotificationsBody extends StatefulWidget {
-  const _NotificationsBody();
+  const _NotificationsBody({required this.notificationsDenied});
+
+  final NotificationsDeniedCheck notificationsDenied;
 
   @override
   State<_NotificationsBody> createState() => _NotificationsBodyState();
@@ -64,17 +87,7 @@ class _NotificationsBodyState extends State<_NotificationsBody>
   }
 
   Future<void> _checkPermission() async {
-    // Use FirebaseMessaging's authorization status — the source this app actually
-    // requests notification permission through. On iOS, permission_handler's
-    // `Permission.notification.status` can report `denied` even when the user has
-    // authorized notifications (they were granted via FCM, not permission_handler),
-    // which made this banner show incorrectly. `authorized` and `provisional` both
-    // mean notifications are on.
-    final settings =
-        await FirebaseMessaging.instance.getNotificationSettings();
-    final denied =
-        settings.authorizationStatus == AuthorizationStatus.denied ||
-            settings.authorizationStatus == AuthorizationStatus.notDetermined;
+    final denied = await widget.notificationsDenied();
     if (mounted) {
       setState(() => _notifsDenied = denied);
     }

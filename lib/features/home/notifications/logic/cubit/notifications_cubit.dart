@@ -14,6 +14,29 @@ class NotificationsCubit extends Cubit<NotificationsState>
 
   Timer? _pollTimer;
 
+  /// Bumped by every local change the user makes (mark all read, mark one
+  /// read, delete). A fetch that started before the bump is stale by the time
+  /// it returns, so its result is dropped instead of emitted.
+  ///
+  /// Without this, the 30-second poll — or the silentRefresh() HomeLayout runs
+  /// when you come back from this screen — could land in the window between
+  /// "mark all as read" updating the list and the server committing it, and
+  /// repaint every row as unread again. That looks exactly like the button
+  /// doing nothing, right up until you pull to refresh and it finally sticks.
+  int _localChangeEpoch = 0;
+
+  /// Runs [fetch] and only emits its result if no local change happened while
+  /// it was in flight.
+  Future<void> _emitIfNotSuperseded(
+    Future<NotificationsResponse> Function() fetch,
+    void Function(NotificationsResponse res) onResult,
+  ) async {
+    final epoch = _localChangeEpoch;
+    final res = await fetch();
+    if (isClosed || epoch != _localChangeEpoch) return;
+    onResult(res);
+  }
+
   /// Broadcast stream — HomeLayout listens to show in-app banners
   final _newNotifController =
       StreamController<NotificationModel>.broadcast();
@@ -26,8 +49,10 @@ class NotificationsCubit extends Cubit<NotificationsState>
   Future<void> load() async {
     if (state is! NotificationsLoaded) emit(NotificationsLoading());
     try {
-      final res = await _repo.getNotifications();
-      if (!isClosed) emit(NotificationsLoaded(res.data, res.unreadCount));
+      await _emitIfNotSuperseded(
+        _repo.getNotifications,
+        (res) => emit(NotificationsLoaded(res.data, res.unreadCount)),
+      );
       _startPolling();
       _tryConnectSocket();
     } catch (e) {
@@ -46,19 +71,19 @@ class NotificationsCubit extends Cubit<NotificationsState>
           ? prev.notifications.map((n) => n.id).toSet()
           : <int>{};
 
-      final res = await _repo.getNotifications();
-      if (isClosed) return;
-      emit(NotificationsLoaded(res.data, res.unreadCount));
+      await _emitIfNotSuperseded(_repo.getNotifications, (res) {
+        emit(NotificationsLoaded(res.data, res.unreadCount));
 
-      // Surface newly-arrived notifications as banners
-      if (res.unreadCount > prevUnread) {
-        final newOnes = res.data
-            .where((n) => !n.isRead && !prevIds.contains(n.id))
-            .take(res.unreadCount - prevUnread);
-        for (final n in newOnes) {
-          _newNotifController.add(n);
+        // Surface newly-arrived notifications as banners
+        if (res.unreadCount > prevUnread) {
+          final newOnes = res.data
+              .where((n) => !n.isRead && !prevIds.contains(n.id))
+              .take(res.unreadCount - prevUnread);
+          for (final n in newOnes) {
+            _newNotifController.add(n);
+          }
         }
-      }
+      });
     } catch (_) {}
   }
 
@@ -72,18 +97,18 @@ class NotificationsCubit extends Cubit<NotificationsState>
           ? (state as NotificationsLoaded).unreadCount
           : 0;
       try {
-        final res = await _repo.getNotifications();
-        if (isClosed) return;
-        emit(NotificationsLoaded(res.data, res.unreadCount));
-        // Surface newly-arrived notifications as banners
-        if (res.unreadCount > prevUnread) {
-          final newOnes = res.data
-              .where((n) => !n.isRead)
-              .take(res.unreadCount - prevUnread);
-          for (final n in newOnes) {
-            _newNotifController.add(n);
+        await _emitIfNotSuperseded(_repo.getNotifications, (res) {
+          emit(NotificationsLoaded(res.data, res.unreadCount));
+          // Surface newly-arrived notifications as banners
+          if (res.unreadCount > prevUnread) {
+            final newOnes = res.data
+                .where((n) => !n.isRead)
+                .take(res.unreadCount - prevUnread);
+            for (final n in newOnes) {
+              _newNotifController.add(n);
+            }
           }
-        }
+        });
       } catch (_) {}
     });
   }
@@ -123,6 +148,7 @@ class NotificationsCubit extends Cubit<NotificationsState>
   /// Cancels polling, disconnects socket, and wipes state.
   /// Call this before navigating to login so the next user starts clean.
   void reset() {
+    _localChangeEpoch++;
     _pollTimer?.cancel();
     _pollTimer = null;
     _socket.off('notification');
@@ -133,6 +159,7 @@ class NotificationsCubit extends Cubit<NotificationsState>
   // ── Actions ───────────────────────────────────────────────────────────────
 
   Future<void> deleteAll() async {
+    _localChangeEpoch++;
     try {
       await _repo.deleteAllNotifications();
       if (!isClosed) emit(NotificationsLoaded([], 0));
@@ -149,6 +176,10 @@ class NotificationsCubit extends Cubit<NotificationsState>
   /// Returns true when the server confirmed.
   Future<bool> markAllRead() async {
     if (isClosed) return false;
+
+    // Any fetch already in flight is now stale — it would repaint the rows as
+    // unread and undo what the user just did.
+    _localChangeEpoch++;
 
     final previous = state;
     if (previous is NotificationsLoaded) {
@@ -168,6 +199,7 @@ class NotificationsCubit extends Cubit<NotificationsState>
   }
 
   Future<void> removeNotification(int id) async {
+    _localChangeEpoch++;
     // Optimistic remove from UI
     final cur = state;
     if (cur is NotificationsLoaded && !isClosed) {
@@ -186,6 +218,7 @@ class NotificationsCubit extends Cubit<NotificationsState>
   void markRead(int notifId) {
     final cur = state;
     if (cur is! NotificationsLoaded || isClosed) return;
+    _localChangeEpoch++;
     final updated = cur.notifications
         .map((n) => n.id == notifId ? n.copyWith(isRead: true) : n)
         .toList();

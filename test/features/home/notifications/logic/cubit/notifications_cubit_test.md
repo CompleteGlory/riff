@@ -11,6 +11,9 @@ the "mark all as read sometimes works, sometimes doesn't" report.
   nothing is loaded yet.
 - **Surviving route disposal** — `close()` (what `BlocProvider` calls) leaves
   the cubit usable, including its polling timer.
+- **Stale fetches** — a `getNotifications()` that was already in flight when the
+  user marked everything read (or deleted a row) is dropped instead of emitted;
+  one that starts afterwards is applied normally.
 - **`reset`** — wipes state for the next user without killing the singleton.
 
 ## What's mocked
@@ -39,3 +42,10 @@ cancelled or the test binding fails with a pending timer.
   The user-visible symptom — it works until you've opened and left the
   notifications screen once, then never again — is exactly "sometimes it works,
   sometimes it doesn't".
+- **A background fetch undoing the local update.** The optimistic update lands
+  immediately, but the 30-second poll — or the `silentRefresh()` HomeLayout runs
+  when you come back from the notifications screen — could return server data
+  from *before* the mark-all-read committed and repaint every row as unread.
+  That reads as the button doing nothing, right up until a manual refresh
+  finally sticks. Local changes now bump an epoch counter and any fetch that
+  started before the bump discards its result.

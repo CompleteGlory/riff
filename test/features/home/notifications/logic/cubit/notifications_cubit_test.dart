@@ -145,6 +145,81 @@ void main() {
     });
   });
 
+  // "I mark all as read and have to refresh before they show as read."
+  //
+  // The optimistic update lands immediately, but a fetch that was already in
+  // flight — the 30-second poll, or the silentRefresh() HomeLayout runs when
+  // you come back from the notifications screen — returned server data from
+  // *before* the mark-all-read committed and repainted every row as unread.
+  // That reads as the button doing nothing, right until a manual refresh
+  // finally sticks.
+  group('a fetch in flight does not undo a local change', () {
+    test('a refresh that started first cannot repaint rows as unread',
+        () async {
+      await loadWith([notification(1), notification(2)]);
+      when(repo.markAllRead()).thenAnswer((_) async {});
+
+      // A refresh starts, and the server answers with pre-mark-all-read data.
+      final staleFetch = Completer<NotificationsResponse>();
+      when(repo.getNotifications()).thenAnswer((_) => staleFetch.future);
+      final refresh = cubit.silentRefresh();
+
+      // The user hits "mark all as read" while it is still in flight.
+      await cubit.markAllRead();
+      expect((cubit.state as NotificationsLoaded).unreadCount, 0);
+
+      staleFetch.complete(NotificationsResponse(
+        data: [notification(1), notification(2)], // still unread server-side
+        unreadCount: 2,
+      ));
+      await refresh;
+
+      expect((cubit.state as NotificationsLoaded).unreadCount, 0,
+          reason: 'the stale response must be dropped, not emitted');
+      expect(
+        (cubit.state as NotificationsLoaded).notifications.every((n) => n.isRead),
+        isTrue,
+      );
+    });
+
+    test('a refresh that starts after the change is applied normally',
+        () async {
+      await loadWith([notification(1)]);
+      when(repo.markAllRead()).thenAnswer((_) async {});
+      await cubit.markAllRead();
+
+      // A later poll picks up a genuinely new notification.
+      await loadWith([notification(9), notification(1, isRead: true)]);
+
+      expect((cubit.state as NotificationsLoaded).unreadCount, 1);
+      expect((cubit.state as NotificationsLoaded).notifications, hasLength(2));
+    });
+
+    test('deleting one notification also invalidates a fetch in flight',
+        () async {
+      await loadWith([notification(1), notification(2)]);
+      when(repo.deleteNotification(any)).thenAnswer((_) async {});
+
+      final staleFetch = Completer<NotificationsResponse>();
+      when(repo.getNotifications()).thenAnswer((_) => staleFetch.future);
+      final refresh = cubit.silentRefresh();
+
+      await cubit.removeNotification(1);
+
+      staleFetch.complete(NotificationsResponse(
+        data: [notification(1), notification(2)],
+        unreadCount: 2,
+      ));
+      await refresh;
+
+      expect(
+        (cubit.state as NotificationsLoaded).notifications.map((n) => n.id),
+        [2],
+        reason: 'the deleted row must not come back',
+      );
+    });
+  });
+
   group('reset', () {
     test('wipes state so the next user starts clean', () async {
       await loadWith([notification(1)]);
