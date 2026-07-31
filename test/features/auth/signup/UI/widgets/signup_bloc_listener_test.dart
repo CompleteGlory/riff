@@ -41,7 +41,7 @@ void main() {
         child: const Scaffold(body: SignupBlocListener()),
       ),
       routes: {
-        '/phoneVerify': (_) => const Scaffold(body: Text('PHONE_VERIFY')),
+        '/newUserOnboarding': (_) => const Scaffold(body: Text('ONBOARDING')),
       },
     );
   }
@@ -68,7 +68,7 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('navigates to phone verify on success', (tester) async {
+  testWidgets('navigates straight to onboarding on success', (tester) async {
     when(mockSignupRepo.signUp(any))
         .thenAnswer((_) async => const ApiResult.success(null));
     when(mockLoginRepo.login(any))
@@ -79,7 +79,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(CircularProgressIndicator), findsNothing);
-    expect(find.text('PHONE_VERIFY'), findsOneWidget);
+    // Phone verification used to sit between signup and onboarding; it was
+    // removed, so signup must land the user directly on onboarding.
+    expect(find.text('ONBOARDING'), findsOneWidget);
   });
 
   testWidgets('shows an error dialog when signup is rejected', (tester) async {

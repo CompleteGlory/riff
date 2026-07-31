@@ -1,12 +1,9 @@
 {
   "@@locale": "ar",
-
   "appTitle": "ريف",
-
   "defineYourself": "عرّف نفسك\nبأسلوبك الفريد.",
   "shareYourSound": "شارك صوتك. ابحث عن مجتمعك.",
   "getStarted": "ابدأ الآن",
-
   "loginTitle": "تسجيل الدخول إلى حسابك",
   "itsGreatToSeeYouAgain": "يسعدنا رؤيتك مجدداً!",
   "emailLabel": "البريد الإلكتروني",
@@ -24,7 +21,6 @@
   "signingIn": "جارٍ تسجيل الدخول…",
   "dontHaveAnAccount": "ليس لديك حساب؟",
   "joinBtn": "انضم",
-
   "createAnAccount": "إنشاء حساب",
   "letsCreateYourAccount": "لنقم بإنشاء حسابك.",
   "fullName": "الاسم الكامل",
@@ -37,15 +33,12 @@
   "termsAndConditions": "الشروط والأحكام.",
   "alreadyHaveAnAccount": "لديك حساب بالفعل؟",
   "loginLink": "تسجيل الدخول",
-
   "forgotPasswordTitle": "نسيت كلمة المرور",
   "forgotPasswordSubtitle": "أدخل بريدك الإلكتروني لإجراء التحقق. سنرسل رمزاً مكوناً من 4 أرقام إلى بريدك.",
   "sendCodeBtn": "إرسال الرمز",
-
   "enterCodeSubtitle": "أدخل الرمز المكون من 6 أرقام الذي استلمته على بريدك الإلكتروني.",
   "continueBtn": "متابعة",
   "resendCode": "إعادة إرسال الرمز",
-
   "resetPasswordTitle": "إعادة تعيين كلمة المرور",
   "resetPasswordSubtitle": "قم بتعيين كلمة مرور جديدة لحسابك حتى تتمكن من تسجيل الدخول والوصول إلى جميع الميزات.",
   "resetPasswordBtn": "إعادة تعيين",
@@ -58,39 +51,21 @@
   "passwordUpdatedSuccessfully": "تم تحديث كلمة المرور بنجاح.\nيرجى تسجيل الدخول للمتابعة.",
   "proceedToLogin": "الانتقال إلى تسجيل الدخول",
   "tryAgainBtn": "حاول مجدداً",
-
   "step1Of2": "الخطوة 1 من 2",
   "selectInstruments": "اختر الآلات الموسيقية التي تعزف عليها.\nيمكنك اختيار أكثر من واحدة.",
   "step2Of2": "الخطوة 2 من 2",
   "selectGenres": "اختر الأنواع الموسيقية التي تحبها.\nهذا يساعدنا في إيجاد مجتمعك.",
-
   "skipBtn": "تخطى",
-  "verifyYourPhoneNumber": "تحقق من\nرقم هاتفك",
-  "wellSendWhatsApp": "سنرسل رسالة واتساب برمز مكون من 6 أرقام.",
-  "phoneNumberLabel": "رقم الهاتف",
-  "sendOTPViaWhatsApp": "إرسال رمز التحقق عبر واتساب",
-  "sendingOTP": "جارٍ الإرسال…",
-  "codeWillBeSentViaWhatsApp": "سيتم إرسال الرمز عبر واتساب",
-  "weSentWhatsAppTo": "أرسلنا رسالة واتساب إلى\n{phoneNumber}",
-  "verifyBtn": "تحقق",
-  "resendCodeIn": "إعادة الإرسال خلال {seconds} ث",
-  "resendViaWhatsApp": "إعادة الإرسال عبر واتساب",
   "skipForNow": "تخطى في الوقت الحالي",
-
   "helpFriendsRecogniseYou": "ساعد أصدقاءك على التعرف عليك.\nيمكنك تغيير هذا لاحقاً.",
   "changePhoto": "تغيير الصورة",
   "chooseFromGallery": "اختر من المعرض",
   "savingBtn": "جارٍ الحفظ…",
   "saveAndContinue": "حفظ ومتابعة",
-  "seeWhichContactsOnRiff": "تعرف على جهات الاتصال الموجودة على Riff.",
-  "syncContactsBtn": "مزامنة جهات الاتصال",
-  "wellMatchContacts": "سنطابق جهات اتصالك مع مستخدمي Riff.",
-  "contactsSyncedNoneOnRiff": "تمت المزامنة — لا توجد جهات اتصال على Riff بعد.",
   "followArtistsToFillFeed": "تابع الفنانين والموسيقيين لملء خلاصتك.",
   "noSuggestionsYet": "لا توجد اقتراحات بعد",
   "followingStatus": "متابَع",
   "followBtn": "متابعة",
-
   "yourMusicSocialFeed": "شبكتك الموسيقية الاجتماعية",
   "settingsDrawer": "إعدادات التطبيق",
   "privacyAppearance": "المظهر واللغة",
@@ -116,7 +91,6 @@
   "requestAFeatureDrawer": "طلب ميزة",
   "shareYourIdeas": "شارك أفكارك",
   "logOut": "تسجيل الخروج",
-
   "settingsTitle": "الإعدادات",
   "appearanceSection": "المظهر",
   "darkMode": "الوضع الداكن",
@@ -131,12 +105,10 @@
   "languageSection": "اللغة",
   "appLanguage": "لغة التطبيق",
   "currentLanguageName": "العربية",
-
   "exitAppTitle": "الخروج من التطبيق",
   "doYouWantToExit": "هل تريد الخروج من التطبيق؟",
   "cancelBtn": "إلغاء",
   "exitBtn": "خروج",
-
   "noPostsLoaded": "لا توجد منشورات محملة",
   "failedToLoadMorePosts": "فشل تحميل المزيد من المنشورات",
   "retryBtn": "إعادة المحاولة",
@@ -145,22 +117,18 @@
   "serverError": "خطأ في الخادم",
   "checkYourConnection": "تحقق من الاتصال، ثم اسحب للأسفل للتحديث.",
   "gotItBtn": "حسناً",
-
   "editPostOption": "تعديل المنشور",
   "deletePostOption": "حذف المنشور",
   "reportPostOption": "الإبلاغ عن المنشور",
-
   "commentsLabel": "التعليقات",
   "failedToLoadComments": "فشل تحميل التعليقات",
   "postScreenTitle": "المنشور",
-
   "deletePostDialogTitle": "حذف المنشور؟",
   "deletePostDialogContent": "هل أنت متأكد أنك تريد حذف هذا المنشور؟ لا يمكن التراجع عن هذا الإجراء.",
   "postDeletedSuccessfully": "تم حذف المنشور بنجاح!",
   "failedToDeletePost": "فشل حذف المنشور.",
   "failedToUpdatePost": "فشل تحديث المنشور.",
   "deleteBtn": "حذف",
-
   "whatsOnYourMind": "ما الذي يدور في ذهنك؟",
   "shareYourMusicRiff": "شارك آخر عزفك، أفكارك، أو معداتك...",
   "addCaptionToShare": "أضف تعليقاً لمشاركتك…",
@@ -176,7 +144,6 @@
   "saveChangesBtn": "حفظ التغييرات",
   "pleaseEnterContentBeforeUpdating": "يرجى إدخال محتوى قبل التحديث.",
   "failedToCreatePost": "فشل إنشاء المنشور.",
-
   "youLabel": "أنت",
   "failedToSendComment": "فشل إرسال التعليق",
   "failedToUpdateLike": "فشل تحديث الإعجاب",
@@ -195,13 +162,10 @@
   "beFirstToSaySomething": "كن أول من يتحدث!",
   "unlike": "إلغاء الإعجاب",
   "likeBtn": "إعجاب",
-
   "writeCaption": "اكتب تعليقاً… (اختياري)",
   "shareBtn": "مشاركة",
-
   "unknown": "غير معروف",
   "videoLabel": "فيديو",
-
   "searchHint": "ابحث عن أشخاص أو منشورات…",
   "genresFilter": "الأنواع",
   "instrumentsFilter": "الآلات",
@@ -214,7 +178,6 @@
   "followMorePeople": "تابع المزيد من الأشخاص لتنمية\nخلاصة الاكتشاف الخاصة بك.",
   "noResultsForQuery": "لا توجد نتائج لـ \"{query}\"",
   "tryDifferentName": "جرب اسماً مختلفاً\nأو مصطلح بحث آخر.",
-
   "notificationsTitle": "الإشعارات",
   "markAllRead": "تحديد الكل كمقروء",
   "noNotificationsYet": "لا توجد إشعارات بعد",
@@ -226,7 +189,6 @@
   "likedYourPost": "أعجب بمنشورك.",
   "commentedOnYourPost": "علّق على منشورك.",
   "loadingPost": "جارٍ تحميل المنشور…",
-
   "reportPostTitle": "الإبلاغ عن منشور",
   "whyReportingPost": "لماذا تُبلغ عن هذا المنشور؟",
   "additionalDetails": "تفاصيل إضافية (اختياري)",
@@ -244,10 +206,8 @@
   "falseInformation": "معلومات كاذبة",
   "intellectualPropertyViolation": "انتهاك حقوق الملكية الفكرية",
   "otherReason": "أخرى",
-
   "reportCommentTitle": "الإبلاغ عن تعليق",
   "whyReportingComment": "لماذا تُبلغ عن هذا التعليق؟",
-
   "chooseFromGalleryProfile": "اختر من المعرض",
   "profilePhotoUpdated": "تم تحديث الصورة الشخصية",
   "postsLabel": "منشورات",
@@ -255,13 +215,11 @@
   "followersLabel": "المتابعون",
   "followingLabel": "المتابَعون",
   "noPostsYet": "لا توجد منشورات بعد",
-
   "unfollowBtn": "إلغاء المتابعة",
   "requestedBtn": "تم الطلب",
   "requestBtn": "طلب متابعة",
   "genresSection": "الأنواع الموسيقية",
   "instrumentsSection": "الآلات الموسيقية",
-
   "followersTitle": "المتابعون",
   "followingTitle": "المتابَعون",
   "failedToLoad": "فشل التحميل",
@@ -271,9 +229,7 @@
   "notFollowingAnyone": "لا تتابع أحداً بعد",
   "whenSomeonFollows": "عندما يتابع شخص ما هذا الحساب،\nسيظهر هنا.",
   "accountsFollowed": "الحسابات المتابَعة\nستظهر هنا.",
-
   "noReelsYet": "لا توجد مقاطع بعد.\nانشر مقطعاً لتبدأ!",
-
   "reportABugTitle": "الإبلاغ عن خطأ",
   "bugTitleLabel": "العنوان",
   "shortSummaryOfBug": "ملخص قصير للخطأ",
@@ -291,7 +247,6 @@
   "failedToSubmit": "فشل الإرسال. يرجى المحاولة مجدداً.",
   "pleaseAddTitle": "يرجى إضافة عنوان",
   "pleaseDescribeBug": "يرجى وصف الخطأ",
-
   "featureRequestTitle": "طلب ميزة",
   "shareYourIdeaWithRiff": "شارك فكرتك مع فريق Riff",
   "featureTitleLabel": "عنوان الميزة",
@@ -303,13 +258,10 @@
   "submitRequestBtn": "إرسال الطلب",
   "featureRequestSubmitted": "تم إرسال طلب الميزة. شكراً لك!",
   "pleaseDescribeFeature": "يرجى وصف طلب الميزة",
-
   "messagesComingSoon": "الرسائل قادمة قريباً",
   "directMessagingBeingBuilt": "جارٍ بناء الرسائل المباشرة.\nتحقق مجدداً في التحديث القادم.",
   "messageHint": "رسالة…",
-
   "sponsored": "إعلان",
-
   "postUpdatedSuccessfully": "تم تحديث المنشور بنجاح!",
   "postCreatedSuccessfully": "تم إنشاء المنشور بنجاح!",
   "yourCaption": "تعليقك",
@@ -321,7 +273,6 @@
   "postNotFoundDeleted": "المنشور غير موجود أو تم حذفه.",
   "flaggedComment": "تعليق مُبلَّغ عنه",
   "flaggedPost": "منشور مُبلَّغ عنه",
-  "enterTheCode": "أدخل الرمز",
   "addAProfilePhoto": "أضف صورة ملف شخصي",
   "whatDoYouListenTo": "ماذا تستمع؟",
   "whatDoYouPlay": "ماذا تعزف؟",
@@ -330,17 +281,10 @@
   "removeFollowerTitle": "إزالة المتابع؟",
   "keepBtn": "احتفظ",
   "removeBtn": "إزالة",
-
   "feedTitle": "الخلاصة",
   "searchTitle": "البحث",
   "reelsTitle": "ريلز",
   "usernameEnglishOnly": "يجب أن يحتوي اسم المستخدم على أحرف إنجليزية وأرقام وشرطات سفلية أو نقاط فقط",
-  "phoneNumberAlreadyTaken": "رقم الهاتف هذا مرتبط بحساب آخر بالفعل",
-  "phoneOtpWhatsappUnavailable": "لم نتمكن من إرسال الكود على واتساب الآن. من فضلك حاول مرة أخرى بعد قليل.",
-  "confirmPhoneSection": "رقم الهاتف",
-  "confirmPhoneTile": "أكّد رقم هاتفك",
-  "confirmPhoneSub": "تحقق من رقمك بكود يُرسل على واتساب",
-
   "confirmPassword": "تأكيد كلمة المرور",
   "enterConfirmPassword": "أعد إدخال كلمة المرور",
   "passwordStrengthWeak": "ضعيفة",
@@ -358,7 +302,6 @@
   "googleSignInFailed": "تم إلغاء تسجيل الدخول بـ Google أو فشل. يرجى المحاولة مجدداً.",
   "gmailAlreadyLinked": "هذا البريد الإلكتروني مرتبط بحساب بالفعل. جارٍ تسجيل الدخول...",
   "gmailAlreadyLinkedTitle": "تم العثور على الحساب",
-
   "chatMessagesTitle": "الرسائل",
   "chatTabChats": "المحادثات",
   "chatTabRequests": "الطلبات",
@@ -367,7 +310,6 @@
   "noMessageRequests": "لا توجد طلبات رسائل",
   "conversationsSectionLabel": "المحادثات",
   "messageBtn": "رسالة",
-
   "newGroupTitle": "مجموعة جديدة",
   "createGroupBtn": "إنشاء",
   "groupNameHint": "اسم المجموعة",
@@ -377,21 +319,23 @@
   "groupMemberRequired": "أضف عضواً واحداً على الأقل",
   "groupCreationError": "خطأ: {message}",
   "@groupCreationError": {
-    "placeholders": { "message": { "type": "String" } }
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
   },
   "groupDetailsTitle": "معلومات المجموعة",
   "groupMembersSection": "الأعضاء",
   "groupAdminBadge": "مشرف",
   "groupDescriptionLabel": "الوصف",
   "groupNoDescription": "لا يوجد وصف",
-
   "deleteForEveryoneBtn": "حذف للجميع",
   "deleteConversationTitle": "حذف المحادثة؟",
   "deleteConversationContent": "سيؤدي هذا إلى حذف جميع الرسائل للجميع في هذه المحادثة نهائياً.",
   "conversationDeleted": "تم حذف المحادثة",
   "couldNotDeleteConversation": "تعذر حذف المحادثة.",
   "deleteMessageOption": "حذف الرسالة",
-
   "acceptBtn": "قبول",
   "declineBtn": "رفض",
   "presenceOnline": "متصل",
@@ -405,16 +349,13 @@
   "sendingVoice": "جارٍ إرسال الصوت…",
   "sendingFile": "جارٍ إرسال الملف…",
   "requestInfoMessage": "{name} يريد إرسال رسالة إليك.\nلا يمكنه رؤية أنك اطلعت على هذا الطلب.",
-
   "blockedUsersDrawer": "المستخدمون المحظورون",
   "manageBlockedUsers": "إدارة من قمت بحظره",
   "privacyPolicyDrawer": "سياسة الخصوصية",
   "howWeHandleData": "كيف نتعامل مع بياناتك",
-
   "privacyPolicyConsentPrefix": "لقد قرأت وأوافق على ",
   "privacyPolicyLinkText": "سياسة الخصوصية",
   "privacyPolicyRequiredSnackbar": "يرجى قراءة سياسة الخصوصية والموافقة عليها للمتابعة.",
-
   "privacyPolicyScreenTitle": "سياسة الخصوصية",
   "privacyPolicyHeaderTitle": "سياسة خصوصية Riff",
   "privacyPolicyHeaderSubtitle": "خصوصيتك تهمنا. اقرأ كيف نجمع بياناتك ونستخدمها ونحميها.",
@@ -440,7 +381,6 @@
   "ppSection10Body": "قد نُحدّث سياسة الخصوصية هذه من وقت لآخر. عند إجراء تغييرات جوهرية، سنُخطرك عبر إشعار داخل التطبيق أو البريد الإلكتروني. الاستمرار في استخدام Riff بعد نشر التغييرات يُعدّ قبولاً للسياسة المُحدَّثة.\n\nآخر تحديث: يونيو 2026.",
   "ppSection11Title": "١١. اتصل بنا",
   "ppSection11Body": "إذا كانت لديك أسئلة أو مخاوف أو طلبات بشأن سياسة الخصوصية هذه أو بياناتك الشخصية، يُرجى التواصل معنا على:\n\nالبريد الإلكتروني: magddevf@gmail.com\n",
-
   "profileSettingsDrawer": "إعدادات الملف الشخصي",
   "editYourProfile": "تعديل معلومات ملفك الشخصي",
   "profileSettingsTitle": "إعدادات الملف الشخصي",
@@ -465,7 +405,6 @@
   "noGenresSelected": "اختر نوعاً موسيقياً واحداً على الأقل",
   "selectGenresTitle": "اختر الأنواع الموسيقية",
   "fullNameRequired": "الاسم الكامل مطلوب",
-
   "aboutUsDrawer": "عن Riff",
   "aboutUsDrawerSubtitle": "قصتنا وفريقنا",
   "aboutUsTitle": "عن Riff",

@@ -15,8 +15,6 @@ import 'package:riff/features/auth/signup/UI/signup_screen.dart';
 import 'package:riff/features/auth/signup/logic/cubit/signup_cubit.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 import 'package:riff/features/home/notifications/logic/cubit/notifications_cubit.dart';
-import 'package:riff/features/auth/phone_verify/UI/phone_verify_screen.dart';
-import 'package:riff/features/auth/phone_verify/logic/cubit/phone_verify_cubit.dart';
 import 'package:riff/features/auth/new_user_onboarding/UI/new_user_onboarding_screen.dart';
 import 'package:riff/features/home/add_post/logic/cubit/create_post_cubit.dart';
 import 'package:riff/features/home/chat/UI/chats_list_screen.dart';
@@ -123,14 +121,6 @@ class AppRouter {
           ),
         );
 
-      case Routes.phoneVerify:
-        return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<PhoneVerifyCubit>(),
-            child: const PhoneVerifyScreen(),
-          ),
-        );
-
       case Routes.newUserOnboarding:
         return MaterialPageRoute(
           builder: (_) => const NewUserOnboardingScreen(),
@@ -202,31 +192,9 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const AboutUsScreen());
 
       case Routes.accountSettings:
-        final args = settings.arguments as (bool, bool)?;
+        final isPrivate = settings.arguments as bool? ?? false;
         return MaterialPageRoute(
-          builder: (_) => AccountSettingsScreen(
-            initialIsPrivate: args?.$1 ?? false,
-            // Defaults to verified so an unknown state never nags the user.
-            initialPhoneVerified: args?.$2 ?? true,
-          ),
-        );
-
-      case Routes.confirmPhone:
-        return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => getIt<PhoneVerifyCubit>(),
-            child: PhoneVerifyScreen(
-              onVerified: (context) {
-                final nav = Navigator.of(context);
-                // The OTP step is pushed unnamed on top of this route, so wind
-                // back to it first, then pop the route itself with `true` —
-                // account settings awaits that to refresh and drop the
-                // "confirm your number" entry.
-                nav.popUntil((r) => r.settings.name == Routes.confirmPhone);
-                nav.pop(true);
-              },
-            ),
-          ),
+          builder: (_) => AccountSettingsScreen(initialIsPrivate: isPrivate),
         );
 
       case Routes.changePassword:

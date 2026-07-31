@@ -66,7 +66,6 @@ dependencies:
   cached_network_image: ^3.4.1
   url_launcher: ^6.3.1
   intl_phone_field: ^3.2.0
-  flutter_contacts: ^1.1.9+2
   permission_handler: ^11.3.1
   record: ^6.2.1
   audioplayers: ^6.1.0
@@ -120,8 +119,8 @@ flutter:
 
   config:
     # This project integrates its iOS plugins through CocoaPods (see ios/Podfile).
-    # Several dependencies — flutter_appauth, flutter_contacts,
-    # flutter_local_notifications, receive_sharing_intent — have no Swift Package
+    # Several dependencies — flutter_appauth, flutter_local_notifications,
+    # receive_sharing_intent — have no Swift Package
     # Manager support, and Xcode Cloud disables automatic package resolution, so
     # letting Flutter add SPM integration there fails the build asking for a
     # checked-in Package.resolved. Pinning it here keeps CI matching local
