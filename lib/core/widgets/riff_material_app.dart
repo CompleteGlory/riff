@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/routing/app_router.dart';
+import 'package:riff/core/routing/navigation_service.dart';
 import 'package:riff/core/routing/routes.dart';
-import 'package:riff/core/services/push_notification_service.dart';
 import 'package:riff/core/themes/app_theme.dart';
 import 'package:riff/core/widgets/upload_overlay.dart';
 import 'package:riff/generated/l10n.dart';
@@ -35,7 +35,10 @@ class RiffMaterialApp extends StatelessWidget {
       minTextAdapt: true,
       builder: (_, __) => MaterialApp(
         title: 'Riff',
-        navigatorKey: PushNotificationService.navigatorKey,
+        // The app's single root navigator key. Everything that navigates
+        // without a BuildContext (401 handling, push-notification taps) uses
+        // this same key — see NavigationService.
+        navigatorKey: NavigationService.navigatorKey,
         themeMode: themeMode,
         theme: lightTheme(),
         darkTheme: darkTheme(),

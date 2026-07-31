@@ -455,11 +455,17 @@ class MessageLookup extends MessageLookupByLibrary {
       "إدارة من قمت بحظره",
     ),
     "markAllRead": MessageLookupByLibrary.simpleMessage("تحديد الكل كمقروء"),
+    "markAllReadFailed": MessageLookupByLibrary.simpleMessage(
+      "تعذّر تحديد الإشعارات كمقروءة. حاول مرة أخرى.",
+    ),
     "maximumFilesAllowed": m1,
     "mediaLabel": MessageLookupByLibrary.simpleMessage("الوسائط"),
     "mediumSeverity": MessageLookupByLibrary.simpleMessage("متوسطة"),
     "messageBtn": MessageLookupByLibrary.simpleMessage("رسالة"),
     "messageHint": MessageLookupByLibrary.simpleMessage("رسالة…"),
+    "messageNotSent": MessageLookupByLibrary.simpleMessage(
+      "لم يتم إرسال الرسالة — تحقق من اتصالك وحاول مرة أخرى.",
+    ),
     "messagesComingSoon": MessageLookupByLibrary.simpleMessage(
       "الرسائل قادمة قريباً",
     ),

@@ -201,6 +201,8 @@
   "tryDifferentName": "Try a different name\nor search term.",
   "notificationsTitle": "Notifications",
   "markAllRead": "Mark all read",
+  "markAllReadFailed": "Couldn't mark notifications as read. Try again.",
+  "messageNotSent": "Message not sent — check your connection and try again.",
   "noNotificationsYet": "No notifications yet",
   "startedFollowingYou": "started following you.",
   "requestedToFollowYou": "requested to follow you.",

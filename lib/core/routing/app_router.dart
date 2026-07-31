@@ -13,7 +13,11 @@ import 'package:riff/features/auth/login/logic/cubit/login_cubit.dart';
 import 'package:riff/features/auth/onboarding/onboarding_screen.dart';
 import 'package:riff/features/auth/signup/UI/signup_screen.dart';
 import 'package:riff/features/auth/signup/logic/cubit/signup_cubit.dart';
+import 'package:riff/core/services/notification_route.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
+import 'package:riff/features/home/notifications/UI/flagged_comment_detail_screen.dart';
+import 'package:riff/features/home/notifications/UI/flagged_post_detail_screen.dart';
+import 'package:riff/features/home/notifications/UI/notifications_screen.dart';
 import 'package:riff/features/home/notifications/logic/cubit/notifications_cubit.dart';
 import 'package:riff/features/auth/new_user_onboarding/UI/new_user_onboarding_screen.dart';
 import 'package:riff/features/home/add_post/logic/cubit/create_post_cubit.dart';
@@ -52,13 +56,13 @@ class AppRouter {
           builder: (_) => MultiBlocProvider(
             providers: [
               BlocProvider(create: (_) => getIt<HomeCubit>()),
-              BlocProvider(
-                create: (_) => getIt<NotificationsCubit>()..load(),
-              ),
-              // Use .value so BlocProvider never calls close() on the singleton.
-              // close() is permanent — a closed cubit can never emit again, which
-              // caused the chat list to be empty after switching accounts.
-              // load() is called in HomeLayout.initState() instead.
+              // Use .value so BlocProvider never calls close() on a singleton.
+              // close() is permanent — a closed cubit can never emit again, and
+              // getIt keeps handing back the same dead instance. That is what
+              // broke "mark all as read" (silently no-op'd after the Home route
+              // was ever replaced) and left the chat list empty after switching
+              // accounts. load() is called from HomeLayout.initState() instead.
+              BlocProvider.value(value: getIt<NotificationsCubit>()),
               BlocProvider.value(value: getIt<ChatsListCubit>()),
               // Singleton: keeps the cubit alive while a video upload runs in
               // the background after the user navigates away from CreatePostScreen.
@@ -166,6 +170,38 @@ class AppRouter {
               BlocProvider(create: (_) => getIt<ProfileSettingsCubit>()),
             ],
             child: ProfileSettingsScreen(profile: args.$1),
+          ),
+        );
+
+      // ── Notifications ───────────────────────────────────────────────────
+      // Reached from the Home app bar and from a push-notification tap. The
+      // cubit is a singleton, so it is always provided with .value.
+      case Routes.notifications:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: getIt<NotificationsCubit>(),
+            child: const NotificationsScreen(),
+          ),
+        );
+
+      case Routes.flaggedComment:
+        final route = settings.arguments as NotificationRoute?;
+        return MaterialPageRoute(
+          builder: (_) => FlaggedCommentDetailScreen(
+            commentId: route?.commentId,
+            postId: route?.postId,
+            flagTitle: route?.title,
+            flagBody: route?.body,
+          ),
+        );
+
+      case Routes.flaggedPost:
+        final route = settings.arguments as NotificationRoute?;
+        return MaterialPageRoute(
+          builder: (_) => FlaggedPostDetailScreen(
+            postId: route?.postId,
+            flagTitle: route?.title,
+            flagBody: route?.body,
           ),
         );
 

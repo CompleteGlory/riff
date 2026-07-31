@@ -469,11 +469,17 @@ class MessageLookup extends MessageLookupByLibrary {
       "Manage who you have blocked",
     ),
     "markAllRead": MessageLookupByLibrary.simpleMessage("Mark all read"),
+    "markAllReadFailed": MessageLookupByLibrary.simpleMessage(
+      "Couldn\'t mark notifications as read. Try again.",
+    ),
     "maximumFilesAllowed": m1,
     "mediaLabel": MessageLookupByLibrary.simpleMessage("Media"),
     "mediumSeverity": MessageLookupByLibrary.simpleMessage("Medium"),
     "messageBtn": MessageLookupByLibrary.simpleMessage("Message"),
     "messageHint": MessageLookupByLibrary.simpleMessage("Message…"),
+    "messageNotSent": MessageLookupByLibrary.simpleMessage(
+      "Message not sent — check your connection and try again.",
+    ),
     "messagesComingSoon": MessageLookupByLibrary.simpleMessage(
       "Messages coming soon",
     ),

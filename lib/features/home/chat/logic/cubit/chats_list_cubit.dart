@@ -1,10 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:riff/core/logic/app_scoped_cubit.dart';
 import '../../data/models/chat_models.dart';
 import '../../data/repos/chat_repo.dart';
 
 part 'chats_list_state.dart';
 
-class ChatsListCubit extends Cubit<ChatsListState> {
+class ChatsListCubit extends Cubit<ChatsListState>
+    with AppScopedCubit<ChatsListState> {
   final ChatRepo _repo;
 
   ChatsListCubit(this._repo) : super(ChatsListInitial());

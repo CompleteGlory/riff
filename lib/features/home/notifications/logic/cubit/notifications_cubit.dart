@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:riff/core/helpers/constants.dart';
-import 'package:riff/core/helpers/shared_pref_helper.dart';
+import 'package:riff/core/logic/app_scoped_cubit.dart';
 import 'package:riff/core/networks/socket_service.dart';
 import '../../data/models/notification_model.dart';
 import '../../data/repos/notifications_repo.dart';
 
 part 'notifications_state.dart';
 
-class NotificationsCubit extends Cubit<NotificationsState> {
+class NotificationsCubit extends Cubit<NotificationsState>
+    with AppScopedCubit<NotificationsState> {
   final NotificationsRepo _repo;
   final SocketService _socket;
 
@@ -92,11 +92,8 @@ class NotificationsCubit extends Cubit<NotificationsState> {
 
   Future<void> _tryConnectSocket() async {
     try {
-      if (_socket.isConnected) return;
-      final token =
-          await SharedPrefHelper.getString(SharedPrefKeys.userToken) as String;
-      if (token.isEmpty) return;
-      _socket.connect(token);
+      // Register the handler before connecting: SocketService replays its
+      // handlers onto every new socket, so this survives reconnects too.
       _socket.on('notification', (data) {
         if (isClosed) return;
         final notif = NotificationModel.fromJson(
@@ -104,6 +101,9 @@ class NotificationsCubit extends Cubit<NotificationsState> {
         _prependNotification(notif);
         _newNotifController.add(notif); // triggers in-app banner
       });
+      // ensureConnected() refreshes an expired access token first — the
+      // handshake is rejected outright by the gateway otherwise.
+      await _socket.ensureConnected();
     } catch (_) {
       // socket_io_client not installed or server unreachable — polling covers it
     }
@@ -139,17 +139,32 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     } catch (_) {}
   }
 
-  Future<void> markAllRead() async {
+  /// Marks everything read.
+  ///
+  /// Optimistic: the list clears immediately and only rolls back if the server
+  /// rejects it. The previous version emitted *after* awaiting the request and
+  /// swallowed every error, so a failed call looked identical to a successful
+  /// one — the badge just stayed put with no explanation.
+  ///
+  /// Returns true when the server confirmed.
+  Future<bool> markAllRead() async {
+    if (isClosed) return false;
+
+    final previous = state;
+    if (previous is NotificationsLoaded) {
+      emit(NotificationsLoaded(
+        previous.notifications.map((n) => n.copyWith(isRead: true)).toList(),
+        0,
+      ));
+    }
+
     try {
       await _repo.markAllRead();
-      final cur = state;
-      if (cur is NotificationsLoaded && !isClosed) {
-        emit(NotificationsLoaded(
-          cur.notifications.map((n) => n.copyWith(isRead: true)).toList(),
-          0,
-        ));
-      }
-    } catch (_) {}
+      return true;
+    } catch (_) {
+      if (!isClosed && previous is NotificationsLoaded) emit(previous);
+      return false;
+    }
   }
 
   Future<void> removeNotification(int id) async {
@@ -193,6 +208,10 @@ class NotificationsCubit extends Cubit<NotificationsState> {
 
   @override
   Future<void> close() {
+    // Ignore route-scoped disposal (see AppScopedCubit) — tearing the polling
+    // timer and socket down here used to permanently break notifications for
+    // the rest of the session.
+    if (!isPermanentlyClosing) return Future<void>.value();
     _pollTimer?.cancel();
     _newNotifController.close();
     _socket.off('notification');

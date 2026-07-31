@@ -16,6 +16,11 @@ class Routes {
   static const String chatDetail   = '/chatDetail';
   static const String createGroup  = '/createGroup';
 
+  // Notifications
+  static const String notifications   = '/notifications';
+  static const String flaggedComment  = '/flaggedComment';
+  static const String flaggedPost     = '/flaggedPost';
+
   // Block
   static const String blockedUsers = '/blockedUsers';
 

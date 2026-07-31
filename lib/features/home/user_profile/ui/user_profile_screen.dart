@@ -640,7 +640,10 @@ class _MessageButtonState extends State<_MessageButton> {
         MaterialPageRoute(
           builder: (_) => MultiBlocProvider(
             providers: [
-              BlocProvider(create: (_) => getIt<ChatsListCubit>()),
+              // .value — ChatsListCubit is an app-lifetime singleton; providing
+              // it with create: would close it when this route pops and freeze
+              // the chat list for the rest of the session.
+              BlocProvider.value(value: getIt<ChatsListCubit>()),
               BlocProvider(
                 create: (_) => ChatCubit(
                   getIt<ChatRepo>(),

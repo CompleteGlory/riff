@@ -1594,6 +1594,26 @@ class S {
     );
   }
 
+  /// `Couldn't mark notifications as read. Try again.`
+  String get markAllReadFailed {
+    return Intl.message(
+      'Couldn\'t mark notifications as read. Try again.',
+      name: 'markAllReadFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Message not sent — check your connection and try again.`
+  String get messageNotSent {
+    return Intl.message(
+      'Message not sent — check your connection and try again.',
+      name: 'messageNotSent',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `No notifications yet`
   String get noNotificationsYet {
     return Intl.message(

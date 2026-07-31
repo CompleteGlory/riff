@@ -93,7 +93,18 @@ class _NotificationsBodyState extends State<_NotificationsBody>
         ),
         actions: [
           TextButton(
-            onPressed: () => context.read<NotificationsCubit>().markAllRead(),
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              final failedMessage = S.of(context).markAllReadFailed;
+              final ok = await context.read<NotificationsCubit>().markAllRead();
+              // A silent no-op used to be indistinguishable from success, which
+              // is what "sometimes it works, sometimes it doesn't" looked like.
+              if (!ok) {
+                messenger.showSnackBar(
+                  SnackBar(content: Text(failedMessage)),
+                );
+              }
+            },
             child: Text(S.of(context).markAllRead,
                 style: TextStyles.font12Medium.copyWith(
                     color: isDark ? Colors.white70 : ColorManager.primaryBlack)),

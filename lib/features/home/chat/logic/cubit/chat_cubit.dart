@@ -35,10 +35,17 @@ class ChatCubit extends Cubit<ChatState> {
         messages: msgs.reversed.toList(),
         hasMore: msgs.length == 30,
       ));
+      _listenSocket();
+      // Make sure the socket is actually alive before joining the room. Opening
+      // a chat straight from a push notification means the app has been idle
+      // long enough for the access token to expire, and the gateway rejects the
+      // handshake outright when it has — leaving a screen that loads over HTTP
+      // but can neither send nor receive.
+      await _socket.ensureConnected();
+      if (isClosed) return;
       _socket.joinConversation(conversation.id);
       // Tell the backend we've read these messages
       _socket.markAsRead(conversation.id);
-      _listenSocket();
     } catch (e) {
       if (!isClosed) emit(ChatError(e.toString()));
     }
@@ -152,9 +159,21 @@ class ChatCubit extends Cubit<ChatState> {
     } catch (_) {}
   }
 
-  void sendText(String text) {
-    if (_conversationId == null) return;
-    _socket.sendTextMessage(_conversationId!, text);
+  /// Sends a text message. Returns false when it could not be handed to a live
+  /// socket, so the UI can tell the user instead of clearing the composer on a
+  /// message that silently went nowhere.
+  Future<bool> sendText(String text) async {
+    if (_conversationId == null) return false;
+    return _socket.sendTextMessage(_conversationId!, text);
+  }
+
+  /// Re-establishes the socket (refreshing an expired token first) and re-joins
+  /// the open conversation. Called when the screen is opened.
+  Future<bool> ensureConnected() async {
+    final connected = await _socket.ensureConnected();
+    final convId = _conversationId;
+    if (connected && convId != null) _socket.joinConversation(convId);
+    return connected;
   }
 
   Future<void> sendMedia(

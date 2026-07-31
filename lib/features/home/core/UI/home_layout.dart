@@ -57,10 +57,12 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
       }
     });
 
-    // Load conversations for the current user. Must be called here (not in
-    // the router) because we use BlocProvider.value to avoid closing the
-    // singleton on logout — so the router no longer calls ..load().
+    // Load conversations + notifications for the current user. Must be called
+    // here (not in the router) because both are provided with
+    // BlocProvider.value to avoid ever closing the singletons — so the router
+    // no longer calls ..load().
     getIt<ChatsListCubit>().load();
+    getIt<NotificationsCubit>().load();
 
     // Listen for content shared to Riff from the system share sheet.
     // IG/TikTok links open CreatePostScreen with pre-filled caption + source.
@@ -72,18 +74,31 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
 
     // Connect chat socket using stored token
     _connectChatSocket();
+
+    // Replay a notification tap that arrived before the app had a signed-in
+    // Home to land on (tapped from the login screen, or during a cold start
+    // that hadn't finished booting). Home is on screen now, so pushing on top
+    // of it leaves a sane back stack.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      PushNotificationService.instance.flushPendingRoute();
+    });
   }
 
   Future<void> _connectChatSocket() async {
-    final token = await SharedPrefHelper.getString(SharedPrefKeys.userToken) as String? ?? '';
-    if (token.isEmpty) return;
-
     // Load the current user ID so we can filter own messages from unread count.
     final id = await SharedPrefHelper.getString(SharedPrefKeys.userId) as String? ?? '';
     if (mounted) setState(() => _myId = id);
 
     final socket = getIt<ChatSocketService>();
-    socket.connect(token);
+    // ensureConnected() refreshes an expired access token before handshaking.
+    // The gateway verifies the token on connect and drops the client when it
+    // fails, and access tokens only live 15 minutes — so resuming after a
+    // pause (exactly what opening a push notification is) used to hand it a
+    // dead token. HTTP recovered via the 401 interceptor, the socket never
+    // did, and every message the user typed was emitted into the void until
+    // they restarted the app.
+    final connected = await socket.ensureConnected();
+    if (!connected) return;
 
     // Forward every incoming socket message to ChatsListCubit so the badge
     // count updates in real-time without requiring the user to open the chat list.

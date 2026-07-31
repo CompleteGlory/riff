@@ -180,6 +180,8 @@
   "tryDifferentName": "جرب اسماً مختلفاً\nأو مصطلح بحث آخر.",
   "notificationsTitle": "الإشعارات",
   "markAllRead": "تحديد الكل كمقروء",
+  "markAllReadFailed": "تعذّر تحديد الإشعارات كمقروءة. حاول مرة أخرى.",
+  "messageNotSent": "لم يتم إرسال الرسالة — تحقق من اتصالك وحاول مرة أخرى.",
   "noNotificationsYet": "لا توجد إشعارات بعد",
   "startedFollowingYou": "بدأ بمتابعتك.",
   "requestedToFollowYou": "طلب متابعتك.",

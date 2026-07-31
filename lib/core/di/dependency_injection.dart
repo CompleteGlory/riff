@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:riff/core/networks/api_services.dart';
 import 'package:riff/core/networks/dio_factory.dart';
+import 'package:riff/core/services/push_notification_service.dart';
+import 'package:riff/core/services/session_manager.dart';
 import 'package:riff/features/auth/forgot_password/data/repos/forgot_pasword_repo.dart';
 import 'package:riff/features/auth/forgot_password/logic/cubit/forgot_password_cubit.dart';
 import 'package:riff/features/auth/login/data/repos/login_repo.dart';
@@ -170,4 +172,23 @@ Future<void> setUpGetIt() async {
   // account settings — change password
   getIt.registerFactory<ChangePasswordCubit>(
       () => ChangePasswordCubit(getIt()));
+
+  _registerSessionEndHooks();
+}
+
+/// Wipes the per-user state held by app-lifetime singletons when the session
+/// ends (manual logout or an expired refresh token).
+///
+/// Registered here rather than inside [SessionManager] so that class stays free
+/// of DI imports and remains unit-testable.
+void _registerSessionEndHooks() {
+  final session = SessionManager.instance;
+  if (session.sessionEndHooks.isNotEmpty) return;
+  session.sessionEndHooks.addAll([
+    () => getIt<NotificationsCubit>().reset(),
+    () => getIt<ChatsListCubit>().reset(),
+    () => getIt<ChatSocketService>().disconnect(),
+    () => getIt<CreatePostCubit>().reset(),
+    () => PushNotificationService.instance.reset(),
+  ]);
 }
