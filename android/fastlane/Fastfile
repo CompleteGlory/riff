@@ -14,12 +14,37 @@ platform :android do
       firebase_cli_token: ENV["FIREBASE_CLI_TOKEN"],
       android_artifact_type: "APK",
       android_artifact_path: "../build/app/outputs/flutter-apk/app-production-release.apk",
-      testers: "fadyalaa441@gmail.com, fadyalaa2112@gmail.com, zakymagd@gmail.com, magddevf@gmail.com, Danielgeorge369@gmail.com, " ,
+      testers: "fadyalaa441@gmail.com, fadyalaa2112@gmail.com, zakymagd@gmail.com, magddevf@gmail.com, Danielgeorge369@gmail.com, marten.atef.eng@gmail.com" ,
       upload_timeout: 600,
       release_notes: <<~RELEASE_NOTES
-        Version 1.0.12
+        Version 1.0.13
 
-        Date: 2026-07-25
+        Date: 2026-07-31
+
+        Fixed
+
+        - Random sign-outs. Writing a comment — or anything else that sent
+          several requests at once — could quietly end your session, leaving
+          every screen failing until you signed in again.
+        - "Mark all as read" no longer silently does nothing. It used to stop
+          working once you had opened and left the notifications screen, and it
+          now tells you if it fails instead of looking like it worked.
+        - Opening the app from a message notification: you can reply straight
+          away. Before this you had to close and reopen the app first.
+        - Notification taps in general: reliable when the app was fully closed,
+          no longer land on a blank screen when you are signed out (you get
+          taken there after signing in), no longer open the same screen twice,
+          and no longer do nothing at all on a flagged-comment notice.
+        - Times were showing three hours early throughout the app — message
+          timestamps, last seen, and the "x hours ago" labels.
+        - The same person could appear twice in Chats: one conversation with
+          your messages and an empty one next to it. New ones can't be created,
+          and duplicates already on your account are cleaned up.
+
+        Changed
+
+        - Signup no longer asks for a phone number, and contacts sync has been
+          removed.
 
       RELEASE_NOTES
     )
