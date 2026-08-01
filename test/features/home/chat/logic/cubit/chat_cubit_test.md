@@ -12,6 +12,10 @@ notification and couldn't send anything until I restarted" bug.
   the socket can't be reached or no conversation is open.
 - **`ensureConnected`** — reconnects and re-joins the open conversation; reports
   failure without joining when the socket stays down.
+- **Read receipts** — reopening the chat picks up the status the server reports;
+  a `read` event upgrades every message; a `message_id` scopes the upgrade to
+  one; an already-read message is never downgraded; an event for another
+  conversation is ignored.
 
 ## What's mocked
 
@@ -34,6 +38,13 @@ notification and couldn't send anything until I restarted" bug.
   until the app was restarted (by which point the interceptor had refreshed the
   stored token). `open()` now brings the socket up through
   `SessionManager.validAccessToken()` first.
+- **Checkmarks resetting to one tick.** Read receipts only existed as a live
+  socket event, and the REST serializer had no `status` field — so
+  `MessageStatusX.fromString(null)` fell through to `sent` and every message
+  showed a single check again as soon as the sender reopened the chat, however
+  long ago it had been read. The API now derives status from
+  `conversation_participants.last_read_at` and sends it with every message; see
+  [message-status.spec.md](/Users/magd/apis/riff/src/modules/chat/message-status.spec.md).
 - **Fire-and-forget sends.** `sendText` returned `void` and emitted into
   whatever socket happened to be there. The composer cleared either way, so the
   user believed the message had gone. It now returns a result the input bar acts

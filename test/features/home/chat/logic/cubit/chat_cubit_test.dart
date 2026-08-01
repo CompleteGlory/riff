@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -15,6 +17,18 @@ import 'chat_cubit_test.mocks.dart';
 class _FakeChatSocketService extends ChatSocketService {
   /// Whether the (re)connection attempt succeeds.
   bool connects = true;
+
+  // Own controllers so tests can push socket events in. The real ones are
+  // private to ChatSocketService, so a subclass can't reach them.
+  final _statusCtrl = StreamController<Map<String, dynamic>>.broadcast();
+
+  @override
+  Stream<Map<String, dynamic>> get onMessageStatus => _statusCtrl.stream;
+
+  /// Pushes a `message_status` event, as the gateway would.
+  void emitStatus(Map<String, dynamic> data) => _statusCtrl.add(data);
+
+  Future<void> closeFakes() => _statusCtrl.close();
 
   int ensureConnectedCalls = 0;
   final joined = <String>[];
@@ -69,7 +83,10 @@ void main() {
         .thenAnswer((_) async => <ChatMessage>[]);
   });
 
-  tearDown(() async => cubit.close());
+  tearDown(() async {
+    await cubit.close();
+    await socket.closeFakes();
+  });
 
   group('open', () {
     test('loads the conversation and joins its room', () async {
@@ -135,6 +152,100 @@ void main() {
     test('reports failure when no conversation is open', () async {
       expect(await cubit.sendText('hello'), isFalse);
       expect(socket.sent, isEmpty);
+    });
+  });
+
+  // "I read his voice notes but he still sees one check."
+  //
+  // Read receipts only ever existed as a live socket event, and the REST
+  // serializer had no status field at all — so MessageStatusX.fromString(null)
+  // fell through to `sent` and every message reset to a single check as soon as
+  // the sender reopened the chat. The API now derives status from
+  // conversation_participants.last_read_at and sends it with every message.
+  group('read receipts', () {
+    ChatMessage message(String id, {MessageStatus status = MessageStatus.sent}) =>
+        ChatMessage(
+          id: id,
+          conversationId: 'conv-1',
+          type: MessageType.audio,
+          duration: 8,
+          isDeleted: false,
+          createdAt: DateTime(2026, 8, 1, 10),
+          status: status,
+        );
+
+    /// Status keyed by message id. open() reverses the repo's order (newest
+    /// first, for the reverse ListView), so index-based assertions read
+    /// backwards — key by id instead.
+    Map<String, MessageStatus> statusById(ChatState state) => {
+          for (final m in (state as ChatLoaded).messages) m.id: m.status,
+        };
+
+    test('opening the chat picks up the status the server reports', () async {
+      // The sender reopens the conversation. Whatever happened while they were
+      // away must come back from the API, not be reset to one check.
+      when(repo.getMessages(any, beforeId: anyNamed('beforeId'))).thenAnswer(
+        (_) async => [
+          message('m1', status: MessageStatus.read),
+          message('m2', status: MessageStatus.read),
+        ],
+      );
+
+      await cubit.open(conversation);
+
+      expect(statusById(cubit.state),
+          {'m1': MessageStatus.read, 'm2': MessageStatus.read});
+    });
+
+    test('a read event upgrades every message in the conversation', () async {
+      when(repo.getMessages(any, beforeId: anyNamed('beforeId')))
+          .thenAnswer((_) async => [message('m1'), message('m2')]);
+      await cubit.open(conversation);
+
+      socket.emitStatus({'conversation_id': 'conv-1', 'status': 'read'});
+      await Future<void>.delayed(Duration.zero);
+
+      expect(statusById(cubit.state),
+          {'m1': MessageStatus.read, 'm2': MessageStatus.read});
+    });
+
+    test('a message_id scopes the upgrade to that message', () async {
+      when(repo.getMessages(any, beforeId: anyNamed('beforeId')))
+          .thenAnswer((_) async => [message('m1'), message('m2')]);
+      await cubit.open(conversation);
+
+      socket.emitStatus({
+        'conversation_id': 'conv-1',
+        'status': 'delivered',
+        'message_id': 'm1',
+      });
+      await Future<void>.delayed(Duration.zero);
+
+      expect(statusById(cubit.state),
+          {'m1': MessageStatus.delivered, 'm2': MessageStatus.sent});
+    });
+
+    test('never downgrades an already-read message', () async {
+      when(repo.getMessages(any, beforeId: anyNamed('beforeId'))).thenAnswer(
+        (_) async => [message('m1', status: MessageStatus.read)],
+      );
+      await cubit.open(conversation);
+
+      socket.emitStatus({'conversation_id': 'conv-1', 'status': 'delivered'});
+      await Future<void>.delayed(Duration.zero);
+
+      expect(statusById(cubit.state), {'m1': MessageStatus.read});
+    });
+
+    test('ignores an event for a different conversation', () async {
+      when(repo.getMessages(any, beforeId: anyNamed('beforeId')))
+          .thenAnswer((_) async => [message('m1')]);
+      await cubit.open(conversation);
+
+      socket.emitStatus({'conversation_id': 'other', 'status': 'read'});
+      await Future<void>.delayed(Duration.zero);
+
+      expect(statusById(cubit.state), {'m1': MessageStatus.sent});
     });
   });
 
