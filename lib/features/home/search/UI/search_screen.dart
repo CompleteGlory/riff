@@ -776,14 +776,39 @@ class _PostThumbnailState extends State<_PostThumbnail> {
         color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFEEEEEE),
         padding: EdgeInsets.all(6.r),
         child: Center(
-          child: Text(
-            displayText,
-            style: TextStyles.font12Medium.copyWith(
-              color: isDark ? const Color(0xFF888888) : ColorManager.darkGrey,
-            ),
-            maxLines: 4,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (widget.post.originalPostDeleted == true) ...[
+                // Share of a post that has since been deleted.
+                Icon(Icons.visibility_off_outlined,
+                    size: 14.r,
+                    color: isDark
+                        ? const Color(0xFF888888)
+                        : ColorManager.normalGrey),
+                SizedBox(height: 4.h),
+                Text(
+                  S.of(context).postUnavailableTitle,
+                  style: TextStyles.font12Medium.copyWith(
+                    color: isDark
+                        ? const Color(0xFF888888)
+                        : ColorManager.normalGrey,
+                    fontSize: 10.sp,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 4.h),
+              ],
+              Text(
+                displayText,
+                style: TextStyles.font12Medium.copyWith(
+                  color: isDark ? const Color(0xFF888888) : ColorManager.darkGrey,
+                ),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
       );

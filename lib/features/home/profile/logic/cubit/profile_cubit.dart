@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:riff/core/cache/cache_keys.dart';
 import 'package:riff/core/cache/offline_cache.dart';
+import 'package:riff/core/logic/post_deletion.dart';
+import 'package:riff/core/logic/post_events.dart';
 import 'package:riff/core/logic/reconnect_refresh.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
@@ -33,6 +35,36 @@ class ProfileCubit extends Cubit<ProfileState>
       final userId = _lastUserId;
       if (_isShowingCached && userId != null) loadUserPosts(userId);
     });
+    _deletionSub = PostEvents.deletions.listen(removePostLocally);
+  }
+
+  StreamSubscription<String>? _deletionSub;
+
+  /// Drop a deleted post, and mark any share of it as quoting a post that no
+  /// longer exists. Driven by [PostEvents.deletions].
+  void removePostLocally(String postId) {
+    // Unconditional: the cache holds my own posts whether or not this cubit
+    // happens to be showing them right now.
+    unawaited(_pruneCache(postId));
+
+    final updated = applyPostDeletion(_posts, postId);
+    if (identical(updated, _posts)) return;
+
+    _posts = updated;
+    if (!isClosed && state is ProfileSuccess) {
+      emit(ProfileState.success(List<Post>.from(_posts)));
+    }
+  }
+
+  /// Prune the cached own-posts copy directly rather than writing back what is
+  /// on screen — this cubit may currently be showing someone else's profile,
+  /// and the cache only ever holds the signed-in user's posts.
+  Future<void> _pruneCache(String postId) async {
+    final cached = await _readCachedPosts();
+    if (cached == null || cached.isEmpty) return;
+    final updated = applyPostDeletion(cached, postId);
+    if (identical(updated, cached)) return;
+    await _cachePosts(updated);
   }
 
   List<Post> get posts => _posts;
@@ -112,5 +144,11 @@ class ProfileCubit extends Cubit<ProfileState>
         ProfileState.imageUploadFailure(error.message ?? 'Upload failed'),
       ),
     );
+  }
+
+  @override
+  Future<void> close() {
+    _deletionSub?.cancel();
+    return super.close();
   }
 }

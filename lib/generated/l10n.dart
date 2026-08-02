@@ -516,12 +516,7 @@ class S {
 
   /// `Skip`
   String get skipBtn {
-    return Intl.message(
-      'Skip',
-      name: 'skipBtn',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Skip', name: 'skipBtn', desc: '', args: []);
   }
 
   /// `Skip for now`
@@ -1149,6 +1144,26 @@ class S {
     return Intl.message(
       'Failed to delete post.',
       name: 'failedToDeletePost',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Post unavailable`
+  String get postUnavailableTitle {
+    return Intl.message(
+      'Post unavailable',
+      name: 'postUnavailableTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The original post may have been deleted by its author, or removed after a report or for going against our standards.`
+  String get postUnavailableReason {
+    return Intl.message(
+      'The original post may have been deleted by its author, or removed after a report or for going against our standards.',
+      name: 'postUnavailableReason',
       desc: '',
       args: [],
     );
@@ -3876,42 +3891,22 @@ class S {
 
   /// `Sending…`
   String get messageSending {
-    return Intl.message(
-      'Sending…',
-      name: 'messageSending',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Sending…', name: 'messageSending', desc: '', args: []);
   }
 
   /// `Not sent`
   String get messageFailed {
-    return Intl.message(
-      'Not sent',
-      name: 'messageFailed',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Not sent', name: 'messageFailed', desc: '', args: []);
   }
 
   /// `Retry`
   String get messageRetrySend {
-    return Intl.message(
-      'Retry',
-      name: 'messageRetrySend',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Retry', name: 'messageRetrySend', desc: '', args: []);
   }
 
   /// `Discard`
   String get messageDiscard {
-    return Intl.message(
-      'Discard',
-      name: 'messageDiscard',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Discard', name: 'messageDiscard', desc: '', args: []);
   }
 
   /// `This message wasn't sent`

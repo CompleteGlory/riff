@@ -5,6 +5,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:riff/core/cache/cache_keys.dart';
 import 'package:riff/core/cache/offline_cache.dart';
+import 'package:riff/core/logic/post_events.dart';
 import 'package:riff/core/networks/api_error_handler.dart';
 import 'package:riff/core/networks/api_error_model.dart';
 import 'package:riff/core/networks/api_result.dart' as api;
@@ -222,6 +223,85 @@ void main() {
       // Page 1 failing is not a "couldn't load more" failure, so the footer
       // error must not appear at the bottom of the list.
       expect(cubit.lastError, isNull);
+    });
+  });
+
+  // Deleting a post from the profile used to leave it sitting in the feed until
+  // the next refresh — and, offline, in the cache indefinitely.
+  group('deletion', () {
+    Post share(int id, Post original) => Post(
+          id: id,
+          author: null,
+          content: 'share $id',
+          createdAt: '2026-08-01T10:00:00Z',
+          updatedAt: '2026-08-01T10:00:00Z',
+          isLiked: false,
+          likesCount: '0',
+          originalPost: original,
+        );
+
+    test('a post deleted anywhere disappears from the feed', () async {
+      when(repo.getPosts(any, any)).thenAnswer(
+          (_) async => api.ApiResult.success(page([post(1), post(2)])));
+      await cubit.getPosts();
+
+      PostEvents.notifyDeleted('2');
+      await pumpEventQueue();
+
+      expect(idsOf(cubit.state), [1]);
+    });
+
+    test('a share of the deleted post stays, marked unavailable', () async {
+      when(repo.getPosts(any, any)).thenAnswer(
+          (_) async => api.ApiResult.success(page([share(9, post(2))])));
+      await cubit.getPosts();
+
+      PostEvents.notifyDeleted('2');
+      await pumpEventQueue();
+
+      final posts = ((cubit.state as Success).data as PostsResponse).data;
+      expect(posts.single.id, 9);
+      expect(posts.single.originalPost, isNull);
+      expect(posts.single.originalPostDeleted, isTrue);
+    });
+
+    test('the cached copy is pruned too, so it stays gone offline', () async {
+      when(repo.getPosts(any, any)).thenAnswer(
+          (_) async => api.ApiResult.success(page([post(1), post(2)])));
+      await cubit.getPosts();
+
+      PostEvents.notifyDeleted('2');
+      await pumpEventQueue();
+
+      final cached = await cache.readList(CacheKeys.feedPosts);
+      expect(cached!.map((p) => p['id']), [1]);
+    });
+
+    test('a delete for a post that is not on screen changes nothing', () async {
+      when(repo.getPosts(any, any))
+          .thenAnswer((_) async => api.ApiResult.success(page([post(1)])));
+      await cubit.getPosts();
+      final before = cubit.state;
+
+      PostEvents.notifyDeleted('404');
+      await pumpEventQueue();
+
+      expect(identical(cubit.state, before), isTrue);
+    });
+
+    test('the trending post is dropped when it is the one deleted', () async {
+      when(repo.getTrendingPost())
+          .thenAnswer((_) async => api.ApiResult.success(post(7)));
+      when(repo.getPosts(any, any))
+          .thenAnswer((_) async => api.ApiResult.success(page([post(1)])));
+      await cubit.getPosts(refresh: true);
+      await pumpEventQueue();
+      expect(cubit.trendingPost?.id, 7);
+
+      PostEvents.notifyDeleted('7');
+      await pumpEventQueue();
+
+      expect(cubit.trendingPost, isNull);
     });
   });
 }
