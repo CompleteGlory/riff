@@ -95,7 +95,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Username already taken'), findsOneWidget);
-    expect(find.text('PHONE_VERIFY'), findsNothing);
+    // A rejected signup must not navigate anywhere. (This used to assert on a
+    // 'PHONE_VERIFY' stub route, which was removed with the phone-OTP feature
+    // — leaving an assertion that could never fail.)
+    expect(find.text('ONBOARDING'), findsNothing);
 
     await tester.tap(find.text(S.current.gotItBtn));
     await tester.pumpAndSettle();
