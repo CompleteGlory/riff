@@ -42,6 +42,17 @@ class HomeCubit extends Cubit<HomeState> {
     const Center(child: CircularProgressIndicator()),
   ];
 
+  /// The signed-in user's profile, or null while it is still loading (or if the
+  /// fetch failed).
+  ///
+  /// `screens[4]` is where [_loadUser] parks it: a [ProfileScreen] on success,
+  /// a spinner or an error widget otherwise. Anything that needs the profile
+  /// goes through here rather than repeating that cast at the call site.
+  UserProfile? get profile {
+    final screen = screens[4];
+    return screen is ProfileScreen ? screen.profile : null;
+  }
+
   Future<void> _loadUser() async {
     final result = await _homeRepo.getMe();
     result.when(

@@ -160,16 +160,19 @@ class AppRouter {
         );
 
       case Routes.profileSettings:
-        // args is a (UserProfile, HomeCubit) record so the screen can
-        // refresh the profile instantly after saving.
-        final args = settings.arguments as (dynamic, HomeCubit);
+        final args = settings.arguments as ProfileSettingsArgs;
         return MaterialPageRoute(
           builder: (_) => MultiBlocProvider(
             providers: [
-              BlocProvider.value(value: args.$2), // share existing HomeCubit
+              // .value — the caller's cubit, so refreshProfile() after saving
+              // updates the profile tab they came from rather than a copy.
+              BlocProvider.value(value: args.homeCubit),
               BlocProvider(create: (_) => getIt<ProfileSettingsCubit>()),
             ],
-            child: ProfileSettingsScreen(profile: args.$1),
+            child: ProfileSettingsScreen(
+              profile: args.profile,
+              scrollToPreferences: args.scrollToPreferences,
+            ),
           ),
         );
 

@@ -15,7 +15,8 @@ import 'package:riff/features/home/block/logic/cubit/block_cubit.dart';
 import 'package:riff/features/home/block/data/repos/block_repo.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 import 'package:riff/features/home/core/logic/cubit/home_state.dart';
-import 'package:riff/features/home/profile/UI/profile_screen.dart';
+import 'package:riff/features/home/profile_settings/UI/profile_settings_screen.dart'
+    show ProfileSettingsArgs;
 import 'package:riff/generated/l10n.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -46,12 +47,8 @@ class AppDrawer extends StatelessWidget {
           // Profile Settings
           BlocBuilder<HomeCubit, HomeState>(
             builder: (context, homeState) {
-              // Extract the loaded profile from HomeCubit's screens list.
-              // screens[4] is a ProfileScreen once the user is loaded.
               final cubit = context.read<HomeCubit>();
-              final screen = cubit.screens[4];
-              final UserProfile? profile =
-                  screen is ProfileScreen ? screen.profile : null;
+              final profile = cubit.profile;
 
               return _DrawerItem(
                 isDark: isDark,
@@ -69,7 +66,10 @@ class AppDrawer extends StatelessWidget {
                         nav.pop(); // close drawer
                         nav.pushNamed(
                           Routes.profileSettings,
-                          arguments: (profile, homeCubit),
+                          arguments: ProfileSettingsArgs(
+                            profile: profile,
+                            homeCubit: homeCubit,
+                          ),
                         );
                       },
               );
