@@ -486,5 +486,18 @@
   "aboutUsContactLabel": "Get in touch",
   "aboutUsContactEmail": "magddevf@gmail.com",
   "aboutUsVersion": "Version",
-  "aboutUsMadeWith": "Made with ❤️ for the music community"
+  "aboutUsMadeWith": "Made with ❤️ for the music community",
+  "offlineBannerTitle": "You're offline",
+  "offlineBannerSubtitle": "Showing saved content",
+  "offlineBackOnline": "Back online",
+  "offlineCachedNotice": "Offline — showing content saved earlier",
+  "offlineCachedNoticeWithTime": "Offline — saved {time}",
+  "offlineNothingSaved": "You're offline and nothing was saved for this screen yet.",
+  "offlineRetryWhenBack": "This will work again once you're back online.",
+  "offlineActionUnavailable": "You're offline — try again once you reconnect",
+  "messageSending": "Sending…",
+  "messageFailed": "Not sent",
+  "messageRetrySend": "Retry",
+  "messageDiscard": "Discard",
+  "messageFailedSheetTitle": "This message wasn't sent"
 }

@@ -55,11 +55,15 @@ class ChatRepo {
     String fileName,
     String mimeType, {
     int? duration,
+    String? clientId,
   }) async {
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath,
           filename: fileName, contentType: DioMediaType.parse(mimeType)),
       if (duration != null) 'duration': duration.toString(),
+      // Echoed back on the saved message so the optimistic bubble can be
+      // replaced rather than duplicated — see ChatCubit.sendMedia.
+      if (clientId != null) 'client_id': clientId,
     });
     final res = await _dio.post(ApiConstants.chatUpload(conversationId), data: formData);
     return ChatMessage.fromJson(res.data as Map<String, dynamic>);

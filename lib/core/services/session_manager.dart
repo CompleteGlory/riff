@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
 import 'package:riff/core/networks/api_constants.dart';
+import 'package:riff/core/networks/connectivity_service.dart';
 import 'package:riff/core/routing/navigation_service.dart';
 
 /// Outcome of one call to `POST /api/auth/refresh`.
@@ -60,6 +61,15 @@ typedef RefreshTransport = Future<RefreshOutcome> Function(String refreshToken);
 /// 2. **Only a real rejection ends the session.** A network blip during refresh,
 ///    or a retried request that fails for an unrelated reason, no longer signs
 ///    the user out.
+///
+/// 3. **A refresh gets several chances before the session is declared over.**
+///    A transient failure is retried on a backoff instead of leaving the caller
+///    with a dead token; a rejection has to be *confirmed* by a second attempt;
+///    a rejection that arrives while the device is offline is not believed at
+///    all; and a rejection for a refresh token that storage has since rotated
+///    is retried with the newer token rather than ending the session over a
+///    race. Between them these cover the "signed out for no reason on a bad
+///    connection" reports.
 class SessionManager {
   SessionManager._();
 
@@ -76,6 +86,26 @@ class SessionManager {
   /// Refresh a token slightly before it actually expires, so a request (or a
   /// socket handshake) never leaves with a token that dies in flight.
   static const Duration expiryLeeway = Duration(seconds: 30);
+
+  /// How many times one refresh will talk to the server before giving up.
+  static const int maxRefreshAttempts = 4;
+
+  /// How many *confirmed* rejections it takes to end the session. A single 401
+  /// on `/auth/refresh` is not proof: the endpoint rotates the token, so a
+  /// rejection can just as easily mean "you lost a race" as "your session is
+  /// over", and losing the race used to sign people out mid-scroll.
+  static const int requiredRejections = 2;
+
+  /// Delay before each retry, by attempt index.
+  static const List<Duration> retryBackoff = [
+    Duration(seconds: 1),
+    Duration(seconds: 3),
+    Duration(seconds: 6),
+  ];
+
+  /// Overridable delay so tests don't sit through the backoff.
+  @visibleForTesting
+  Future<void> Function(Duration)? sleep;
 
   final _tokenRefreshedController = StreamController<String>.broadcast();
 
@@ -165,29 +195,73 @@ class SessionManager {
   }
 
   Future<String?> _performRefresh() async {
-    final refreshToken = await currentRefreshToken();
+    var refreshToken = await currentRefreshToken();
     if (refreshToken.isEmpty) {
       debugPrint('SessionManager: no refresh token — ending session');
       await endSession();
       return null;
     }
 
-    final outcome =
-        await (refreshTransport ?? _defaultRefreshTransport)(refreshToken);
+    final transport = refreshTransport ?? _defaultRefreshTransport;
+    var rejections = 0;
 
-    if (outcome.authRejected) {
-      debugPrint('SessionManager: refresh rejected — ending session');
-      await endSession();
-      return null;
-    }
+    for (var attempt = 0; attempt < maxRefreshAttempts; attempt++) {
+      final outcome = await transport(refreshToken);
 
-    if (!outcome.succeeded) {
-      // Transient (offline, timeout, 5xx). Keep the session; the caller just
-      // sees its own request fail.
+      if (outcome.succeeded) return _storeRefreshedTokens(outcome);
+
+      if (outcome.authRejected) {
+        // A rejection while the device has no connectivity is far more likely
+        // to be a captive portal or a proxy inventing a response than the
+        // server actually revoking the session.
+        if (ConnectivityService.instance.isOffline) {
+          debugPrint('SessionManager: refresh rejected while offline — '
+              'session kept');
+          return null;
+        }
+
+        // Another flow may have rotated the token while this call was in
+        // flight. Retrying with the newer one is not a second chance at a bad
+        // token — it is the first chance at the right one.
+        final stored = await currentRefreshToken();
+        if (stored.isNotEmpty && stored != refreshToken) {
+          debugPrint('SessionManager: refresh token rotated mid-flight — '
+              'retrying with the stored one');
+          refreshToken = stored;
+          continue;
+        }
+
+        rejections++;
+        if (rejections < requiredRejections &&
+            attempt + 1 < maxRefreshAttempts) {
+          debugPrint('SessionManager: refresh rejected — confirming before '
+              'ending the session');
+          await _wait(_backoffFor(attempt));
+          continue;
+        }
+
+        debugPrint('SessionManager: refresh rejected twice — ending session');
+        await endSession();
+        return null;
+      }
+
+      // Transient (offline, timeout, 5xx). Keep the session and try again on a
+      // backoff; the old code gave up after one attempt, which on a flaky
+      // connection meant every request in the burst failed for no good reason.
+      if (attempt + 1 < maxRefreshAttempts) {
+        debugPrint('SessionManager: refresh failed transiently — retrying');
+        await _wait(_backoffFor(attempt));
+        continue;
+      }
+
       debugPrint('SessionManager: refresh failed transiently — session kept');
       return null;
     }
 
+    return null;
+  }
+
+  Future<String?> _storeRefreshedTokens(RefreshOutcome outcome) async {
     final newAccess = outcome.accessToken!;
     await SharedPrefHelper.setData(SharedPrefKeys.userToken, newAccess);
     if (outcome.refreshToken != null && outcome.refreshToken!.isNotEmpty) {
@@ -202,6 +276,11 @@ class SessionManager {
     return newAccess;
   }
 
+  Duration _backoffFor(int attempt) =>
+      retryBackoff[attempt.clamp(0, retryBackoff.length - 1)];
+
+  Future<void> _wait(Duration d) => (sleep ?? Future<void>.delayed)(d);
+
   Future<RefreshOutcome> _defaultRefreshTransport(String refreshToken) async {
     try {
       // A bare Dio: no interceptors, so a failing refresh can't recurse into
@@ -213,6 +292,9 @@ class SessionManager {
       ));
 
       final response = await dio.post<void>(ApiConstants.refreshToken);
+      // This Dio deliberately has no interceptors, so the connectivity signal
+      // the app's main Dio publishes has to be reported by hand here.
+      ConnectivityService.instance.reportReachable();
       final status = response.statusCode ?? 0;
 
       if (status == 401 || status == 403) return const RefreshOutcome.rejected();
@@ -238,6 +320,7 @@ class SessionManager {
       }
       return RefreshOutcome.success(accessToken: access, refreshToken: refresh);
     } on DioException catch (e) {
+      ConnectivityService.instance.reportDioError(e);
       final status = e.response?.statusCode;
       if (status == 401 || status == 403) return const RefreshOutcome.rejected();
       return const RefreshOutcome.transientFailure();

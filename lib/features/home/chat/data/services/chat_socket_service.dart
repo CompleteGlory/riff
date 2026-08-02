@@ -218,15 +218,24 @@ class ChatSocketService {
 
   /// Sends a text message, reconnecting first if the socket is down.
   ///
+  /// [clientId] is echoed back by the gateway on the saved message, so the
+  /// optimistic bubble the sender is already looking at can be replaced by the
+  /// real one rather than duplicated next to it.
+  ///
   /// Returns false when the message could not be handed to a live socket, so
   /// the caller can tell the user instead of leaving them staring at a message
   /// that silently never sent.
-  Future<bool> sendTextMessage(String conversationId, String text) async {
+  Future<bool> sendTextMessage(
+    String conversationId,
+    String text, {
+    String? clientId,
+  }) async {
     if (!await ensureConnected()) return false;
     _socket?.emit('send_message', {
       'conversation_id': conversationId,
       'type': 'text',
       'content': text,
+      if (clientId != null) 'client_id': clientId,
     });
     return true;
   }

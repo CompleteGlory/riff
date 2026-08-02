@@ -140,12 +140,13 @@ class MockChatRepo extends _i1.Mock implements _i3.ChatRepo {
     String? fileName,
     String? mimeType, {
     int? duration,
+    String? clientId,
   }) =>
       (super.noSuchMethod(
             Invocation.method(
               #uploadMedia,
               [conversationId, filePath, fileName, mimeType],
-              {#duration: duration},
+              {#duration: duration, #clientId: clientId},
             ),
             returnValue: _i4.Future<_i2.ChatMessage>.value(
               _FakeChatMessage_1(
@@ -153,7 +154,7 @@ class MockChatRepo extends _i1.Mock implements _i3.ChatRepo {
                 Invocation.method(
                   #uploadMedia,
                   [conversationId, filePath, fileName, mimeType],
-                  {#duration: duration},
+                  {#duration: duration, #clientId: clientId},
                 ),
               ),
             ),

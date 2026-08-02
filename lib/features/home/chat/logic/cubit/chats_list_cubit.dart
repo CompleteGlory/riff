@@ -1,5 +1,11 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:riff/core/cache/cache_keys.dart';
+import 'package:riff/core/cache/offline_cache.dart';
 import 'package:riff/core/logic/app_scoped_cubit.dart';
+import 'package:riff/core/logic/reconnect_refresh.dart';
 import '../../data/models/chat_models.dart';
 import '../../data/repos/chat_repo.dart';
 import 'conversation_dedupe.dart';
@@ -7,13 +13,44 @@ import 'conversation_dedupe.dart';
 part 'chats_list_state.dart';
 
 class ChatsListCubit extends Cubit<ChatsListState>
-    with AppScopedCubit<ChatsListState> {
+    // Order matters: AppScopedCubit must be applied last so its `close()`
+    // override runs first and short-circuits a route-level close. The other way
+    // round, popping a route that provided this singleton would cancel the
+    // reconnect subscription for the rest of the process while the cubit itself
+    // stayed alive.
+    with ReconnectRefresh<ChatsListState>, AppScopedCubit<ChatsListState> {
   final ChatRepo _repo;
+  final OfflineCache _cache;
 
-  ChatsListCubit(this._repo) : super(ChatsListInitial());
+  ChatsListCubit(this._repo, {OfflineCache? cache})
+      : _cache = cache ?? OfflineCache.instance,
+        super(ChatsListInitial()) {
+    refreshOnReconnect(() {
+      if (_isShowingCached) _refresh();
+    });
+  }
+
+  bool _isShowingCached = false;
+
+  /// True while the list on screen was restored from the offline cache.
+  bool get isShowingCached => _isShowingCached;
+
+  /// When the cached copy on screen was written.
+  DateTime? get cacheSavedAt => _cache.savedAt(CacheKeys.conversations);
 
   Future<void> load() async {
-    if (state is! ChatsListLoaded) emit(ChatsListLoading());
+    if (state is! ChatsListLoaded) {
+      // Try the cache before the spinner: opening chats with no signal should
+      // still show who you were talking to, not an empty screen.
+      final cached = await _readCachedList();
+      if (isClosed) return;
+      if (cached != null) {
+        _isShowingCached = true;
+        emit(cached);
+      } else {
+        emit(ChatsListLoading());
+      }
+    }
     await _refresh();
   }
 
@@ -26,14 +63,52 @@ class ChatsListCubit extends Cubit<ChatsListState>
       if (!isClosed) {
         // Collapse the duplicate direct conversations some accounts already
         // have on the server — see conversation_dedupe.dart.
-        emit(ChatsListLoaded(
+        final loaded = ChatsListLoaded(
           conversations: dedupeConversations(convs),
           requests: dedupeConversations(reqs),
-        ));
+        );
+        _isShowingCached = false;
+        emit(loaded);
+        unawaited(_cacheList(loaded));
       }
     } catch (e) {
-      if (!isClosed) emit(ChatsListError(e.toString()));
+      if (isClosed) return;
+      // Keep whatever is already listed — cached or from an earlier fetch —
+      // rather than replacing a usable chat list with an error.
+      if (state is ChatsListLoaded) return;
+      emit(ChatsListError(e.toString()));
     }
+  }
+
+  // ── Offline cache ───────────────────────────────────────────────────────────
+
+  Future<ChatsListLoaded?> _readCachedList() async {
+    try {
+      final convs = await _cache.readList(CacheKeys.conversations);
+      if (convs == null) return null;
+      final reqs =
+          await _cache.readList(CacheKeys.conversationRequests) ?? const [];
+      return ChatsListLoaded(
+        conversations: convs.map(Conversation.fromJson).toList(),
+        requests: reqs.map(Conversation.fromJson).toList(),
+      );
+    } catch (e) {
+      debugPrint('ChatsListCubit: cached conversations unreadable — $e');
+      return null;
+    }
+  }
+
+  Future<void> _cacheList(ChatsListLoaded loaded) async {
+    await _cache.writeList(
+      CacheKeys.conversations,
+      loaded.conversations.map((c) => c.toJson()).toList(),
+      limit: CacheKeys.conversationsLimit,
+    );
+    await _cache.writeList(
+      CacheKeys.conversationRequests,
+      loaded.requests.map((c) => c.toJson()).toList(),
+      limit: CacheKeys.conversationsLimit,
+    );
   }
 
   /// Called when a new socket message arrives — update latest message, increment
@@ -115,6 +190,7 @@ class ChatsListCubit extends Cubit<ChatsListState>
 
   /// Clear all state — call on logout so the next user starts with a blank slate.
   void reset() {
+    _isShowingCached = false;
     if (!isClosed) emit(ChatsListInitial());
   }
 

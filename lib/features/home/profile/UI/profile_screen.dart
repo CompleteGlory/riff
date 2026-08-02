@@ -115,6 +115,22 @@ class UserProfile {
         followersCount: json['followersCount'] as int? ?? 0,
         followingCount: json['followingCount'] as int? ?? 0,
       );
+
+  /// Round-trips through [UserProfile.fromJson], for the offline cache — the
+  /// profile tab is the one screen a user expects to work with no signal at all.
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'full_name': fullName,
+        'username': username,
+        'email': email,
+        'provider': provider,
+        'bio': bio,
+        'instruments': instruments,
+        'genres': genres,
+        'profile_image_url': profileImageUrl,
+        'followersCount': followersCount,
+        'followingCount': followingCount,
+      };
 }
 
 // ---------------------------------------------------------------------------

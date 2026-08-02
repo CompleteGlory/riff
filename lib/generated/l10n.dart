@@ -3788,6 +3788,116 @@ class S {
       args: [],
     );
   }
+
+  /// `You're offline`
+  String get offlineBannerTitle {
+    return Intl.message(
+      'You\'re offline',
+      name: 'offlineBannerTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Showing saved content`
+  String get offlineBannerSubtitle {
+    return Intl.message(
+      'Showing saved content',
+      name: 'offlineBannerSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Back online`
+  String get offlineBackOnline {
+    return Intl.message(
+      'Back online',
+      name: 'offlineBackOnline',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Offline — showing content saved earlier`
+  String get offlineCachedNotice {
+    return Intl.message(
+      'Offline — showing content saved earlier',
+      name: 'offlineCachedNotice',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Offline — saved {time}`
+  String offlineCachedNoticeWithTime(Object time) {
+    return Intl.message(
+      'Offline — saved $time',
+      name: 'offlineCachedNoticeWithTime',
+      desc: '',
+      args: [time],
+    );
+  }
+
+  /// `You're offline and nothing was saved for this screen yet.`
+  String get offlineNothingSaved {
+    return Intl.message(
+      'You\'re offline and nothing was saved for this screen yet.',
+      name: 'offlineNothingSaved',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This will work again once you're back online.`
+  String get offlineRetryWhenBack {
+    return Intl.message(
+      'This will work again once you\'re back online.',
+      name: 'offlineRetryWhenBack',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `You're offline — try again once you reconnect`
+  String get offlineActionUnavailable {
+    return Intl.message(
+      'You\'re offline — try again once you reconnect',
+      name: 'offlineActionUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Sending…`
+  String get messageSending {
+    return Intl.message('Sending…', name: 'messageSending', desc: '', args: []);
+  }
+
+  /// `Not sent`
+  String get messageFailed {
+    return Intl.message('Not sent', name: 'messageFailed', desc: '', args: []);
+  }
+
+  /// `Retry`
+  String get messageRetrySend {
+    return Intl.message('Retry', name: 'messageRetrySend', desc: '', args: []);
+  }
+
+  /// `Discard`
+  String get messageDiscard {
+    return Intl.message('Discard', name: 'messageDiscard', desc: '', args: []);
+  }
+
+  /// `This message wasn't sent`
+  String get messageFailedSheetTitle {
+    return Intl.message(
+      'This message wasn\'t sent',
+      name: 'messageFailedSheetTitle',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

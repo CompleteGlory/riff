@@ -424,5 +424,18 @@
   "aboutUsContactLabel": "تواصل معنا",
   "aboutUsContactEmail": "magddevf@gmail.com",
   "aboutUsVersion": "الإصدار",
-  "aboutUsMadeWith": "صُنع بـ ❤️ لمجتمع الموسيقى"
+  "aboutUsMadeWith": "صُنع بـ ❤️ لمجتمع الموسيقى",
+  "offlineBannerTitle": "أنت غير متصل",
+  "offlineBannerSubtitle": "يتم عرض محتوى محفوظ",
+  "offlineBackOnline": "عاد الاتصال",
+  "offlineCachedNotice": "غير متصل — يتم عرض محتوى محفوظ مسبقًا",
+  "offlineCachedNoticeWithTime": "غير متصل — محفوظ {time}",
+  "offlineNothingSaved": "أنت غير متصل ولا يوجد محتوى محفوظ لهذه الشاشة بعد.",
+  "offlineRetryWhenBack": "سيعمل هذا مرة أخرى بمجرد عودة الاتصال.",
+  "offlineActionUnavailable": "أنت غير متصل — حاول مرة أخرى بعد عودة الاتصال",
+  "messageSending": "جارٍ الإرسال…",
+  "messageFailed": "لم تُرسل",
+  "messageRetrySend": "إعادة المحاولة",
+  "messageDiscard": "تجاهل",
+  "messageFailedSheetTitle": "لم يتم إرسال هذه الرسالة"
 }

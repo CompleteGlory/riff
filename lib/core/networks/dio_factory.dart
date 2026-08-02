@@ -4,6 +4,7 @@ import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
 import 'package:riff/core/networks/api_constants.dart';
+import 'package:riff/core/networks/connectivity_service.dart';
 import 'package:riff/core/services/session_manager.dart';
 
 class DioFactory {
@@ -69,7 +70,17 @@ class DioFactory {
 
     dio?.interceptors.add(
       InterceptorsWrapper(
+        // Every completed response proves the device can reach the server, and
+        // every transport-level failure proves it can't. That is a better
+        // offline signal than anything the app could poll for, and it costs
+        // nothing — so the connectivity banner and the cached-content fallbacks
+        // are driven from right here.
+        onResponse: (response, handler) {
+          ConnectivityService.instance.reportReachable();
+          return handler.next(response);
+        },
         onError: (DioException err, ErrorInterceptorHandler handler) async {
+          ConnectivityService.instance.reportDioError(err);
           final statusCode = err.response?.statusCode;
           final requestOptions = err.requestOptions;
           final requestPath = requestOptions.uri.toString();

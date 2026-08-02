@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:riff/core/di/dependency_injection.dart';
+import 'package:riff/core/networks/api_error_handler.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/widgets/shimmer_loading.dart';
@@ -18,6 +19,7 @@ import 'package:riff/features/home/feed/logic/feed_list_builder.dart';
 import 'package:riff/features/home/feed/logic/cubit/feed/feed_state.dart';
 import 'package:riff/generated/l10n.dart';
 import 'package:riff/core/widgets/app_error_widget.dart';
+import 'package:riff/core/widgets/offline_banner.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Fade + slide-up entrance animation for list items with staggered delay
@@ -188,7 +190,7 @@ class _FeedScreenBodyState extends State<FeedScreenBody> {
               final mixed = _buildMixedList(posts, trending);
               final extra = (isLoadingMore || paginationError != null) ? 1 : 0;
 
-              return ListView.builder(
+              final list = ListView.builder(
                 controller: _controller,
                 padding: const EdgeInsets.all(16),
                 itemCount: mixed.length + extra,
@@ -244,26 +246,37 @@ class _FeedScreenBodyState extends State<FeedScreenBody> {
                   );
                 },
               );
+
+              if (!cubit.isShowingCached) return list;
+              // The global banner says the device is offline; this says which
+              // list is a snapshot.
+              return Column(children: [
+                OfflineCachedNotice(savedAt: cubit.cacheSavedAt),
+                Expanded(child: list),
+              ]);
             },
             failure: (error) {
               // Wrap in a scrollable so the parent RefreshIndicator
               // can detect the pull-to-refresh gesture.
-              final msg = error.errors?.first.message;
-              final isConnErr = msg != null &&
-                  (msg.toLowerCase().contains('connect') ||
-                      msg.toLowerCase().contains('network') ||
-                      msg.toLowerCase().contains('socket') ||
-                      msg.toLowerCase().contains('timeout'));
+              final msg = error.errors?.first.message ?? error.message;
+              // The failure carries whether it was a transport failure, so this
+              // no longer has to guess from the wording of an English string —
+              // which was always fragile and simply never matched in Arabic.
+              final isConnErr = error.isOffline;
               return CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
                   SliverFillRemaining(
                     hasScrollBody: false,
-                    child: AppErrorWidget(
-                      message: msg,
-                      isConnectionError: isConnErr,
-                      onRetry: () => cubit.getPosts(refresh: true),
-                    ),
+                    child: isConnErr
+                        ? OfflineEmptyState(
+                            onRetry: () => cubit.getPosts(refresh: true),
+                          )
+                        : AppErrorWidget(
+                            message: msg,
+                            isConnectionError: false,
+                            onRetry: () => cubit.getPosts(refresh: true),
+                          ),
                   ),
                 ],
               );

@@ -7,7 +7,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
+import 'package:riff/core/cache/offline_cache.dart';
 import 'package:riff/core/di/dependency_injection.dart';
+import 'package:riff/core/networks/connectivity_service.dart';
 import 'package:riff/core/routing/routes.dart';
 import 'package:riff/core/services/push_notification_service.dart';
 import 'package:riff/features/home/core/UI/app_bottom_nav.dart';
@@ -87,6 +89,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   Future<void> _connectChatSocket() async {
     // Load the current user ID so we can filter own messages from unread count.
     final id = await SharedPrefHelper.getString(SharedPrefKeys.userId) as String? ?? '';
+    // Point the offline cache at this user before any screen writes to it.
+    OfflineCache.instance.useScope(id);
     if (mounted) setState(() => _myId = id);
 
     final socket = getIt<ChatSocketService>();
@@ -136,6 +140,11 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && mounted) {
+      // Connectivity is inferred from request outcomes, so a device that lost
+      // (or regained) signal while backgrounded has a stale answer until
+      // something asks. Probe on resume so the banner is right immediately
+      // rather than after the first failed request.
+      unawaited(ConnectivityService.instance.checkNow());
       context.read<NotificationsCubit>().silentRefresh();
       // Refresh chat list so unread counts are accurate after the app was
       // backgrounded (socket may have been paused / missed messages).

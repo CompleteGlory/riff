@@ -30,15 +30,17 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m4(query) => "لا توجد نتائج لـ \"${query}\"";
 
-  static String m5(date) => "آخر ظهور ${date}";
+  static String m5(time) => "غير متصل — محفوظ ${time}";
 
-  static String m6(n) => "آخر ظهور منذ ${n} دقيقة";
+  static String m6(date) => "آخر ظهور ${date}";
 
-  static String m7(time) => "آخر ظهور اليوم الساعة ${time}";
+  static String m7(n) => "آخر ظهور منذ ${n} دقيقة";
 
-  static String m8(time) => "آخر ظهور أمس الساعة ${time}";
+  static String m8(time) => "آخر ظهور اليوم الساعة ${time}";
 
-  static String m9(name) =>
+  static String m9(time) => "آخر ظهور أمس الساعة ${time}";
+
+  static String m10(name) =>
       "${name} يريد إرسال رسالة إليك.\nلا يمكنه رؤية أنك اطلعت على هذا الطلب.";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -462,10 +464,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "mediaLabel": MessageLookupByLibrary.simpleMessage("الوسائط"),
     "mediumSeverity": MessageLookupByLibrary.simpleMessage("متوسطة"),
     "messageBtn": MessageLookupByLibrary.simpleMessage("رسالة"),
+    "messageDiscard": MessageLookupByLibrary.simpleMessage("تجاهل"),
+    "messageFailed": MessageLookupByLibrary.simpleMessage("لم تُرسل"),
+    "messageFailedSheetTitle": MessageLookupByLibrary.simpleMessage(
+      "لم يتم إرسال هذه الرسالة",
+    ),
     "messageHint": MessageLookupByLibrary.simpleMessage("رسالة…"),
     "messageNotSent": MessageLookupByLibrary.simpleMessage(
       "لم يتم إرسال الرسالة — تحقق من اتصالك وحاول مرة أخرى.",
     ),
+    "messageRetrySend": MessageLookupByLibrary.simpleMessage("إعادة المحاولة"),
+    "messageSending": MessageLookupByLibrary.simpleMessage("جارٍ الإرسال…"),
     "messagesComingSoon": MessageLookupByLibrary.simpleMessage(
       "الرسائل قادمة قريباً",
     ),
@@ -518,6 +527,24 @@ class MessageLookup extends MessageLookupByLibrary {
     "notificationsTitle": MessageLookupByLibrary.simpleMessage("الإشعارات"),
     "nudityOrSexual": MessageLookupByLibrary.simpleMessage(
       "محتوى فاضح أو جنسي",
+    ),
+    "offlineActionUnavailable": MessageLookupByLibrary.simpleMessage(
+      "أنت غير متصل — حاول مرة أخرى بعد عودة الاتصال",
+    ),
+    "offlineBackOnline": MessageLookupByLibrary.simpleMessage("عاد الاتصال"),
+    "offlineBannerSubtitle": MessageLookupByLibrary.simpleMessage(
+      "يتم عرض محتوى محفوظ",
+    ),
+    "offlineBannerTitle": MessageLookupByLibrary.simpleMessage("أنت غير متصل"),
+    "offlineCachedNotice": MessageLookupByLibrary.simpleMessage(
+      "غير متصل — يتم عرض محتوى محفوظ مسبقًا",
+    ),
+    "offlineCachedNoticeWithTime": m5,
+    "offlineNothingSaved": MessageLookupByLibrary.simpleMessage(
+      "أنت غير متصل ولا يوجد محتوى محفوظ لهذه الشاشة بعد.",
+    ),
+    "offlineRetryWhenBack": MessageLookupByLibrary.simpleMessage(
+      "سيعمل هذا مرة أخرى بمجرد عودة الاتصال.",
     ),
     "onlyApprovedFollowers": MessageLookupByLibrary.simpleMessage(
       "فقط المتابعون المعتمدون يمكنهم رؤية منشوراتك",
@@ -662,13 +689,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "ppSection9Title": MessageLookupByLibrary.simpleMessage(
       "٩. ملفات تعريف الارتباط والتخزين المحلي",
     ),
-    "presenceLastSeenDate": m5,
+    "presenceLastSeenDate": m6,
     "presenceLastSeenJustNow": MessageLookupByLibrary.simpleMessage(
       "آخر ظهور قبل لحظات",
     ),
-    "presenceLastSeenMinutes": m6,
-    "presenceLastSeenTodayAt": m7,
-    "presenceLastSeenYesterdayAt": m8,
+    "presenceLastSeenMinutes": m7,
+    "presenceLastSeenTodayAt": m8,
+    "presenceLastSeenYesterdayAt": m9,
     "presenceOnline": MessageLookupByLibrary.simpleMessage("متصل"),
     "privacyAppearance": MessageLookupByLibrary.simpleMessage("المظهر واللغة"),
     "privacyPolicyConsentPrefix": MessageLookupByLibrary.simpleMessage(
@@ -742,7 +769,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "requestAFeatureDrawer": MessageLookupByLibrary.simpleMessage("طلب ميزة"),
     "requestBtn": MessageLookupByLibrary.simpleMessage("طلب متابعة"),
-    "requestInfoMessage": m9,
+    "requestInfoMessage": m10,
     "requestedBtn": MessageLookupByLibrary.simpleMessage("تم الطلب"),
     "requestedToFollowYou": MessageLookupByLibrary.simpleMessage(
       "طلب متابعتك.",

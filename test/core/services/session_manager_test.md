@@ -41,3 +41,25 @@
 - **Expired-token socket handshakes.** `validAccessToken` refreshes before
   handing a token out, because the chat/notification gateways verify it during
   the handshake and hang up when it fails — with no retry afterwards.
+
+## Refresh resilience (added with the offline work)
+
+All of this exists for one report: *"I get signed out for no reason."*
+
+- a transient failure is retried on a backoff instead of leaving the caller with
+  a dead token;
+- a single rejection is **not** enough — `/auth/refresh` rotates the token, so a
+  401 can equally mean this caller lost a race;
+- a rejection that arrives while `ConnectivityService` says the device is
+  offline is not believed at all, and doesn't even cost a retry;
+- a rejection for a refresh token that storage has since rotated is retried with
+  the newer one — this is the exact shape of the original bug;
+- two *confirmed* rejections do still end the session.
+
+### Gotchas for this group
+
+- `session.sleep` is overridden to a no-op in `setUp`. Without it every failure
+  case sits through the real 1s/3s/6s backoff, adding ten seconds per test.
+- `ConnectivityService.resetInstanceForTest()` in both `setUp` and `tearDown`:
+  it is a singleton, and an offline verdict left behind by one test changes the
+  outcome of the next one.

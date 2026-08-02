@@ -39,9 +39,15 @@ lib/features/<feature>/
 ```
 lib/core/
   di/dependency_injection.dart   # GetIt setup — register everything here
+  cache/
+    offline_cache.dart           # last-known-good JSON store, scoped per user
+    cache_keys.dart              # bucket names + how much of each is kept
+  logic/
+    reconnect_refresh.dart       # cubit mixin: re-fetch when the connection returns
   networks/
     api_constants.dart           # ALL endpoint strings go here
     dio_factory.dart             # Dio instance with auth interceptor
+    connectivity_service.dart    # online/offline signal, derived from real requests
   helpers/
     shared_pref_helper.dart      # SharedPreferences wrapper
     constants.dart               # SharedPrefKeys and other constants
@@ -67,6 +73,89 @@ lib/core/
 **Images:** Always use `CachedNetworkImage` / `CachedNetworkImageProvider`. Always resolve URLs via `MediaUrl.resolve(url)`.
 
 **API base URL:** `https://riff-production-08f7.up.railway.app` (Railway deployment)
+
+---
+
+## Offline Experience
+
+The app assumes the connection will fail and is built to stay usable when it
+does. Three pieces:
+
+### 1. Knowing you're offline — `ConnectivityService`
+
+No connectivity plugin. The status is derived from what real requests actually
+do, via the Dio interceptor:
+
+- any response → **online** (the server answered, whatever the status code);
+- a *transport* failure (connection error, timeout, socket error) → **offline**;
+- an HTTP failure (401, 404, 500) → still **online**.
+
+While offline it re-probes the API host on a backoff (3s → 30s) so recovery is
+noticed without the user doing anything, and `HomeLayout` probes on resume.
+`ConnectivityService.onStatusChanged` emits **transitions only**.
+
+`ApiErrorHandler` marks transport failures with `statusCode: kOfflineStatusCode`
+(`-1`); use `error.isOffline` rather than sniffing the message text for the word
+"connection" — that never worked in Arabic.
+
+### 2. Showing something anyway — `OfflineCache`
+
+JSON files under `offline_cache/<userId>/`, one per bucket. Partitioned by user,
+wiped by the sign-out hook, never throws — a failed read or write degrades to
+"no cache".
+
+| Bucket | Kept | Written by |
+|--------|------|-----------|
+| `feedPosts` | 10 | `FeedCubit` (first page only) |
+| `conversations` / `conversationRequests` | 10 | `ChatsListCubit` |
+| `reels` | 10 | `ReelsCubit` (first page only) |
+| `myProfile` | 1 | `HomeCubit` |
+| `myPosts` | 10 | `ProfileCubit` (own profile only) |
+| `discoverPosts` | 30 | `SearchCubit` (unfiltered discover only) |
+| `messages_<conversationId>` | 30 | `ChatCubit`, per conversation |
+
+The pattern in every cubit is the same:
+
+1. nothing on screen → read the cache and emit it as a normal `success`, with an
+   `isShowingCached` flag for the UI, instead of emitting `loading`;
+2. request succeeds → **replace** (don't append to) the cached list, clear the
+   flag, cache the fresh first page;
+3. request fails → if anything is on screen, leave it there; only emit a failure
+   when there is genuinely nothing to show.
+
+Cubits that can show cached content mix in `ReconnectRefresh` and re-fetch
+themselves when connectivity returns.
+
+UI: `OfflineBanner` wraps the whole navigator in `RiffMaterialApp.builder`
+(a persistent bar plus a brief "back online" confirmation);
+`OfflineCachedNotice` is the per-screen "this list is a snapshot" strip;
+`OfflineEmptyState` is "offline, and nothing was saved".
+
+### 3. Optimistic message sending
+
+`ChatMessage` carries `clientId`, `delivery` (`complete` | `pending` | `failed`)
+and `localMediaPath`. `ChatCubit.sendText`/`sendMedia` put the bubble on screen
+immediately, dimmed, then either firm it up or mark it failed:
+
+- the client generates a `clientId` and sends it with the message;
+- the gateway echoes it back **only to the sender** (`client_id` on the socket
+  payload; on the HTTP response for uploads) — recipients must never see it or
+  they'd match it against their own bubbles;
+- `ChatCubit._indexOfOptimisticMatch` replaces the optimistic bubble with the
+  server's copy, falling back to sender+type+content matching so the app still
+  reconciles against an API build without the echo;
+- an unacknowledged send fails after `ChatCubit.pendingTimeout` (20s) — a socket
+  `emit` succeeding only means bytes left the device;
+- a failed bubble is tappable (retry) and long-pressable (retry / discard);
+  `_markFailed` deliberately keeps the outbound payload so retry has something
+  to send.
+
+### 4. Not getting signed out
+
+See `SessionManager`. A refresh now retries transient failures on a backoff,
+needs **two** confirmed rejections before ending the session, never believes a
+rejection that arrives while offline, and retries with the newer token when
+storage rotated it mid-flight.
 
 ---
 
@@ -291,6 +380,16 @@ Testability patterns established here, worth reusing elsewhere:
 - Widget-test a form in the same scroll context production uses it in (e.g. wrap in
   `SingleChildScrollView` if the real screen does) — pumping a large form bare inside a `Scaffold`
   can overflow the default test viewport before any assertion runs.
+- `OfflineCache` and `ConnectivityService` are process-wide singletons with
+  in-memory state (a cache mirror, an offline verdict and a live backoff timer).
+  Any test touching a cubit that caches or reports connectivity needs
+  `OfflineCache.resetInstanceForTest()` / `ConnectivityService.resetInstanceForTest()`
+  in `setUp` — otherwise data cached by one test is restored into the next, which
+  is exactly how `chats_list_cubit_test` started failing when the cache landed.
+- When combining `AppScopedCubit` with another `on Cubit` mixin that overrides
+  `close()`, apply `AppScopedCubit` **last** so its no-op `close()` runs first.
+  The other order lets a route-level close tear down the other mixin's resources
+  while the singleton itself stays alive.
 - Never call `pumpAndSettle()` after a transition onto a screen with a repeating `Timer.periodic`
   or a looping `AnimationController` (e.g. a countdown, a blinking cursor) — it never settles. Use
   a bounded `tester.pump(someDuration)` instead.
@@ -321,6 +420,9 @@ test file has a co-located `.md` explaining coverage, mocks and gotchas:
 | Mark-all-read + singleton survival | `test/features/home/notifications/logic/cubit/notifications_cubit_test.dart` | [notifications_cubit_test.md](test/features/home/notifications/logic/cubit/notifications_cubit_test.md) |
 | Chat socket lifecycle + send result | `test/features/home/chat/logic/cubit/chat_cubit_test.dart` | [chat_cubit_test.md](test/features/home/chat/logic/cubit/chat_cubit_test.md) |
 | API timestamp parsing (the 3-hour shift) | `test/core/helpers/app_date_time_test.dart` | [app_date_time_test.md](test/core/helpers/app_date_time_test.md) |
+| Offline/online detection | `test/core/networks/connectivity_service_test.dart` | [connectivity_service_test.md](test/core/networks/connectivity_service_test.md) |
+| Offline cache store | `test/core/cache/offline_cache_test.dart` | [offline_cache_test.md](test/core/cache/offline_cache_test.md) |
+| Feed cache fallback | `test/features/home/feed/logic/cubit/feed_cubit_test.dart` | [feed_cubit_test.md](test/features/home/feed/logic/cubit/feed_cubit_test.md) |
 | Chat model timestamp normalisation | `test/features/home/chat/data/models/chat_models_test.dart` | [chat_models_test.md](test/features/home/chat/data/models/chat_models_test.md) |
 | Duplicate-conversation collapsing | `test/features/home/chat/logic/cubit/conversation_dedupe_test.dart` | [conversation_dedupe_test.md](test/features/home/chat/logic/cubit/conversation_dedupe_test.md) |
 | Chats list dedupe wiring | `test/features/home/chat/logic/cubit/chats_list_cubit_test.dart` | [chats_list_cubit_test.md](test/features/home/chat/logic/cubit/chats_list_cubit_test.md) |
@@ -397,6 +499,10 @@ full widget test.
 | No API unit spec could run | `package.json` jest block | Missing `moduleNameMapper` for the `src/...` path alias, so every spec failed to resolve its imports; only the e2e config worked |
 | "Mark all as read" needed a manual refresh before the rows looked read | `NotificationsCubit` | Two causes. It emitted only *after* awaiting the request and swallowed every error, so a failure looked like a success that hadn't happened yet — now optimistic, with rollback and a reported result. And a fetch already in flight (the 30 s poll, or the `silentRefresh()` HomeLayout runs on returning from the screen) could land between the optimistic update and the server commit and repaint every row unread. Local changes now bump an epoch counter; a fetch that started before the bump discards its result |
 | `NotificationsScreen` untestable | `NotificationsScreen` | Called `FirebaseMessaging.instance.getNotificationSettings()` directly in `initState`; now an injectable `notificationsDenied` callback defaulting to the real call, per the pattern in the login tests |
+| Signed out on a flaky connection | `SessionManager._performRefresh` | One 401 from `/auth/refresh` ended the session, and one transient failure was the end of the attempt. But `/auth/refresh` **rotates** the token, so a 401 can equally mean this caller lost a race with a concurrent refresh — and a rejection that arrives while the device is offline is more likely a captive portal than a revoked session. Refresh now retries transient failures on a 1s/3s/6s backoff, requires two confirmed rejections, ignores rejections while offline, and re-tries with the newer token when storage rotated it mid-flight |
+| Every screen showed an error page instead of content when the connection dropped | feed / reels / chats / search / profile cubits | Nothing was cached and every failure emitted a failure state, so a lost connection replaced a screen the user had been reading a second earlier with "Something went wrong". Each cubit now falls back to `OfflineCache`, keeps whatever is already on screen when a refresh fails, and re-fetches on reconnect |
+| A refresh on a dying connection blanked the feed | `FeedCubit.getPosts` | `refresh: true` cleared the post list *before* the request, so a failed pull-to-refresh left an empty feed. The list is cleared only when the replacement arrives |
+| "Is my message sending, sent, or lost?" | `ChatCubit`, `MessageBubble` | Text messages were fire-and-forget into the socket and the composer cleared regardless; media showed one generic "sending" bubble unattached to the message. Sends are now optimistic, correlated by `client_id`, rendered dimmed while pending, and turned into a tappable retry when they fail |
 | Read receipts stuck on one check — recipient had read the messages | `chat.controller.ts` (`serializeMsg`), `message-status.ts` | Read state only ever existed as a transient `message_status` socket event, upgraded in memory by whoever had that exact chat open at the time. Nothing persisted it and `serializeMsg` had **no `status` field**, so `MessageStatusX.fromString(null)` fell through to `sent` and every message reset to one check as soon as the sender reopened the chat. Status is now derived server-side from `conversation_participants.last_read_at`, returned on every message, and `GET .../messages` also emits a read receipt so a client whose socket hasn't come up still clears the sender's ticks. Voice notes go through the media-upload endpoint, which now carries the same status as a socket-sent text message |
 
 ---
@@ -455,4 +561,6 @@ SPOTIFY_CLIENT_SECRET=
 - [ ] Write DB migration if schema changes needed
 - [ ] Add Cloudinary upload service method if new media type needed
 - [ ] Test dedup logic for any real-time (socket) + HTTP combination
+- [ ] Decide what the feature shows with no connection — cache the last-known-good
+      copy via `OfflineCache` and fall back to it, rather than emitting a failure
 - [ ] **Tests** — new feature: write unit tests for the repo (mock the API service) and cubit (mock the repo), plus widget tests for the screen/widgets, following the pattern in `lib/features/auth/login/` (see Testing section above). Updating existing code: update whichever of those tests cover the changed behavior instead of leaving them stale or deleting them

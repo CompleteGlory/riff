@@ -30,15 +30,17 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m4(query) => "No results for \"${query}\"";
 
-  static String m5(date) => "Last seen ${date}";
+  static String m5(time) => "Offline — saved ${time}";
 
-  static String m6(n) => "Last seen ${n}m ago";
+  static String m6(date) => "Last seen ${date}";
 
-  static String m7(time) => "Last seen today at ${time}";
+  static String m7(n) => "Last seen ${n}m ago";
 
-  static String m8(time) => "Last seen yesterday at ${time}";
+  static String m8(time) => "Last seen today at ${time}";
 
-  static String m9(name) =>
+  static String m9(time) => "Last seen yesterday at ${time}";
+
+  static String m10(name) =>
       "${name} wants to send you a message.\nThey can\'t see that you\'ve viewed this request.";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -476,10 +478,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "mediaLabel": MessageLookupByLibrary.simpleMessage("Media"),
     "mediumSeverity": MessageLookupByLibrary.simpleMessage("Medium"),
     "messageBtn": MessageLookupByLibrary.simpleMessage("Message"),
+    "messageDiscard": MessageLookupByLibrary.simpleMessage("Discard"),
+    "messageFailed": MessageLookupByLibrary.simpleMessage("Not sent"),
+    "messageFailedSheetTitle": MessageLookupByLibrary.simpleMessage(
+      "This message wasn\'t sent",
+    ),
     "messageHint": MessageLookupByLibrary.simpleMessage("Message…"),
     "messageNotSent": MessageLookupByLibrary.simpleMessage(
       "Message not sent — check your connection and try again.",
     ),
+    "messageRetrySend": MessageLookupByLibrary.simpleMessage("Retry"),
+    "messageSending": MessageLookupByLibrary.simpleMessage("Sending…"),
     "messagesComingSoon": MessageLookupByLibrary.simpleMessage(
       "Messages coming soon",
     ),
@@ -524,6 +533,26 @@ class MessageLookup extends MessageLookupByLibrary {
     "notificationsTitle": MessageLookupByLibrary.simpleMessage("Notifications"),
     "nudityOrSexual": MessageLookupByLibrary.simpleMessage(
       "Nudity or sexual content",
+    ),
+    "offlineActionUnavailable": MessageLookupByLibrary.simpleMessage(
+      "You\'re offline — try again once you reconnect",
+    ),
+    "offlineBackOnline": MessageLookupByLibrary.simpleMessage("Back online"),
+    "offlineBannerSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Showing saved content",
+    ),
+    "offlineBannerTitle": MessageLookupByLibrary.simpleMessage(
+      "You\'re offline",
+    ),
+    "offlineCachedNotice": MessageLookupByLibrary.simpleMessage(
+      "Offline — showing content saved earlier",
+    ),
+    "offlineCachedNoticeWithTime": m5,
+    "offlineNothingSaved": MessageLookupByLibrary.simpleMessage(
+      "You\'re offline and nothing was saved for this screen yet.",
+    ),
+    "offlineRetryWhenBack": MessageLookupByLibrary.simpleMessage(
+      "This will work again once you\'re back online.",
     ),
     "onlyApprovedFollowers": MessageLookupByLibrary.simpleMessage(
       "Only approved followers can see your posts",
@@ -672,13 +701,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "ppSection9Title": MessageLookupByLibrary.simpleMessage(
       "9. Cookies & Local Storage",
     ),
-    "presenceLastSeenDate": m5,
+    "presenceLastSeenDate": m6,
     "presenceLastSeenJustNow": MessageLookupByLibrary.simpleMessage(
       "Last seen just now",
     ),
-    "presenceLastSeenMinutes": m6,
-    "presenceLastSeenTodayAt": m7,
-    "presenceLastSeenYesterdayAt": m8,
+    "presenceLastSeenMinutes": m7,
+    "presenceLastSeenTodayAt": m8,
+    "presenceLastSeenYesterdayAt": m9,
     "presenceOnline": MessageLookupByLibrary.simpleMessage("Online"),
     "privacyAppearance": MessageLookupByLibrary.simpleMessage(
       "Appearance & language",
@@ -752,7 +781,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Request a Feature",
     ),
     "requestBtn": MessageLookupByLibrary.simpleMessage("Request"),
-    "requestInfoMessage": m9,
+    "requestInfoMessage": m10,
     "requestedBtn": MessageLookupByLibrary.simpleMessage("Requested"),
     "requestedToFollowYou": MessageLookupByLibrary.simpleMessage(
       "requested to follow you.",

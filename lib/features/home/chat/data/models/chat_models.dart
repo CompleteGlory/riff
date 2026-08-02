@@ -27,6 +27,15 @@ class ChatParticipant {
         fullName: j['full_name'] as String?,
         profileImageUrl: ApiConstants.resolveUrl(j['profile_image_url'] as String?),
       );
+
+  Map<String, dynamic> toJson() => {
+        'user_id': userId,
+        'role': role,
+        'is_request': isRequest,
+        'username': username,
+        'full_name': fullName,
+        'profile_image_url': profileImageUrl,
+      };
 }
 
 class ConversationOtherUser {
@@ -55,6 +64,17 @@ class ConversationOtherUser {
         isOnline: j['is_online'] as bool? ?? false,
         lastSeen: parseServerDateTime(j['last_seen'] as String?),
       );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'username': username,
+        'full_name': fullName,
+        'profile_image_url': profileImageUrl,
+        // Presence is a live fact; a cached copy of it would be a lie the next
+        // time the app opens offline, so it is never restored as "online".
+        'is_online': false,
+        'last_seen': lastSeen?.toUtc().toIso8601String(),
+      };
 
   ConversationOtherUser copyWith({bool? isOnline, DateTime? lastSeen}) =>
       ConversationOtherUser(
@@ -121,6 +141,21 @@ class Conversation {
                 j['latest_message'] as Map<String, dynamic>)
             : null;
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': type,
+        'name': name,
+        'description': description,
+        'image_url': imageUrl,
+        'is_request': isRequest,
+        'last_message_at': lastMessageAt?.toUtc().toIso8601String(),
+        'created_at': createdAt.toUtc().toIso8601String(),
+        'participants': participants.map((p) => p.toJson()).toList(),
+        'other_user': otherUser?.toJson(),
+        'latest_message': latestMessage?.toJson(),
+        'unread_count': unreadCount,
+      };
+
   Conversation withOtherUserPresence(bool online, {DateTime? lastSeen}) => Conversation(
         id: id,
         type: type,
@@ -170,6 +205,13 @@ class MessageSender {
         fullName: j['full_name'] as String?,
         profileImageUrl: ApiConstants.resolveUrl(j['profile_image_url'] as String?),
       );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'username': username,
+        'full_name': fullName,
+        'profile_image_url': profileImageUrl,
+      };
 }
 
 enum MessageType { text, image, video, audio, file, link }
@@ -211,6 +253,16 @@ extension MessageStatusX on MessageStatus {
   }
 }
 
+/// Where a message is in the *local* send pipeline, as opposed to
+/// [MessageStatus], which is where the server says it is.
+///
+/// A message the user just typed exists on screen before it exists anywhere
+/// else. [pending] is that window — the bubble renders dimmed with a clock so
+/// the send is visibly in progress rather than silently maybe-happening — and
+/// [failed] is what it becomes when the send never landed, so the user gets an
+/// explicit retry instead of a message they believe was delivered.
+enum MessageDelivery { complete, pending, failed }
+
 class ChatMessage {
   final String id;
   final String conversationId;
@@ -224,6 +276,20 @@ class ChatMessage {
   final MessageSender? sender;
   final MessageStatus status;
 
+  /// Client-generated correlation id for an optimistic message.
+  ///
+  /// The socket echoes it back on the server's copy (`client_id`), which is how
+  /// the real message replaces the optimistic one instead of appearing beside
+  /// it. Null on anything that came from the server unprompted.
+  final String? clientId;
+
+  /// Local send state. See [MessageDelivery].
+  final MessageDelivery delivery;
+
+  /// On-device path of the media being uploaded, so a pending image or voice
+  /// note renders from disk instead of waiting for a URL that doesn't exist yet.
+  final String? localMediaPath;
+
   const ChatMessage({
     required this.id,
     required this.conversationId,
@@ -236,6 +302,9 @@ class ChatMessage {
     required this.createdAt,
     this.sender,
     this.status = MessageStatus.sent,
+    this.clientId,
+    this.delivery = MessageDelivery.complete,
+    this.localMediaPath,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> j) => ChatMessage(
@@ -252,21 +321,58 @@ class ChatMessage {
             ? MessageSender.fromJson(j['sender'] as Map<String, dynamic>)
             : null,
         status: MessageStatusX.fromString(j['status'] as String?),
+        clientId: j['client_id'] as String?,
       );
 
-  ChatMessage withStatus(MessageStatus s) => ChatMessage(
-        id: id,
+  /// Serialises the server-visible fields, for the offline message cache.
+  /// Local-only send state is deliberately dropped: a pending message that was
+  /// never confirmed must not come back looking sent.
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'conversation_id': conversationId,
+        'type': type.value,
+        'content': content,
+        'media_url': mediaUrl,
+        'file_name': fileName,
+        'duration': duration,
+        'is_deleted': isDeleted,
+        'created_at': createdAt.toUtc().toIso8601String(),
+        'sender': sender?.toJson(),
+        'status': status.name,
+      };
+
+  ChatMessage copyWith({
+    String? id,
+    MessageStatus? status,
+    MessageDelivery? delivery,
+    String? mediaUrl,
+    DateTime? createdAt,
+    bool? isDeleted,
+  }) =>
+      ChatMessage(
+        id: id ?? this.id,
         conversationId: conversationId,
         type: type,
         content: content,
-        mediaUrl: mediaUrl,
+        mediaUrl: mediaUrl ?? this.mediaUrl,
         fileName: fileName,
         duration: duration,
-        isDeleted: isDeleted,
-        createdAt: createdAt,
+        isDeleted: isDeleted ?? this.isDeleted,
+        createdAt: createdAt ?? this.createdAt,
         sender: sender,
-        status: s,
+        status: status ?? this.status,
+        clientId: clientId,
+        delivery: delivery ?? this.delivery,
+        localMediaPath: localMediaPath,
       );
+
+  ChatMessage withStatus(MessageStatus s) => copyWith(status: s);
+
+  /// True while the message only exists on this device.
+  bool get isPending => delivery == MessageDelivery.pending;
+
+  /// True when the send failed and the user can retry it.
+  bool get hasFailed => delivery == MessageDelivery.failed;
 
   String get preview {
     if (isDeleted) return 'Message deleted';

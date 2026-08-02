@@ -3,6 +3,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:riff/features/home/chat/data/models/chat_models.dart';
 import 'package:riff/features/home/chat/data/repos/chat_repo.dart';
+import 'package:riff/core/cache/offline_cache.dart';
 import 'package:riff/features/home/chat/logic/cubit/chats_list_cubit.dart';
 
 import 'chats_list_cubit_test.mocks.dart';
@@ -41,6 +42,10 @@ void main() {
       (state as ChatsListLoaded).conversations.map((c) => c.id).toList();
 
   setUp(() {
+    // The cache mirrors writes in memory, and it is a process-wide singleton —
+    // without this, a list cached by an earlier test is still there to be
+    // restored by a later one that expects an empty start.
+    OfflineCache.resetInstanceForTest();
     repo = MockChatRepo();
     cubit = ChatsListCubit(repo);
     when(repo.getMessageRequests()).thenAnswer((_) async => <Conversation>[]);

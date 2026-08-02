@@ -49,3 +49,40 @@ notification and couldn't send anything until I restarted" bug.
   whatever socket happened to be there. The composer cleared either way, so the
   user believed the message had gone. It now returns a result the input bar acts
   on — restoring the text and showing an error.
+
+## Optimistic sending (added with the offline work)
+
+`ChatCubit` now paints the bubble before the server has seen it:
+
+- the bubble appears immediately marked `pending`, carrying a generated
+  `clientId`;
+- that `clientId` goes out with the socket emit;
+- the server's echo **replaces** the optimistic bubble — both when it echoes
+  `client_id` back and, via the content fallback, when it doesn't (an API build
+  that predates the echo would otherwise show every sent message twice);
+- another user's identical message is never mistaken for our pending one;
+- a send that can't reach a live socket is marked `failed`, as is one that is
+  never acknowledged before `ChatCubit.pendingTimeout`;
+- `retryMessage` re-sends without the user retyping, `discardMessage` drops it;
+- a `message_status` event never upgrades a message the server has not seen;
+- media sends show the local file while uploading and leave a retryable bubble
+  when the upload fails.
+
+### Gotchas for this group
+
+- `ChatCubit.pendingTimeout` is `@visibleForTesting` mutable. Shorten it for the
+  timeout test and restore it in `addTearDown` — the default is 20 seconds.
+- `_FakeChatSocketService` owns its own `onMessage` controller, because the real
+  ones are private to `ChatSocketService`. `emitMessage` is how a test plays the
+  gateway.
+- `SharedPreferences.setMockInitialValues` must include a `userId`: the
+  optimistic bubble's sender is built from stored preferences, and the
+  content-matching fallback only considers messages sent by *us*.
+- `OfflineCache.resetInstanceForTest()` in `setUp` — the cubit caches every
+  loaded conversation, and the cache's in-memory mirror is process-wide.
+
+### Regression locked in
+
+`_markFailed` clears the pending timeout but **not** the outbound payload. An
+earlier version dropped both, so "retry" on a failed message had nothing left to
+send and silently did nothing.
