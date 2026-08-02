@@ -1,7 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
+import 'package:riff/core/cache/offline_cache.dart';
 import 'package:riff/core/networks/api_services.dart';
+import 'package:riff/core/networks/connectivity_service.dart';
 import 'package:riff/core/networks/dio_factory.dart';
+import 'package:riff/core/services/push_notification_service.dart';
+import 'package:riff/core/services/session_manager.dart';
 import 'package:riff/features/auth/forgot_password/data/repos/forgot_pasword_repo.dart';
 import 'package:riff/features/auth/forgot_password/logic/cubit/forgot_password_cubit.dart';
 import 'package:riff/features/auth/login/data/repos/login_repo.dart';
@@ -58,6 +62,13 @@ Future<void> setUpGetIt() async {
   // Dio & ApiService
   getIt.registerLazySingleton<Dio>(() => dio);
   getIt.registerLazySingleton<ApiService>(() => ApiService(dio));
+
+  // Offline support. Both are also reachable as singletons (the Dio
+  // interceptor and SessionManager can't take DI dependencies without a cycle),
+  // so these registrations exist for call sites that prefer getIt.
+  getIt.registerLazySingleton<ConnectivityService>(
+      () => ConnectivityService.instance);
+  getIt.registerLazySingleton<OfflineCache>(() => OfflineCache.instance);
 
   // login
   getIt.registerLazySingleton<LoginRepo>(() => LoginRepo(getIt()));
@@ -170,4 +181,26 @@ Future<void> setUpGetIt() async {
   // account settings — change password
   getIt.registerFactory<ChangePasswordCubit>(
       () => ChangePasswordCubit(getIt()));
+
+  _registerSessionEndHooks();
+}
+
+/// Wipes the per-user state held by app-lifetime singletons when the session
+/// ends (manual logout or an expired refresh token).
+///
+/// Registered here rather than inside [SessionManager] so that class stays free
+/// of DI imports and remains unit-testable.
+void _registerSessionEndHooks() {
+  final session = SessionManager.instance;
+  if (session.sessionEndHooks.isNotEmpty) return;
+  session.sessionEndHooks.addAll([
+    // Everything cached for offline use is per-user content; a signed-out
+    // device must not keep the previous account's feed, chats or profile.
+    () => OfflineCache.instance.clear(),
+    () => getIt<NotificationsCubit>().reset(),
+    () => getIt<ChatsListCubit>().reset(),
+    () => getIt<ChatSocketService>().disconnect(),
+    () => getIt<CreatePostCubit>().reset(),
+    () => PushNotificationService.instance.reset(),
+  ]);
 }

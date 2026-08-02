@@ -14,6 +14,7 @@ import 'package:riff/features/home/search/logic/search_cubit.dart';
 import 'package:riff/features/home/search/logic/search_state.dart';
 import 'package:riff/generated/l10n.dart';
 import 'package:riff/core/widgets/app_error_widget.dart';
+import 'package:riff/core/widgets/offline_banner.dart';
 
 // ─── Static filter data ──────────────────────────────────────────────────────
 
@@ -120,16 +121,28 @@ class _SearchBodyState extends State<_SearchBody> {
                       return _buildShimmer(isDark);
                     }
                     if (state is SearchDiscoverLoaded) {
-                      return _DiscoverView(
+                      final cubit = context.read<SearchCubit>();
+                      final discover = _DiscoverView(
                         state: state,
                         isDark: isDark,
                         showInstruments: _showInstruments,
                         onTabChanged: (v) =>
                             setState(() => _showInstruments = v),
                       );
+                      if (!cubit.isShowingCached) return discover;
+                      return Column(children: [
+                        OfflineCachedNotice(savedAt: cubit.cacheSavedAt),
+                        Expanded(child: discover),
+                      ]);
                     }
                     if (state is SearchResultsLoaded) {
                       return _ResultsView(state: state, isDark: isDark);
+                    }
+                    if (state is SearchOffline) {
+                      // Nothing to retry until the connection is back, so this
+                      // is a statement of fact rather than an error with a
+                      // button that cannot do anything.
+                      return const OfflineEmptyState();
                     }
                     if (state is SearchError) {
                       return AppErrorWidget(

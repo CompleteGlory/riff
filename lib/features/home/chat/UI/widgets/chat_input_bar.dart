@@ -53,13 +53,18 @@ class _ChatInputBarState extends State<ChatInputBar> {
     }
   }
 
-  void _sendText() {
+  Future<void> _sendText() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
-    widget.cubit.sendText(text);
     _controller.clear();
     _typingTimer?.cancel();
     widget.cubit.stopTyping();
+
+    // The bubble is already on screen, dimmed, and turns into a tappable
+    // "not sent · retry" if this fails — so the composer stays cleared. Putting
+    // the text back (what this used to do) would leave the user with the same
+    // message in two places.
+    await widget.cubit.sendText(text);
   }
 
   Future<void> _pickImage() async {

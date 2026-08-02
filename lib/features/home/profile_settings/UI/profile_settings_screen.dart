@@ -11,9 +11,42 @@ import 'package:riff/features/home/profile/UI/profile_screen.dart';
 import 'package:riff/features/home/profile_settings/logic/profile_settings_cubit.dart';
 import 'package:riff/generated/l10n.dart';
 
+/// Arguments for [Routes.profileSettings].
+///
+/// [homeCubit] is the one the caller is already using, not a fresh instance:
+/// the screen calls `refreshProfile()` on it after saving so the change shows
+/// up in the profile tab straight away. Handing it a new cubit would navigate
+/// and save perfectly well, and silently leave the home shell showing stale
+/// data.
+class ProfileSettingsArgs {
+  final UserProfile profile;
+  final HomeCubit homeCubit;
+
+  /// Open scrolled down to the genres and instruments pickers.
+  ///
+  /// Set by the "Complete your profile" notification, whose entire subject is
+  /// those two fields — landing at the top of the form and asking the user to
+  /// go hunting for them would be a worse answer to the nudge they just tapped.
+  final bool scrollToPreferences;
+
+  const ProfileSettingsArgs({
+    required this.profile,
+    required this.homeCubit,
+    this.scrollToPreferences = false,
+  });
+}
+
 class ProfileSettingsScreen extends StatefulWidget {
   final UserProfile profile;
-  const ProfileSettingsScreen({super.key, required this.profile});
+
+  /// See [ProfileSettingsArgs.scrollToPreferences].
+  final bool scrollToPreferences;
+
+  const ProfileSettingsScreen({
+    super.key,
+    required this.profile,
+    this.scrollToPreferences = false,
+  });
 
   @override
   State<ProfileSettingsScreen> createState() => _ProfileSettingsScreenState();
@@ -25,6 +58,9 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   late final TextEditingController _emailCtrl;
   final _formKey = GlobalKey<FormState>();
 
+  /// Anchor for [widget.scrollToPreferences] — the start of the genres section.
+  final _preferencesKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
@@ -32,6 +68,25 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     _usernameCtrl = TextEditingController(text: widget.profile.username);
     _emailCtrl = TextEditingController(text: widget.profile.email);
     context.read<ProfileSettingsCubit>().init(widget.profile);
+
+    if (widget.scrollToPreferences) {
+      // The anchor doesn't exist until the first build has laid the form out.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToPreferences();
+      });
+    }
+  }
+
+  /// Animates rather than jumps: arriving mid-form with no idea how you got
+  /// there is disorienting, and the scroll doubles as the explanation.
+  void _scrollToPreferences() {
+    final anchor = _preferencesKey.currentContext;
+    if (!mounted || anchor == null) return;
+    Scrollable.ensureVisible(
+      anchor,
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   @override
@@ -186,7 +241,10 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                     SizedBox(height: 28.h),
 
                     // ── Genres ───────────────────────────────────────────
-                    _SectionLabel(label: s.genresSettingsLabel, isDark: isDark),
+                    _SectionLabel(
+                        key: _preferencesKey,
+                        label: s.genresSettingsLabel,
+                        isDark: isDark),
                     SizedBox(height: 4.h),
                     Text(
                       s.genresSettingsSubtitle,
@@ -325,7 +383,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
 class _SectionLabel extends StatelessWidget {
   final String label;
   final bool isDark;
-  const _SectionLabel({required this.label, required this.isDark});
+  const _SectionLabel({super.key, required this.label, required this.isDark});
 
   @override
   Widget build(BuildContext context) {

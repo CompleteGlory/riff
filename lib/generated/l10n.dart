@@ -516,7 +516,12 @@ class S {
 
   /// `Skip`
   String get skipBtn {
-    return Intl.message('Skip', name: 'skipBtn', desc: '', args: []);
+    return Intl.message(
+      'Skip',
+      name: 'skipBtn',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Skip for now`
@@ -1594,6 +1599,26 @@ class S {
     );
   }
 
+  /// `Couldn't mark notifications as read. Try again.`
+  String get markAllReadFailed {
+    return Intl.message(
+      'Couldn\'t mark notifications as read. Try again.',
+      name: 'markAllReadFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Message not sent — check your connection and try again.`
+  String get messageNotSent {
+    return Intl.message(
+      'Message not sent — check your connection and try again.',
+      name: 'messageNotSent',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `No notifications yet`
   String get noNotificationsYet {
     return Intl.message(
@@ -1639,6 +1664,36 @@ class S {
     return Intl.message(
       'Complete your profile to get discovered!',
       name: 'completeYourProfile',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Set up`
+  String get notificationSetUpBtn {
+    return Intl.message(
+      'Set up',
+      name: 'notificationSetUpBtn',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Couldn't open profile settings. Please try again.`
+  String get profileSettingsUnavailable {
+    return Intl.message(
+      'Couldn\'t open profile settings. Please try again.',
+      name: 'profileSettingsUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Post text copied`
+  String get postTextCopied {
+    return Intl.message(
+      'Post text copied',
+      name: 'postTextCopied',
       desc: '',
       args: [],
     );
@@ -3734,6 +3789,136 @@ class S {
     return Intl.message(
       'Made with ❤️ for the music community',
       name: 'aboutUsMadeWith',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `You're offline`
+  String get offlineBannerTitle {
+    return Intl.message(
+      'You\'re offline',
+      name: 'offlineBannerTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Showing saved content`
+  String get offlineBannerSubtitle {
+    return Intl.message(
+      'Showing saved content',
+      name: 'offlineBannerSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Back online`
+  String get offlineBackOnline {
+    return Intl.message(
+      'Back online',
+      name: 'offlineBackOnline',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Offline — showing content saved earlier`
+  String get offlineCachedNotice {
+    return Intl.message(
+      'Offline — showing content saved earlier',
+      name: 'offlineCachedNotice',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Offline — saved {time}`
+  String offlineCachedNoticeWithTime(Object time) {
+    return Intl.message(
+      'Offline — saved $time',
+      name: 'offlineCachedNoticeWithTime',
+      desc: '',
+      args: [time],
+    );
+  }
+
+  /// `You're offline and nothing was saved for this screen yet.`
+  String get offlineNothingSaved {
+    return Intl.message(
+      'You\'re offline and nothing was saved for this screen yet.',
+      name: 'offlineNothingSaved',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This will work again once you're back online.`
+  String get offlineRetryWhenBack {
+    return Intl.message(
+      'This will work again once you\'re back online.',
+      name: 'offlineRetryWhenBack',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `You're offline — try again once you reconnect`
+  String get offlineActionUnavailable {
+    return Intl.message(
+      'You\'re offline — try again once you reconnect',
+      name: 'offlineActionUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Sending…`
+  String get messageSending {
+    return Intl.message(
+      'Sending…',
+      name: 'messageSending',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not sent`
+  String get messageFailed {
+    return Intl.message(
+      'Not sent',
+      name: 'messageFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Retry`
+  String get messageRetrySend {
+    return Intl.message(
+      'Retry',
+      name: 'messageRetrySend',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Discard`
+  String get messageDiscard {
+    return Intl.message(
+      'Discard',
+      name: 'messageDiscard',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This message wasn't sent`
+  String get messageFailedSheetTitle {
+    return Intl.message(
+      'This message wasn\'t sent',
+      name: 'messageFailedSheetTitle',
       desc: '',
       args: [],
     );

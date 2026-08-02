@@ -1,3 +1,5 @@
+import 'package:riff/core/helpers/app_date_time.dart';
+
 class NotificationSender {
   final String id;
   final String username;
@@ -54,8 +56,7 @@ class NotificationModel {
       id: j['id'] as int,
       type: j['type'] as String,
       isRead: j['is_read'] as bool? ?? false,
-      createdAt: DateTime.tryParse(j['created_at'] as String? ?? '') ??
-          DateTime.now(),
+      createdAt: parseServerDateTimeOr(j['created_at'] as String?),
       sender: senderData != null
           ? NotificationSender.fromJson(senderData)
           : null,

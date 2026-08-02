@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:riff/core/helpers/constants.dart';
@@ -22,12 +24,16 @@ void main() async {
   await initFirebaseWithRetry();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  setUpGetIt();
+  // Must be awaited: setUpGetIt() itself awaits DioFactory.getDio(), and
+  // HomeLayout resolves singletons out of getIt in initState(). Firing it
+  // without awaiting left a race where a fast first frame reached getIt before
+  // registration finished.
+  await setUpGetIt();
 
   final isLoggedIn = await checkIfLoggedIn();
   if (isLoggedIn) {
     // Init push after confirming user is logged in so token send has a valid JWT
-    PushNotificationService.instance.init();
+    unawaited(PushNotificationService.instance.init());
   }
 
   runApp(RiffApp(

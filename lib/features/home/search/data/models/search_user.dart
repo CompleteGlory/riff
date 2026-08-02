@@ -1,3 +1,5 @@
+import 'package:riff/core/helpers/app_date_time.dart';
+
 import 'package:riff/core/networks/api_constants.dart';
 
 class SuggestedPost {
@@ -19,7 +21,7 @@ class SuggestedPost {
         id: json['id'] as int,
         content: json['content'] as String,
         media: (json['media'] as List?)?.map((e) => e as String).toList(),
-        createdAt: DateTime.parse(json['created_at'] as String),
+        createdAt: parseServerDateTimeOr(json['created_at'] as String?),
         likesCount: json['likes_count'] as int? ?? 0,
       );
 }

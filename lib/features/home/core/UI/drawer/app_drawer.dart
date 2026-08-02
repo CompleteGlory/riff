@@ -1,14 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:riff/core/di/dependency_injection.dart';
-import 'package:riff/core/helpers/extenstions.dart';
-import 'package:riff/core/helpers/constants.dart';
-import 'package:riff/core/helpers/shared_pref_helper.dart';
 import 'package:riff/core/routing/routes.dart';
+import 'package:riff/core/services/session_manager.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:riff/features/home/notifications/logic/cubit/notifications_cubit.dart';
-import 'package:riff/features/home/chat/logic/cubit/chats_list_cubit.dart';
-import 'package:riff/features/home/chat/data/services/chat_socket_service.dart';
 import 'package:riff/features/home/settings/UI/settings_screen.dart';
 import 'package:riff/features/home/core/UI/bug_report/bug_report_screen.dart';
 import 'package:riff/features/home/core/UI/feature_request/feature_request_screen.dart';
@@ -20,7 +15,8 @@ import 'package:riff/features/home/block/logic/cubit/block_cubit.dart';
 import 'package:riff/features/home/block/data/repos/block_repo.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 import 'package:riff/features/home/core/logic/cubit/home_state.dart';
-import 'package:riff/features/home/profile/UI/profile_screen.dart';
+import 'package:riff/features/home/profile_settings/UI/profile_settings_screen.dart'
+    show ProfileSettingsArgs;
 import 'package:riff/generated/l10n.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -51,12 +47,8 @@ class AppDrawer extends StatelessWidget {
           // Profile Settings
           BlocBuilder<HomeCubit, HomeState>(
             builder: (context, homeState) {
-              // Extract the loaded profile from HomeCubit's screens list.
-              // screens[4] is a ProfileScreen once the user is loaded.
               final cubit = context.read<HomeCubit>();
-              final screen = cubit.screens[4];
-              final UserProfile? profile =
-                  screen is ProfileScreen ? screen.profile : null;
+              final profile = cubit.profile;
 
               return _DrawerItem(
                 isDark: isDark,
@@ -74,7 +66,10 @@ class AppDrawer extends StatelessWidget {
                         nav.pop(); // close drawer
                         nav.pushNamed(
                           Routes.profileSettings,
-                          arguments: (profile, homeCubit),
+                          arguments: ProfileSettingsArgs(
+                            profile: profile,
+                            homeCubit: homeCubit,
+                          ),
                         );
                       },
               );
@@ -321,20 +316,11 @@ class _LogoutButton extends StatelessWidget {
     return GestureDetector(
       onTap: () async {
         Navigator.pop(context);
-        // Reset all singletons that hold per-user state so the next login
-        // starts with a clean slate.
-        getIt<NotificationsCubit>().reset();
-        getIt<ChatsListCubit>().reset();
-        getIt<ChatSocketService>().disconnect();
-        context.pushReplacementNamed(Routes.login);
-        // Clear user session data but preserve theme preference so the
-        // user's chosen light/dark mode survives logout.
-        await SharedPrefHelper.removeData(SharedPrefKeys.userToken);
-        await SharedPrefHelper.removeData(SharedPrefKeys.refreshToken);
-        await SharedPrefHelper.removeData(SharedPrefKeys.userId);
-        await SharedPrefHelper.removeData(SharedPrefKeys.userProfileImage);
-        await SharedPrefHelper.removeData(SharedPrefKeys.firstName);
-        await SharedPrefHelper.removeData(SharedPrefKeys.lastName);
+        // One code path for every sign-out (manual here, forced on an expired
+        // refresh token): clears the stored credentials, runs the teardown
+        // hooks that reset the app-lifetime singletons, and lands on login with
+        // an empty stack. Theme and locale preferences are deliberately kept.
+        await SessionManager.instance.endSession();
       },
       behavior: HitTestBehavior.opaque,
       child: Container(

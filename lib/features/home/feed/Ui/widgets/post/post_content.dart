@@ -1,5 +1,8 @@
 // ignore_for_file: unused_element, deprecated_member_use
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,6 +12,7 @@ import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/fullscsreen_image.dart';
+import 'package:riff/generated/l10n.dart';
 
 class PostContent extends StatelessWidget {
   final Post post;
@@ -65,7 +69,7 @@ class PostContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if ((post.content ?? '').isNotEmpty)
-          Text(post.content!, style: TextStyles.font16Medium),
+          CopyablePostText(text: post.content!),
         if (images.isNotEmpty) ...[
           verticalSpace(12),
           GestureDetector(
@@ -226,6 +230,53 @@ class PostContent extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Post text — long-press to copy
+// ---------------------------------------------------------------------------
+
+/// The body of a post, copied to the clipboard on a long press.
+///
+/// Long-press rather than [SelectableText]: the whole card is wrapped in a
+/// `GestureDetector` that opens the post, and a `SelectableText` claims taps
+/// over its own text — tapping a post's words would stop opening it, which is
+/// a worse trade than losing partial selection. A long press costs nothing and
+/// copies the whole body, which is what someone reaching for a link pasted
+/// into a post actually wants.
+///
+/// The two gestures don't fight: a tap ends before the long-press timer fires,
+/// so that recognizer rejects and the card's tap recognizer wins the arena.
+@visibleForTesting
+class CopyablePostText extends StatelessWidget {
+  const CopyablePostText({super.key, required this.text});
+
+  final String text;
+
+  Future<void> _copy(BuildContext context) async {
+    // Resolved before the await — `context` is not safe to touch after it.
+    final messenger = ScaffoldMessenger.of(context);
+    final message = S.of(context).postTextCopied;
+
+    await Clipboard.setData(ClipboardData(text: text));
+    unawaited(HapticFeedback.selectionClick());
+
+    messenger.showSnackBar(SnackBar(
+      content: Text(message),
+      behavior: SnackBarBehavior.floating,
+      duration: const Duration(seconds: 2),
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      // opaque so the whole line box responds, not just the glyphs.
+      behavior: HitTestBehavior.opaque,
+      onLongPress: () => _copy(context),
+      child: Text(text, style: TextStyles.font16Medium),
     );
   }
 }

@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:riff/core/helpers/time_ago.dart';
+import 'package:riff/core/helpers/app_date_time.dart';
 import 'package:riff/core/networks/api_constants.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
@@ -17,24 +17,49 @@ import 'package:riff/core/di/dependency_injection.dart';
 import 'package:riff/features/home/notifications/data/models/notification_model.dart';
 import 'package:riff/features/home/notifications/logic/cubit/notifications_cubit.dart';
 import 'package:riff/features/home/user_profile/ui/user_profile_screen.dart';
+import 'package:riff/core/routing/routes.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
-import 'package:riff/features/auth/user-prefrences/instruments_screen.dart';
+import 'package:riff/features/home/profile_settings/UI/profile_settings_screen.dart'
+    show ProfileSettingsArgs;
 import 'package:riff/features/home/notifications/UI/post_by_id_screen.dart';
 import 'package:riff/features/home/notifications/UI/flagged_comment_detail_screen.dart';
 import 'package:riff/generated/l10n.dart';
 
+/// Reports whether the OS has notifications turned off for this app.
+typedef NotificationsDeniedCheck = Future<bool> Function();
+
+Future<bool> _firebaseNotificationsDenied() async {
+  // Use FirebaseMessaging's authorization status — the source this app actually
+  // requests notification permission through. On iOS, permission_handler's
+  // `Permission.notification.status` can report `denied` even when the user has
+  // authorized notifications (they were granted via FCM, not permission_handler),
+  // which made this banner show incorrectly. `authorized` and `provisional` both
+  // mean notifications are on.
+  final settings = await FirebaseMessaging.instance.getNotificationSettings();
+  return settings.authorizationStatus == AuthorizationStatus.denied ||
+      settings.authorizationStatus == AuthorizationStatus.notDetermined;
+}
+
 class NotificationsScreen extends StatelessWidget {
-  const NotificationsScreen({super.key});
+  const NotificationsScreen({
+    super.key,
+    this.notificationsDenied = _firebaseNotificationsDenied,
+  });
+
+  /// Injectable so widget tests don't need a live Firebase.
+  final NotificationsDeniedCheck notificationsDenied;
 
   @override
   Widget build(BuildContext context) {
     // Cubit already provided via BlocProvider.value from HomeLayout
-    return const _NotificationsBody();
+    return _NotificationsBody(notificationsDenied: notificationsDenied);
   }
 }
 
 class _NotificationsBody extends StatefulWidget {
-  const _NotificationsBody();
+  const _NotificationsBody({required this.notificationsDenied});
+
+  final NotificationsDeniedCheck notificationsDenied;
 
   @override
   State<_NotificationsBody> createState() => _NotificationsBodyState();
@@ -64,17 +89,7 @@ class _NotificationsBodyState extends State<_NotificationsBody>
   }
 
   Future<void> _checkPermission() async {
-    // Use FirebaseMessaging's authorization status — the source this app actually
-    // requests notification permission through. On iOS, permission_handler's
-    // `Permission.notification.status` can report `denied` even when the user has
-    // authorized notifications (they were granted via FCM, not permission_handler),
-    // which made this banner show incorrectly. `authorized` and `provisional` both
-    // mean notifications are on.
-    final settings =
-        await FirebaseMessaging.instance.getNotificationSettings();
-    final denied =
-        settings.authorizationStatus == AuthorizationStatus.denied ||
-            settings.authorizationStatus == AuthorizationStatus.notDetermined;
+    final denied = await widget.notificationsDenied();
     if (mounted) {
       setState(() => _notifsDenied = denied);
     }
@@ -93,7 +108,18 @@ class _NotificationsBodyState extends State<_NotificationsBody>
         ),
         actions: [
           TextButton(
-            onPressed: () => context.read<NotificationsCubit>().markAllRead(),
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              final failedMessage = S.of(context).markAllReadFailed;
+              final ok = await context.read<NotificationsCubit>().markAllRead();
+              // A silent no-op used to be indistinguishable from success, which
+              // is what "sometimes it works, sometimes it doesn't" looked like.
+              if (!ok) {
+                messenger.showSnackBar(
+                  SnackBar(content: Text(failedMessage)),
+                );
+              }
+            },
             child: Text(S.of(context).markAllRead,
                 style: TextStyles.font12Medium.copyWith(
                     color: isDark ? Colors.white70 : ColorManager.primaryBlack)),
@@ -493,7 +519,7 @@ class _NotificationTile extends StatelessWidget {
                               ),
                               SizedBox(width: 6.w),
                               Text(
-                                timeAgo(notification.createdAt.toString()),
+                                timeAgoFrom(notification.createdAt),
                                 style: TextStyles.font12Medium.copyWith(
                                     color: ColorManager.normalGrey),
                               ),
@@ -620,7 +646,7 @@ class _NotificationTile extends StatelessWidget {
                               ),
                               SizedBox(width: 6.w),
                               Text(
-                                timeAgo(notification.createdAt.toString()),
+                                timeAgoFrom(notification.createdAt),
                                 style: TextStyles.font12Medium.copyWith(
                                     color: ColorManager.normalGrey),
                               ),
@@ -744,7 +770,7 @@ class _NotificationTile extends StatelessWidget {
                               ),
                               SizedBox(width: 6.w),
                               Text(
-                                timeAgo(notification.createdAt.toString()),
+                                timeAgoFrom(notification.createdAt),
                                 style: TextStyles.font12Medium.copyWith(
                                     color: ColorManager.normalGrey),
                               ),
@@ -808,7 +834,13 @@ class _NotificationTile extends StatelessWidget {
 
     // System notification (complete_profile) — full-width row
     if (_isSystem) {
-      return Container(
+      return GestureDetector(
+        // The row goes the same place the "Set up" button does — tapping the
+        // notification itself and missing the pill shouldn't be a dead end.
+        behavior: HitTestBehavior.opaque,
+        onTap: () =>
+            _openProfileSettings(context, notifsCubit, notification.id),
+        child: Container(
         color: bg,
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
         child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
@@ -829,7 +861,7 @@ class _NotificationTile extends StatelessWidget {
                   style: TextStyles.font12Medium.copyWith(
                       color: ColorManager.normalGrey)),
               SizedBox(height: 3.h),
-              Text(timeAgo(notification.createdAt.toString()),
+              Text(timeAgoFrom(notification.createdAt),
                   style: TextStyles.font12Medium.copyWith(
                       color: ColorManager.normalGrey)),
             ]),
@@ -837,6 +869,7 @@ class _NotificationTile extends StatelessWidget {
           SizedBox(width: 10.w),
           _ActionArea(notification: notification, notifsCubit: notifsCubit),
         ]),
+        ),
       );
     }
 
@@ -902,7 +935,7 @@ class _NotificationTile extends StatelessWidget {
                                 ),
                                 SizedBox(width: 6.w),
                                 Text(
-                                  timeAgo(notification.createdAt.toString()),
+                                  timeAgoFrom(notification.createdAt),
                                   style: TextStyles.font12Medium.copyWith(
                                       color: ColorManager.normalGrey),
                                 ),
@@ -1018,7 +1051,7 @@ class _NotificationTile extends StatelessWidget {
               ]),
             ),
             SizedBox(height: 3.h),
-            Text(timeAgo(notification.createdAt.toString()),
+            Text(timeAgoFrom(notification.createdAt),
                 style: TextStyles.font12Medium.copyWith(
                     color: ColorManager.normalGrey)),
           ]),
@@ -1029,6 +1062,75 @@ class _NotificationTile extends StatelessWidget {
       ]),
     ),
     );
+  }
+}
+
+/// Opens Profile Settings — where genres and instruments are actually edited —
+/// for the "Complete your profile" nudge, then clears the nudge.
+///
+/// This used to push [InstrumentsScreen] with an `onFinish` that popped twice to
+/// unwind the genres and instruments screens it had stacked. Profile Settings is
+/// the screen those fields live on for every other entry point, so the nudge now
+/// lands in the same place — scrolled straight to the two pickers it is about.
+///
+/// The route wants the loaded profile plus the [HomeCubit] it came from. That
+/// cubit is above us whenever the notifications screen is reached from the home
+/// shell — but this screen is also a push-notification destination
+/// (`Routes.notifications` provides only the notifications cubit), so fall back
+/// to a throwaway instance and close it again on the way out.
+Future<void> _openProfileSettings(
+  BuildContext context,
+  NotificationsCubit notifsCubit,
+  int notificationId,
+) async {
+  final nav = Navigator.of(context);
+  final messenger = ScaffoldMessenger.of(context);
+  final couldNotOpen = S.of(context).profileSettingsUnavailable;
+
+  HomeCubit? shared;
+  try {
+    shared = context.read<HomeCubit>();
+  } catch (_) {}
+  final homeCubit = shared ?? getIt<HomeCubit>();
+
+  try {
+    // HomeCubit fetches the profile in its constructor, so a freshly resolved
+    // one — or a shared one on a slow first load — may not have it yet.
+    var profile = homeCubit.profile;
+    if (profile == null) {
+      await homeCubit.refreshProfile();
+      profile = homeCubit.profile;
+    }
+
+    if (profile == null) {
+      messenger.showSnackBar(SnackBar(
+        content: Text(couldNotOpen),
+        behavior: SnackBarBehavior.floating,
+      ));
+      return;
+    }
+
+    await nav.pushNamed(
+      Routes.profileSettings,
+      arguments: ProfileSettingsArgs(
+        profile: profile,
+        homeCubit: homeCubit,
+        scrollToPreferences: true,
+      ),
+    );
+
+    // Acted on — the nudge has served its purpose, so it goes. Deleting rather
+    // than marking read because it is a standing reminder, not an event: a read
+    // copy sitting in the list is just clutter.
+    //
+    // Safe even if the user backed out without filling anything in. The
+    // scheduler re-creates it within three days while the profile is still
+    // incomplete, and upsertSystemUnique keeps that at one row.
+    await notifsCubit.removeNotification(notificationId);
+  } finally {
+    // Only ours to dispose. Closing the shared one would tear down the home
+    // shell's state along with it.
+    if (shared == null) await homeCubit.close();
   }
 }
 
@@ -1055,20 +1157,10 @@ class _ActionArea extends StatelessWidget {
         );
       case 'complete_profile':
         return _PillBtn(
-          label: 'Set up',
+          label: S.of(context).notificationSetUpBtn,
           filled: true,
-          onTap: () {
-            final nav = Navigator.of(context);
-            nav.push(MaterialPageRoute(
-              builder: (_) => InstrumentsScreen(
-                // Pop both genres + instruments screens to return here.
-                onFinish: (_, __) {
-                  nav.pop(); // genres
-                  nav.pop(); // instruments
-                },
-              ),
-            ));
-          },
+          onTap: () =>
+              _openProfileSettings(context, notifsCubit, notification.id),
         );
       case 'like':
       case 'comment':

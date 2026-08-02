@@ -14,6 +14,7 @@ import 'package:riff/features/home/chat/logic/cubit/chats_list_cubit.dart';
 import 'package:riff/features/home/user_profile/ui/user_profile_screen.dart';
 import 'package:riff/features/home/chat/UI/group_details_screen.dart';
 import 'package:riff/core/widgets/app_error_widget.dart';
+import 'package:riff/core/widgets/offline_banner.dart';
 import 'package:riff/generated/l10n.dart';
 
 class ChatDetailScreen extends StatefulWidget {
@@ -178,33 +179,31 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           }
           if (state is ChatLoaded) {
             final isRequest = state.conversation.isRequest;
-            final pendingCount = state.isSending ? 1 : 0;
             // Extra slot at the end (top in reverse) for the request info tile
             final requestInfoCount = isRequest ? 1 : 0;
             return Column(children: [
+              // Say so when this history came off disk rather than the server.
+              if (state.isFromCache) const OfflineCachedNotice(),
               Expanded(
                 child: ListView.builder(
                   controller: _scrollCtrl,
                   reverse: true, // index 0 at bottom → newest visible without scrolling
                   padding:
                       EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-                  itemCount: state.messages.length + pendingCount + requestInfoCount,
+                  itemCount: state.messages.length + requestInfoCount,
                   itemBuilder: (_, i) {
-                    // Pending media bubble at index 0 (bottom)
-                    if (state.isSending && i == 0) {
-                      return Padding(
-                        padding: EdgeInsets.only(bottom: 6.h),
-                        child: _PendingMediaBubble(
-                            type: state.sendingMediaType ?? 'file'),
-                      );
-                    }
                     // Request info tile at the top (last index in reverse list)
-                    if (isRequest && i == state.messages.length + pendingCount) {
+                    if (isRequest && i == state.messages.length) {
                       return _RequestInfoTile(conv: state.conversation);
                     }
-                    final msgIdx = state.isSending ? i - 1 : i;
-                    final msg = state.messages[msgIdx];
-                    final isMe = msg.sender?.id == _myId;
+                    final msg = state.messages[i];
+                    // An optimistic bubble normally carries the signed-in user
+                    // as its sender, so the usual check works. The fallback is
+                    // for the case where the stored user id was unavailable
+                    // when the bubble was built: only our own sends have a
+                    // client id, and only an unattributed one has no sender.
+                    final isMe = msg.sender?.id == _myId ||
+                        (msg.clientId != null && msg.sender == null);
                     // Show checkmarks on all own messages (WhatsApp-style)
                     return Padding(
                       padding: EdgeInsets.only(bottom: 6.h),
@@ -213,9 +212,19 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                         isMe: isMe,
                         showSender: conv.isGroup,
                         showStatus: isMe,
-                        onLongPress: isMe
-                            ? () => _showDeleteOption(ctx, msg.id)
+                        onRetry: msg.hasFailed
+                            ? () => ctx
+                                .read<ChatCubit>()
+                                .retryMessage(msg.clientId!)
                             : null,
+                        // Nothing to offer while a send is still in flight:
+                        // "delete for everyone" would be talking about a
+                        // message the server has never heard of.
+                        onLongPress: !isMe || msg.isPending
+                            ? null
+                            : () => msg.hasFailed
+                                ? _showFailedOptions(ctx, msg.clientId!)
+                                : _showDeleteOption(ctx, msg.id),
                       ),
                     );
                   },
@@ -290,6 +299,43 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             child: Text(s.deleteBtn, style: const TextStyle(color: Colors.red)),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Options for a message that never reached the server: send it again, or
+  /// throw it away. Leaving the user with only "delete" would mean retyping.
+  void _showFailedOptions(BuildContext ctx, String clientId) {
+    final s = S.of(ctx);
+    showModalBottomSheet(
+      context: ctx,
+      builder: (_) => SafeArea(
+        child: Wrap(children: [
+          ListTile(
+            dense: true,
+            title: Text(s.messageFailedSheetTitle,
+                style: TextStyles.font12regular
+                    .copyWith(color: ColorManager.normalGrey)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.refresh_rounded),
+            title: Text(s.messageRetrySend),
+            onTap: () {
+              Navigator.pop(ctx);
+              ctx.read<ChatCubit>().retryMessage(clientId);
+            },
+          ),
+          ListTile(
+            leading:
+                const Icon(Icons.delete_outline_rounded, color: ColorManager.red),
+            title: Text(s.messageDiscard,
+                style: const TextStyle(color: ColorManager.red)),
+            onTap: () {
+              Navigator.pop(ctx);
+              ctx.read<ChatCubit>().discardMessage(clientId);
+            },
+          ),
+        ]),
       ),
     );
   }
@@ -394,60 +440,6 @@ class _HeaderAvatar extends StatelessWidget {
           ),
         ),
     ]);
-  }
-}
-
-// ─── Pending media bubble ─────────────────────────────────────────────────────
-
-class _PendingMediaBubble extends StatelessWidget {
-  final String type;
-  const _PendingMediaBubble({required this.type});
-
-  IconData get _icon {
-    switch (type) {
-      case 'image': return Icons.image_rounded;
-      case 'video': return Icons.videocam_rounded;
-      case 'audio': return Icons.mic_rounded;
-      default: return Icons.attach_file_rounded;
-    }
-  }
-
-  String _localizedLabel(BuildContext context) {
-    final s = S.of(context);
-    switch (type) {
-      case 'image': return s.sendingPhoto;
-      case 'video': return s.sendingVideo;
-      case 'audio': return s.sendingVoice;
-      default: return s.sendingFile;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-        decoration: BoxDecoration(
-          color: ColorManager.accent.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(18.r),
-        ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(_icon, size: 18, color: Colors.white),
-          SizedBox(width: 8.w),
-          Text(_localizedLabel(context),
-              style: TextStyles.font12regular.copyWith(color: Colors.white)),
-          SizedBox(width: 10.w),
-          SizedBox(
-            width: 14.w,
-            height: 14.h,
-            child: const CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation(Colors.white70)),
-          ),
-        ]),
-      ),
-    );
   }
 }
 

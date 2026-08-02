@@ -18,6 +18,11 @@ class ChatLoaded extends ChatState {
   /// Type of media currently being uploaded ('image' | 'video' | 'audio') — null = not uploading
   final String? sendingMediaType;
 
+  /// True when [messages] came out of the offline cache rather than the API,
+  /// so the screen can say so instead of presenting a stale chunk of history as
+  /// the live conversation.
+  final bool isFromCache;
+
   ChatLoaded({
     required this.conversation,
     required this.messages,
@@ -26,6 +31,7 @@ class ChatLoaded extends ChatState {
     this.isSending = false,
     this.isBlocked = false,
     this.sendingMediaType,
+    this.isFromCache = false,
   });
 
   ChatLoaded copyWith({
@@ -35,6 +41,7 @@ class ChatLoaded extends ChatState {
     Map<String, bool>? typingUsers,
     bool? isSending,
     bool? isBlocked,
+    bool? isFromCache,
     Object? sendingMediaType = _sentinel,
   }) => ChatLoaded(
     conversation: conversation ?? this.conversation,
@@ -43,6 +50,7 @@ class ChatLoaded extends ChatState {
     typingUsers: typingUsers ?? this.typingUsers,
     isSending: isSending ?? this.isSending,
     isBlocked: isBlocked ?? this.isBlocked,
+    isFromCache: isFromCache ?? this.isFromCache,
     sendingMediaType: sendingMediaType == _sentinel
         ? this.sendingMediaType
         : sendingMediaType as String?,

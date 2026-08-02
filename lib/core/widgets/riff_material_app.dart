@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/routing/app_router.dart';
+import 'package:riff/core/routing/navigation_service.dart';
 import 'package:riff/core/routing/routes.dart';
-import 'package:riff/core/services/push_notification_service.dart';
 import 'package:riff/core/themes/app_theme.dart';
+import 'package:riff/core/widgets/offline_banner.dart';
 import 'package:riff/core/widgets/upload_overlay.dart';
 import 'package:riff/generated/l10n.dart';
 
@@ -35,7 +36,10 @@ class RiffMaterialApp extends StatelessWidget {
       minTextAdapt: true,
       builder: (_, __) => MaterialApp(
         title: 'Riff',
-        navigatorKey: PushNotificationService.navigatorKey,
+        // The app's single root navigator key. Everything that navigates
+        // without a BuildContext (401 handling, push-notification taps) uses
+        // this same key — see NavigationService.
+        navigatorKey: NavigationService.navigatorKey,
         themeMode: themeMode,
         theme: lightTheme(),
         darkTheme: darkTheme(),
@@ -49,7 +53,11 @@ class RiffMaterialApp extends StatelessWidget {
         ],
         supportedLocales: S.delegate.supportedLocales,
         initialRoute: initialRoute,
-        builder: (_, child) => UploadOverlay(child: child!),
+        // The connection banner sits outside every route so it survives
+        // navigation — being offline is a property of the app, not of one
+        // screen, and each screen having to render its own would guarantee the
+        // ones that forgot look like everything is fine.
+        builder: (_, child) => OfflineBanner(child: UploadOverlay(child: child!)),
         onGenerateRoute: (settings) {
           if (settings.name == Routes.privacyPolicyGate &&
               settings.arguments == null) {

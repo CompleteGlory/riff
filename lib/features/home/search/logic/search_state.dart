@@ -37,3 +37,13 @@ class SearchError extends SearchState {
   final String message;
   SearchError(this.message);
 }
+
+/// The user typed a query while the device has no connection.
+///
+/// Distinct from [SearchError] because there is nothing wrong and nothing to
+/// retry until connectivity returns — the screen should say that plainly rather
+/// than show a generic failure with a retry button that cannot work.
+class SearchOffline extends SearchState {
+  final String query;
+  SearchOffline(this.query);
+}

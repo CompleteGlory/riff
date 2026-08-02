@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
+import 'package:riff/generated/l10n.dart';
 import 'package:riff/features/social_share/UI/widgets/link_preview_card.dart';
 import 'package:riff/features/social_share/data/models/link_preview.dart';
 import '../../../chat/data/models/chat_models.dart';
@@ -15,6 +17,9 @@ class MessageBubble extends StatelessWidget {
   final bool showStatus; // show WA-style checkmarks on the last sent message
   final VoidCallback? onLongPress;
 
+  /// Called when the user taps a message whose send failed.
+  final VoidCallback? onRetry;
+
   const MessageBubble({
     super.key,
     required this.message,
@@ -22,6 +27,7 @@ class MessageBubble extends StatelessWidget {
     this.showSender = false,
     this.showStatus = false,
     this.onLongPress,
+    this.onRetry,
   });
 
   @override
@@ -32,9 +38,23 @@ class MessageBubble extends StatelessWidget {
       return _DeletedBubble(isMe: isMe, isDark: isDark);
     }
 
+    // A message that hasn't reached the server yet is drawn faded, so "sent"
+    // and "sending" are never the same picture. Anything else — clearing the
+    // composer on an emit that may have gone nowhere — reads as delivered.
+    final bubble = Opacity(
+      opacity: message.isPending ? 0.55 : 1,
+      child: _body(context, isDark),
+    );
+
     return GestureDetector(
       onLongPress: onLongPress,
-      child: Align(
+      onTap: message.hasFailed ? onRetry : null,
+      child: bubble,
+    );
+  }
+
+  Widget _body(BuildContext context, bool isDark) {
+    return Align(
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -77,9 +97,12 @@ class MessageBubble extends StatelessWidget {
                             fontSize: 10,
                           ),
                         ),
-                        if (isMe && showStatus) ...[
+                        if (isMe) ...[
                           SizedBox(width: 3.w),
-                          _StatusIcon(status: message.status),
+                          _DeliveryIndicator(
+                            message: message,
+                            showStatus: showStatus,
+                          ),
                         ],
                       ],
                     ),
@@ -89,12 +112,62 @@ class MessageBubble extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 
   String _fmt(DateTime dt) =>
       '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+}
+
+// ─── Delivery indicator ───────────────────────────────────────────────────────
+
+/// The trailing marker on the sender's own messages.
+///
+/// Three distinct situations used to collapse into one grey check: still
+/// uploading, failed outright, and genuinely sent. They now read differently —
+/// a spinner, a tappable red warning, and the usual checkmarks.
+class _DeliveryIndicator extends StatelessWidget {
+  final ChatMessage message;
+  final bool showStatus;
+
+  const _DeliveryIndicator({required this.message, required this.showStatus});
+
+  @override
+  Widget build(BuildContext context) {
+    if (message.isPending) {
+      return Row(mainAxisSize: MainAxisSize.min, children: [
+        SizedBox(
+          width: 9.r,
+          height: 9.r,
+          child: const CircularProgressIndicator(
+            strokeWidth: 1.4,
+            valueColor: AlwaysStoppedAnimation(ColorManager.normalGrey),
+          ),
+        ),
+        SizedBox(width: 4.w),
+        Text(
+          S.of(context).messageSending,
+          style: TextStyles.font12regular
+              .copyWith(color: ColorManager.normalGrey, fontSize: 10),
+        ),
+      ]);
+    }
+
+    if (message.hasFailed) {
+      return Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.error_outline_rounded, size: 12.r, color: ColorManager.red),
+        SizedBox(width: 4.w),
+        Text(
+          '${S.of(context).messageFailed} · ${S.of(context).messageRetrySend}',
+          style: TextStyles.font12regular
+              .copyWith(color: ColorManager.red, fontSize: 10),
+        ),
+      ]);
+    }
+
+    if (!showStatus) return const SizedBox.shrink();
+    return _StatusIcon(status: message.status);
+  }
 }
 
 // ─── WhatsApp-style checkmarks ────────────────────────────────────────────────
@@ -140,12 +213,19 @@ class _BubbleContent extends StatelessWidget {
       case MessageType.link:
         return _TextBubble(text: message.content ?? '', bg: _bg, fg: _fg);
       case MessageType.image:
-        return _ImageBubble(url: message.mediaUrl ?? '', bg: _bg);
+        return _ImageBubble(
+          url: message.mediaUrl ?? '',
+          // While the upload is in flight there is no remote URL yet — show the
+          // file the user picked so the bubble isn't an empty grey box.
+          localPath: message.localMediaPath,
+          bg: _bg,
+        );
       case MessageType.video:
         return _VideoBubble(url: message.mediaUrl ?? '', bg: _bg);
       case MessageType.audio:
         return _AudioBubble(
           url: message.mediaUrl ?? '',
+          localPath: message.localMediaPath,
           duration: message.duration ?? 0,
           bg: _bg,
           fg: _fg,
@@ -192,11 +272,31 @@ class _TextBubble extends StatelessWidget {
 
 class _ImageBubble extends StatelessWidget {
   final String url;
+  final String? localPath;
   final Color bg;
-  const _ImageBubble({required this.url, required this.bg});
+  const _ImageBubble({required this.url, required this.bg, this.localPath});
 
   @override
   Widget build(BuildContext context) {
+    final local = localPath;
+    if (url.isEmpty && local != null && local.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(16.r),
+        child: Image.file(
+          File(local),
+          width: 0.65.sw,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Container(
+            width: 0.65.sw,
+            height: 180.h,
+            color: bg,
+            child: const Icon(Icons.image_outlined,
+                color: ColorManager.normalGrey),
+          ),
+        ),
+      );
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(16.r),
       child: Image.network(
@@ -271,6 +371,7 @@ class _VideoBubble extends StatelessWidget {
 
 class _AudioBubble extends StatefulWidget {
   final String url;
+  final String? localPath;
   final int duration;
   final Color bg;
   final Color fg;
@@ -280,7 +381,13 @@ class _AudioBubble extends StatefulWidget {
     required this.duration,
     required this.bg,
     required this.fg,
+    this.localPath,
   });
+
+  /// Whether there is anything playable — a remote URL, or the local recording
+  /// while it is still uploading.
+  bool get hasSource =>
+      url.isNotEmpty || (localPath != null && localPath!.isNotEmpty);
 
   @override
   State<_AudioBubble> createState() => _AudioBubbleState();
@@ -330,6 +437,8 @@ class _AudioBubbleState extends State<_AudioBubble> {
       }
       if (widget.url.isNotEmpty) {
         await _player.play(UrlSource(widget.url));
+      } else if (widget.localPath != null && widget.localPath!.isNotEmpty) {
+        await _player.play(DeviceFileSource(widget.localPath!));
       }
     }
   }
@@ -389,7 +498,7 @@ class _AudioBubbleState extends State<_AudioBubble> {
                 ),
                 child: Slider(
                   value: progress.toDouble(),
-                  onChanged: widget.url.isEmpty
+                  onChanged: !widget.hasSource
                       ? null
                       : (v) {
                           final ms = (v * totalMs).round();

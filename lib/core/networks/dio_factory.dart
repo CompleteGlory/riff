@@ -3,14 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
-import 'package:riff/core/networks/api_services.dart';
 import 'package:riff/core/networks/api_constants.dart';
-import 'package:riff/core/routing/navigation_service.dart';
+import 'package:riff/core/networks/connectivity_service.dart';
+import 'package:riff/core/services/session_manager.dart';
 
 class DioFactory {
   DioFactory._();
 
   static Dio? dio;
+
+  /// Endpoints that must never trigger the refresh-and-retry path: they either
+  /// mint the tokens themselves or are the refresh call.
+  static const _authEndpoints = <String>[
+    ApiConstants.login,
+    ApiConstants.signUp,
+    ApiConstants.refreshToken,
+    ApiConstants.googleSignin,
+  ];
 
   static Future<Dio> getDio() async {
     Duration timeOut = const Duration(seconds: 30);
@@ -26,7 +35,7 @@ class DioFactory {
         // @HttpCode(HttpStatus.NO_CONTENT) (204) — e.g. decline/accept request,
         // delete message, add/remove participant.
         ..options.validateStatus = (status) => status != null && status >= 200 && status < 300;
-      
+
       await addDioHeaders();
       addDioInterceptor();
       return dio!;
@@ -39,14 +48,14 @@ class DioFactory {
     final token = await SharedPrefHelper.getString(SharedPrefKeys.userToken);
     dio?.options.headers = {
       "Authorization": "Bearer ${token ?? ''}",
-      "Cookie": "AccessToken=${token ?? ''}"  // ✅ Add cookie header
+      "Cookie": "AccessToken=${token ?? ''}"
     };
   }
 
   static void setTokenIntoHeaderAfterLogin(String token) {
     dio?.options.headers = {
       'Authorization': 'Bearer $token',
-      'Cookie': 'AccessToken=$token',  // ✅ Add cookie header
+      'Cookie': 'AccessToken=$token',
     };
   }
 
@@ -61,137 +70,69 @@ class DioFactory {
 
     dio?.interceptors.add(
       InterceptorsWrapper(
+        // Every completed response proves the device can reach the server, and
+        // every transport-level failure proves it can't. That is a better
+        // offline signal than anything the app could poll for, and it costs
+        // nothing — so the connectivity banner and the cached-content fallbacks
+        // are driven from right here.
+        onResponse: (response, handler) {
+          ConnectivityService.instance.reportReachable();
+          return handler.next(response);
+        },
         onError: (DioException err, ErrorInterceptorHandler handler) async {
+          ConnectivityService.instance.reportDioError(err);
           final statusCode = err.response?.statusCode;
           final requestOptions = err.requestOptions;
           final requestPath = requestOptions.uri.toString();
 
-          // Skip interceptor for login endpoint
-          if (requestPath.contains(ApiConstants.login)) {
+          final isAuthEndpoint =
+              _authEndpoints.any((path) => requestPath.contains(path));
+          final alreadyRetried = requestOptions.extra['retried'] == true;
+
+          if (statusCode != 401 || isAuthEndpoint || alreadyRetried) {
             return handler.next(err);
           }
 
-          // Only attempt refresh once per request
-          if (statusCode == 401 && requestOptions.extra['retried'] != true) {
-            try {
-              debugPrint('🔄 Attempting token refresh...');
-              
-              // Get refresh token from storage
-              final refreshToken = await SharedPrefHelper.getString(
-                SharedPrefKeys.refreshToken
-              );
-              
-              if (refreshToken == null || refreshToken.isEmpty) {
-                debugPrint('❌ No refresh token found, navigating to login');
-                NavigationService.navigateToLoginAndClearStack();
-                return handler.next(err);
-              }
+          // Every concurrent 401 shares one refresh (see SessionManager) —
+          // refreshing per-request rotated the refresh token out from under the
+          // other in-flight requests and got the user signed out.
+          final newAccessToken =
+              await SessionManager.instance.refreshAccessToken();
 
-              // Create a new Dio instance for refresh call
-              final refreshDio = Dio();
-              refreshDio.options.baseUrl = ApiConstants.apiBASEURL;
-              refreshDio.options.headers = {
-                'Cookie': 'RefreshToken=$refreshToken'
-              };
-
-              final refreshService = ApiService(
-                refreshDio,
-                baseUrl: ApiConstants.apiBASEURL
-              );
-
-              // Call refresh endpoint
-              final refreshResp = await refreshService.refreshToken();
-              final refreshStatus = refreshResp.response.statusCode;
-
-              if (refreshStatus == 200 || refreshStatus == 201) {
-                debugPrint('✅ Token refresh successful');
-                
-                // Extract new access token from cookies
-                final cookies = refreshResp.response.headers.map['set-cookie'];
-                String? newAccessToken;
-                String? newRefreshToken;
-
-                if (cookies != null) {
-                  for (var cookie in cookies) {
-                    if (cookie.startsWith('AccessToken=')) {
-                      newAccessToken = cookie
-                          .split(';')[0]
-                          .replaceFirst('AccessToken=', '');
-                    } else if (cookie.startsWith('RefreshToken=')) {
-                      newRefreshToken = cookie
-                          .split(';')[0]
-                          .replaceFirst('RefreshToken=', '');
-                    }
-                  }
-                }
-
-                if (newAccessToken != null) {
-                  // Save new access token
-                  await SharedPrefHelper.setData(
-                    SharedPrefKeys.userToken,
-                    newAccessToken
-                  );
-                  
-                  // Update Dio headers globally (both Authorization and Cookie)
-                  setTokenIntoHeaderAfterLogin(newAccessToken);
-                  
-                  // ✅ Update BOTH headers in the failed request
-                  requestOptions.headers['Authorization'] = 
-                      'Bearer $newAccessToken';
-                  requestOptions.headers['Cookie'] = 
-                      'AccessToken=$newAccessToken';
-                  
-                  final preview = newAccessToken.length <= 20
-                      ? newAccessToken
-                      : newAccessToken.substring(0, 20);
-                  debugPrint('✅ New access token set: $preview...');
-                } else {
-                  debugPrint('⚠️ No new access token in refresh response');
-                  NavigationService.navigateToLoginAndClearStack();
-                  return handler.next(err);
-                }
-
-                // Save new refresh token if provided
-                if (newRefreshToken != null) {
-                  await SharedPrefHelper.setData(
-                    SharedPrefKeys.refreshToken,
-                    newRefreshToken
-                  );
-                  debugPrint('✅ New refresh token saved');
-                }
-
-                // Mark as retried to prevent infinite loop
-                requestOptions.extra['retried'] = true;
-
-                // FormData (multipart uploads) is a single-use stream — the first
-                // attempt already consumed it, so it must be re-serialized before
-                // the retry. Without this, retrying an upload after a token refresh
-                // throws, and the catch below turned that into a forced logout —
-                // which is why users got signed out after uploading anything.
-                if (requestOptions.data is FormData) {
-                  requestOptions.data =
-                      (requestOptions.data as FormData).clone();
-                }
-
-                // Retry the original request with new token
-                debugPrint('🔄 Retrying original request...');
-                final retryResponse = await dio!.fetch(requestOptions);
-                debugPrint('✅ Retry successful!');
-                return handler.resolve(retryResponse);
-                
-              } else {
-                debugPrint('❌ Refresh failed with status: $refreshStatus');
-                NavigationService.navigateToLoginAndClearStack();
-                return handler.next(err);
-              }
-            } catch (e) {
-              debugPrint('❌ Refresh token error: $e');
-              NavigationService.navigateToLoginAndClearStack();
-              return handler.next(err);
-            }
+          if (newAccessToken == null) {
+            // Either the session genuinely ended (SessionManager has already
+            // cleared storage and routed to login) or the refresh failed
+            // transiently. Either way this request just failed — surface its
+            // own error rather than inventing a new one.
+            return handler.next(err);
           }
 
-          return handler.next(err);
+          setTokenIntoHeaderAfterLogin(newAccessToken);
+          requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
+          requestOptions.headers['Cookie'] = 'AccessToken=$newAccessToken';
+          requestOptions.extra['retried'] = true;
+
+          // FormData (multipart uploads) is a single-use stream — the first
+          // attempt already consumed it, so it must be re-serialized before
+          // the retry.
+          if (requestOptions.data is FormData) {
+            requestOptions.data = (requestOptions.data as FormData).clone();
+          }
+
+          try {
+            final retryResponse = await dio!.fetch(requestOptions);
+            return handler.resolve(retryResponse);
+          } on DioException catch (retryError) {
+            // A retry that fails for its own reasons (404, 500, timeout) is a
+            // request failure, NOT an auth failure. The old code funnelled this
+            // into the logout branch, which is how a single failed upload could
+            // sign the user out.
+            debugPrint('DioFactory: retry after refresh failed — $retryError');
+            return handler.next(retryError);
+          } catch (retryError) {
+            debugPrint('DioFactory: retry after refresh threw — $retryError');
+            return handler.next(err);
+          }
         },
       ),
     );

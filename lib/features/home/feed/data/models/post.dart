@@ -33,7 +33,12 @@ class Post {
   @JsonKey(name: 'likes_count')
   final String? likesCount;
 
-  @JsonKey(name: 'comments_count', defaultValue: 0)
+  // No defaultValue: the field is a String? and an int default made
+  // json_serializable emit `as String? ?? 0`, which doesn't compile. The
+  // checked-in .g.dart had been hand-patched to drop it, so any regeneration
+  // broke the build. Call sites already handle null
+  // (`int.tryParse(commentsCount ?? '0')`), so nothing changes at runtime.
+  @JsonKey(name: 'comments_count')
   final String? commentsCount;
 
   @JsonKey(name: 'original_post')
