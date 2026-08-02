@@ -499,5 +499,8 @@
   "messageFailed": "Not sent",
   "messageRetrySend": "Retry",
   "messageDiscard": "Discard",
-  "messageFailedSheetTitle": "This message wasn't sent"
+  "messageFailedSheetTitle": "This message wasn't sent",
+  "postLikesTitle": "Likes",
+  "noLikesYet": "No likes yet",
+  "noLikesYetSubtitle": "When people like this post, they'll show up here."
 }

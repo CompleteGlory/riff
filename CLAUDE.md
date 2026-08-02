@@ -72,6 +72,8 @@ lib/core/
 
 **Images:** Always use `CachedNetworkImage` / `CachedNetworkImageProvider`. Always resolve URLs via `MediaUrl.resolve(url)`.
 
+**User lists:** `FollowListScreen` is the one screen for "a list of people" — followers, following, and who liked a post (`FollowListScreen.postLikers`). All three endpoints return the same user-with-`follow_status` rows, so they share the model (`FollowUser`), the rows, the search box and the follow buttons. Add a `FollowListType` variant rather than a new screen.
+
 **Fullscreen images:** `FullScreenImage` (`lib/features/home/feed/Ui/widgets/post/fullscsreen_image.dart`) is the one viewer — pinch-to-zoom, swipeable gallery, page dots when there's more than one. Used by post media, profile media and chat images. `FullScreenImage.single(imageUrl:)` for one URL, `FullScreenImage.localFile(path:)` for a file not uploaded yet (a chat image mid-send). Local vs remote is an explicit constructor choice, never sniffed from the string: a leading `/` means a local path *and* a legacy relative URL.
 
 **API base URL:** `https://riff-production-08f7.up.railway.app` (Railway deployment)
@@ -433,6 +435,8 @@ test file has a co-located `.md` explaining coverage, mocks and gotchas:
 | Reels cache fallback | `test/features/home/reels/logic/cubit/reels_cubit_test.dart` | [reels_cubit_test.md](test/features/home/reels/logic/cubit/reels_cubit_test.md) |
 | Profile cache fallback | `test/features/home/profile/logic/cubit/profile_cubit_test.dart` | [profile_cubit_test.md](test/features/home/profile/logic/cubit/profile_cubit_test.md) |
 | Chat image → fullscreen | `test/features/home/chat/UI/widgets/message_bubble_test.dart` | [message_bubble_test.md](test/features/home/chat/UI/widgets/message_bubble_test.md) |
+| Who-liked-a-post request | `test/features/home/feed/data/repos/like_repo_test.dart` | [like_repo_test.md](test/features/home/feed/data/repos/like_repo_test.md) |
+| Like row's two tap targets | `test/features/home/feed/Ui/widgets/post/post_actions_test.dart` | [post_actions_test.md](test/features/home/feed/Ui/widgets/post/post_actions_test.md) |
 | Feed cache fallback | `test/features/home/feed/logic/cubit/feed_cubit_test.dart` | [feed_cubit_test.md](test/features/home/feed/logic/cubit/feed_cubit_test.md) |
 | Chat model timestamp normalisation | `test/features/home/chat/data/models/chat_models_test.dart` | [chat_models_test.md](test/features/home/chat/data/models/chat_models_test.md) |
 | Duplicate-conversation collapsing | `test/features/home/chat/logic/cubit/conversation_dedupe_test.dart` | [conversation_dedupe_test.md](test/features/home/chat/logic/cubit/conversation_dedupe_test.md) |

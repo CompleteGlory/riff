@@ -18,6 +18,7 @@ import 'package:riff/features/home/feed/Ui/widgets/post/post_content.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_actions.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/shared_post_card.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/share_sheet.dart';
+import 'package:riff/features/home/follow/UI/follow_list_screen.dart';
 import 'package:riff/features/home/feed/Ui/post_detail_screen.dart';
 import 'package:riff/core/routing/animated_page_route.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
@@ -207,6 +208,19 @@ class _PostItemState extends State<PostItem>
     );
   }
 
+  /// Opens the list of people who liked [post].
+  void _openLikers(Post post) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FollowListScreen.postLikers(
+          postId: post.id,
+          authorName: post.author?.username ?? '',
+        ),
+      ),
+    );
+  }
+
   void _sharePost() {
     showModalBottomSheet(
       context: context,
@@ -332,6 +346,7 @@ class _PostItemState extends State<PostItem>
                     shareCount: shareCount,
                     viewsCount: viewsCount,
                     onLikeTap: _toggleLike,
+                    onLikeCountTap: () => _openLikers(post),
                     onCommentTap: () => _openComments(post.id.toString()),
                     onShareTap: _sharePost,
                   ),

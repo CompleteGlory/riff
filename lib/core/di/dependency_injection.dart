@@ -91,7 +91,7 @@ Future<void> setUpGetIt() async {
   getIt.registerFactory<FeedCubit>(() => FeedCubit(getIt()));
 
   // likes (repo only — LikeCubit removed; PostCubit consumes LikeRepo directly)
-  getIt.registerLazySingleton<LikeRepo>(() => LikeRepo(getIt()));
+  getIt.registerLazySingleton<LikeRepo>(() => LikeRepo(getIt(), dio));
 
   // comments
   getIt.registerLazySingleton<CommentRepo>(() => CommentRepo(getIt()));

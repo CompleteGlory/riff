@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get_it/get_it.dart';
 import 'package:riff/core/helpers/constants.dart';
+import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
 import 'package:riff/core/utils/media_url.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/features/home/follow/data/models/follow_user.dart';
+import 'package:riff/features/home/feed/data/repos/like_repo.dart';
 import 'package:riff/features/home/follow/data/repos/follow_repo.dart';
 import 'package:riff/features/home/chat/data/repos/chat_repo.dart';
 import 'package:riff/features/home/chat/UI/chat_detail_screen.dart';
@@ -14,11 +16,24 @@ import 'package:riff/features/home/follow/logic/cubit/follow_cubit.dart';
 import 'package:riff/features/home/user_profile/ui/user_profile_screen.dart';
 import 'package:riff/generated/l10n.dart';
 
-enum FollowListType { followers, following }
+/// Which list of people the screen is showing.
+///
+/// [postLikes] rides along here rather than in a screen of its own: the API
+/// returns the same user-with-follow-status rows for all three, so everything
+/// below the fetch — search, follow buttons, message button, shimmer, rows —
+/// is identical, and a separate screen would have been ~350 duplicated lines.
+enum FollowListType { followers, following, postLikes }
 
 class FollowListScreen extends StatefulWidget {
+  /// Whose followers/following. Empty for [FollowListType.postLikes].
   final String userId;
+
+  /// Which post's likes. Null unless [type] is [FollowListType.postLikes].
+  final int? postId;
+
   final FollowListType type;
+
+  /// Shown as `@name` under the title — the profile owner, or the post author.
   final String profileName;
 
   const FollowListScreen({
@@ -26,7 +41,16 @@ class FollowListScreen extends StatefulWidget {
     required this.userId,
     required this.type,
     required this.profileName,
-  });
+  }) : postId = null;
+
+  /// The people who liked a post.
+  const FollowListScreen.postLikers({
+    super.key,
+    required int this.postId,
+    required String authorName,
+  })  : userId = '',
+        type = FollowListType.postLikes,
+        profileName = authorName;
 
   @override
   State<FollowListScreen> createState() => _FollowListScreenState();
@@ -63,13 +87,30 @@ class _FollowListScreenState extends State<FollowListScreen> {
   }
 
   void _load() {
-    _future = (widget.type == FollowListType.followers
-            ? _repo.getFollowers(widget.userId)
-            : _repo.getFollowing(widget.userId))
-        .then((list) {
+    _future = _fetch().then((list) {
       _allUsers = list;
       return list;
     });
+  }
+
+  Future<List<FollowUser>> _fetch() {
+    switch (widget.type) {
+      case FollowListType.followers:
+        return _repo.getFollowers(widget.userId);
+      case FollowListType.following:
+        return _repo.getFollowing(widget.userId);
+      case FollowListType.postLikes:
+        // Goes through LikeRepo rather than FollowRepo — same row shape, but
+        // it's the likes feature's endpoint.
+        return GetIt.I<LikeRepo>().getPostLikers(widget.postId!).then(
+              (result) => result.when(
+                success: (users) => users,
+                // The screen's FutureBuilder renders the error state.
+                failure: (error) => throw Exception(
+                    error.message ?? 'Failed to load likes'),
+              ),
+            );
+    }
   }
 
   List<FollowUser> get _filtered {
@@ -109,9 +150,11 @@ class _FollowListScreenState extends State<FollowListScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? const Color(0xFF0F0F0F) : const Color(0xFFF8F8F8);
-    final title = widget.type == FollowListType.followers
-        ? S.of(context).followersTitle
-        : S.of(context).followingTitle;
+    final title = switch (widget.type) {
+      FollowListType.followers => S.of(context).followersTitle,
+      FollowListType.following => S.of(context).followingTitle,
+      FollowListType.postLikes => S.of(context).postLikesTitle,
+    };
 
     return Scaffold(
       backgroundColor: bg,
@@ -562,6 +605,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isFollowers = type == FollowListType.followers;
+    final isLikes = type == FollowListType.postLikes;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -576,9 +620,11 @@ class _EmptyState extends StatelessWidget {
                   : const Color(0xFFF0F0F0),
             ),
             child: Icon(
-              isFollowers
-                  ? Icons.people_outline_rounded
-                  : Icons.person_add_alt_1_outlined,
+              isLikes
+                  ? Icons.favorite_border_rounded
+                  : isFollowers
+                      ? Icons.people_outline_rounded
+                      : Icons.person_add_alt_1_outlined,
               size: 32.r,
               color:
                   isDark ? const Color(0xFF444444) : const Color(0xFFCCCCCC),
@@ -586,7 +632,11 @@ class _EmptyState extends StatelessWidget {
           ),
           SizedBox(height: 18.h),
           Text(
-            isFollowers ? S.of(context).noFollowersYet : S.of(context).notFollowingAnyone,
+            isLikes
+                ? S.of(context).noLikesYet
+                : isFollowers
+                    ? S.of(context).noFollowersYet
+                    : S.of(context).notFollowingAnyone,
             style: TextStyle(
               fontFamily: 'GeneralSans',
               fontSize: 17,
@@ -596,9 +646,11 @@ class _EmptyState extends StatelessWidget {
           ),
           SizedBox(height: 6.h),
           Text(
-            isFollowers
-                ? S.of(context).whenSomeonFollows
-                : S.of(context).accountsFollowed,
+            isLikes
+                ? S.of(context).noLikesYetSubtitle
+                : isFollowers
+                    ? S.of(context).whenSomeonFollows
+                    : S.of(context).accountsFollowed,
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontFamily: 'GeneralSans',
