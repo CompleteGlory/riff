@@ -8,7 +8,10 @@ import 'package:riff/core/cache/offline_cache.dart';
 import 'package:riff/core/networks/api_error_handler.dart';
 import 'package:riff/core/networks/api_error_model.dart';
 import 'package:riff/core/networks/api_result.dart' as api;
+import 'package:riff/features/home/feed/data/models/author.dart';
+import 'package:riff/features/home/feed/data/models/comment.dart';
 import 'package:riff/features/home/feed/data/models/pagination.dart';
+import 'package:riff/features/home/feed/data/models/post_like.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/feed/data/models/posts_response.dart';
 import 'package:riff/features/home/feed/data/repos/feed_repo.dart';
@@ -36,6 +39,25 @@ void main() {
         updatedAt: '2026-08-01T10:00:00Z',
         isLiked: false,
         likesCount: '0',
+      );
+
+  /// A post shaped the way the API actually sends one — nested author, likes
+  /// and comments — rather than the bare object the other cases use. The nested
+  /// objects are the whole point: `Post.toJson()` leaves them as objects.
+  Post nestedPost(int id) => Post(
+        id: id,
+        author: Author(id: 'a1', fullName: 'Mo', username: 'mo'),
+        content: 'post $id',
+        createdAt: '2026-08-01T10:00:00Z',
+        updatedAt: '2026-08-01T10:00:00Z',
+        isLiked: false,
+        likesCount: '2',
+        likes: [
+          PostLike(id: 1, author: Author(id: 'u1', fullName: 'U', username: 'u'))
+        ],
+        comments: [
+          Comment(id: 1, content: 'nice', createdAt: '2026-08-01T10:00:00Z'),
+        ],
       );
 
   PostsResponse page(List<Post> posts, {int page = 1, int totalPages = 3}) =>
@@ -137,6 +159,31 @@ void main() {
       expect(cubit.state, isA<Success>());
       expect(idsOf(cubit.state), [1, 2]);
       expect(cubit.isShowingCached, isTrue);
+    });
+
+    // The reported bug: the cached feed appeared once and then vanished. The
+    // cache was fine on disk — `json.encode` calls `toJson()` on anything it
+    // can't encode — but the in-memory mirror held `Post.toJson()`'s output
+    // verbatim, and that leaves `author`/`likes`/`comments` as *objects*. So the
+    // very next read in the same process threw inside `Post.fromJson` and was
+    // swallowed as "nothing cached".
+    test('a cached post with nested objects survives a same-process reload',
+        () async {
+      when(repo.getPosts(any, any)).thenAnswer(
+          (_) async => api.ApiResult.success(page([nestedPost(1)])));
+      await cubit.getPosts();
+
+      // A second cubit, same process — the mirror is what it reads.
+      final second = FeedCubit(repo, cache: cache);
+      addTearDown(second.close);
+      when(repo.getPosts(any, any)).thenAnswer((_) async => offlineFailure());
+      await second.getPosts();
+
+      expect(second.isShowingCached, isTrue,
+          reason: 'the in-memory copy must be readable, not just the disk one');
+      expect(idsOf(second.state), [1]);
+      expect(((second.state as Success).data as PostsResponse)
+          .data.first.author?.username, 'mo');
     });
 
     test('reports a real failure when there is nothing cached', () async {

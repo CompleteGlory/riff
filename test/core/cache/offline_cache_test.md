@@ -11,6 +11,9 @@ fallback in the app.
   `null` rather than throwing.
 - **Failure handling** — a corrupt file and a file holding something other than
   the envelope both read as "no cache".
+- **JSON normalisation** — an in-memory read is byte-identical to a read after a
+  restart, a nested object is mirrored as a *map* rather than as itself, and a
+  payload that cannot be encoded is not cached at all (not even in memory).
 - **User scoping** — each user id gets its own partition, `clear()` wipes every
   partition (this is what the sign-out hook calls), and `remove()` drops one
   bucket.
@@ -41,3 +44,20 @@ rather than a fake of it. `path_provider` is never reached.
 Every failure path returns "no cache" rather than propagating. A cache exists to
 make a screen better on a bad connection; it must never be the reason a screen
 fails on a good one.
+
+**The in-memory mirror used to store whatever `toJson()` returned**, and that is
+not always JSON. With json_serializable's default `explicit_to_json: false`,
+`Post.toJson()` emits its nested `author`, `likes` and `comments` as *objects*.
+`json.encode` papers over this on the way to disk — its default `toEncodable`
+calls `toJson()` on anything it can't encode — so the **disk copy was always
+correct** and a read after a restart worked fine. But any read served from the
+mirror handed those objects straight back, `Post.fromJson`'s
+`json['author'] as Map<String, dynamic>` threw, and the caller's `catch` reported
+it as "nothing cached".
+
+The symptom was baffling from the outside: the cached feed appeared once and
+then vanished, and reels and profile posts looked like they were never cached at
+all — while chat messages, whose models have hand-written `toJson()`s returning
+plain maps, worked perfectly. `_write` now encodes first and mirrors the
+re-decoded result, so memory and disk cannot disagree, for any model, including
+ones added later.

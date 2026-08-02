@@ -39,8 +39,15 @@ class ProfileCubit extends Cubit<ProfileState>
 
   Future<void> loadUserPosts(String userId) async {
     _lastUserId = userId;
+    // Resolved once, up front. The success handler below is a synchronous
+    // callback, so it can't await this — and doing the lookup there instead
+    // meant the cache write only started a microtask later, which is a race
+    // with anything that reads the cache straight afterwards.
+    final isMine = await _isMe(userId);
+    if (isClosed) return;
+
     if (_posts.isEmpty) {
-      final cached = await _readCachedPosts(userId);
+      final cached = isMine ? await _readCachedPosts() : null;
       if (isClosed) return;
       if (cached != null && cached.isNotEmpty) {
         _posts = cached;
@@ -58,7 +65,7 @@ class ProfileCubit extends Cubit<ProfileState>
         _posts = posts;
         _isShowingCached = false;
         emit(ProfileState.success(posts));
-        unawaited(_cachePosts(userId, posts));
+        if (isMine) unawaited(_cachePosts(posts));
       },
       failure: (error) {
         // Cached posts already on screen beat replacing a real profile with an
@@ -79,8 +86,7 @@ class ProfileCubit extends Cubit<ProfileState>
   Future<bool> _isMe(String userId) async =>
       (await _cache.readMap(CacheKeys.myProfile))?['id'] == userId;
 
-  Future<List<Post>?> _readCachedPosts(String userId) async {
-    if (!await _isMe(userId)) return null;
+  Future<List<Post>?> _readCachedPosts() async {
     final raw = await _cache.readList(CacheKeys.myPosts);
     if (raw == null) return null;
     try {
@@ -91,14 +97,11 @@ class ProfileCubit extends Cubit<ProfileState>
     }
   }
 
-  Future<void> _cachePosts(String userId, List<Post> posts) async {
-    if (!await _isMe(userId)) return;
-    await _cache.writeList(
-      CacheKeys.myPosts,
-      posts.map((p) => p.toJson()).toList(),
-      limit: CacheKeys.myPostsLimit,
-    );
-  }
+  Future<void> _cachePosts(List<Post> posts) => _cache.writeList(
+        CacheKeys.myPosts,
+        posts.map((p) => p.toJson()).toList(),
+        limit: CacheKeys.myPostsLimit,
+      );
 
   Future<void> uploadProfileImage(File file) async {
     emit(const ProfileState.imageUploading());

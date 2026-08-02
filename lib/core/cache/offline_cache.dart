@@ -153,16 +153,45 @@ class OfflineCache {
 
   Future<void> _write(String key, Object payload) async {
     final savedAt = DateTime.now();
-    _memory[key] = _CacheEntry(payload: payload, savedAt: savedAt);
+
+    // Encode *first*, and mirror the re-decoded result rather than the object
+    // that came in.
+    //
+    // What a model's `toJson()` returns is not necessarily JSON. With
+    // json_serializable's default `explicit_to_json: false`, `Post.toJson()`
+    // emits its nested `author`, `likes` and `comments` as **objects**, not
+    // maps — `json.encode` fixes that on the way to disk (it calls `toJson()`
+    // on anything it can't encode), but a mirror of the original map hands
+    // those objects straight back, and `Post.fromJson` throws on
+    // `json['author'] as Map<String, dynamic>`.
+    //
+    // That is exactly what "the cached feed shows up once and then disappears"
+    // was: the disk copy was fine all along, but every read served from memory
+    // after a successful load threw and was swallowed as "nothing cached".
+    // Normalising here makes an in-memory read byte-identical to a read after
+    // a restart, for every model, including ones added later.
+    final String encoded;
+    final Object? normalised;
+    try {
+      encoded = json.encode({
+        'saved_at': savedAt.toIso8601String(),
+        'payload': payload,
+      });
+      normalised = (json.decode(encoded) as Map)['payload'];
+    } catch (e) {
+      // Nothing is mirrored either: a memory-only entry that no restart could
+      // reproduce is worse than no cache at all.
+      debugPrint('OfflineCache: "$key" is not JSON-encodable — not cached ($e)');
+      return;
+    }
+
+    _memory[key] = _CacheEntry(payload: normalised, savedAt: savedAt);
     try {
       final file = await _fileFor(key);
       if (file == null) return;
-      await file.writeAsString(json.encode({
-        'saved_at': savedAt.toIso8601String(),
-        'payload': payload,
-      }));
+      await file.writeAsString(encoded);
     } catch (e) {
-      // A failed write is not worth surfacing — the screen already has the
+      // A failed disk write is not worth surfacing — the screen already has the
       // fresh data it was about to cache.
       debugPrint('OfflineCache: write of "$key" failed — $e');
     }
