@@ -114,6 +114,12 @@ wiped by the sign-out hook, never throws — a failed read or write degrades to
 | `discoverPosts` | 30 | `SearchCubit` (unfiltered discover only) |
 | `messages_<conversationId>` | 30 | `ChatCubit`, per conversation |
 
+**Anything handed to the cache must be genuinely JSON-encodable.** `OfflineCache`
+normalises on write (encode, then mirror the re-decoded result) so this can't
+bite again, but be aware that `Post.toJson()` — and any other json_serializable
+model without `explicitToJson: true` — returns nested *objects*, not maps. It is
+only safe to `json.encode`, never to read back field-by-field.
+
 The pattern in every cubit is the same:
 
 1. nothing on screen → read the cache and emit it as a normal `success`, with an
@@ -422,6 +428,8 @@ test file has a co-located `.md` explaining coverage, mocks and gotchas:
 | API timestamp parsing (the 3-hour shift) | `test/core/helpers/app_date_time_test.dart` | [app_date_time_test.md](test/core/helpers/app_date_time_test.md) |
 | Offline/online detection | `test/core/networks/connectivity_service_test.dart` | [connectivity_service_test.md](test/core/networks/connectivity_service_test.md) |
 | Offline cache store | `test/core/cache/offline_cache_test.dart` | [offline_cache_test.md](test/core/cache/offline_cache_test.md) |
+| Reels cache fallback | `test/features/home/reels/logic/cubit/reels_cubit_test.dart` | [reels_cubit_test.md](test/features/home/reels/logic/cubit/reels_cubit_test.md) |
+| Profile cache fallback | `test/features/home/profile/logic/cubit/profile_cubit_test.dart` | [profile_cubit_test.md](test/features/home/profile/logic/cubit/profile_cubit_test.md) |
 | Feed cache fallback | `test/features/home/feed/logic/cubit/feed_cubit_test.dart` | [feed_cubit_test.md](test/features/home/feed/logic/cubit/feed_cubit_test.md) |
 | Chat model timestamp normalisation | `test/features/home/chat/data/models/chat_models_test.dart` | [chat_models_test.md](test/features/home/chat/data/models/chat_models_test.md) |
 | Duplicate-conversation collapsing | `test/features/home/chat/logic/cubit/conversation_dedupe_test.dart` | [conversation_dedupe_test.md](test/features/home/chat/logic/cubit/conversation_dedupe_test.md) |
@@ -502,6 +510,8 @@ full widget test.
 | Signed out on a flaky connection | `SessionManager._performRefresh` | One 401 from `/auth/refresh` ended the session, and one transient failure was the end of the attempt. But `/auth/refresh` **rotates** the token, so a 401 can equally mean this caller lost a race with a concurrent refresh — and a rejection that arrives while the device is offline is more likely a captive portal than a revoked session. Refresh now retries transient failures on a 1s/3s/6s backoff, requires two confirmed rejections, ignores rejections while offline, and re-tries with the newer token when storage rotated it mid-flight |
 | Every screen showed an error page instead of content when the connection dropped | feed / reels / chats / search / profile cubits | Nothing was cached and every failure emitted a failure state, so a lost connection replaced a screen the user had been reading a second earlier with "Something went wrong". Each cubit now falls back to `OfflineCache`, keeps whatever is already on screen when a refresh fails, and re-fetches on reconnect |
 | A refresh on a dying connection blanked the feed | `FeedCubit.getPosts` | `refresh: true` cleared the post list *before* the request, so a failed pull-to-refresh left an empty feed. The list is cleared only when the replacement arrives |
+| Cached feed showed once then vanished; reels and profile posts never cached | `OfflineCache._write` | The in-memory mirror stored whatever `toJson()` returned. With json_serializable's default `explicit_to_json: false`, `Post.toJson()` leaves nested `author`/`likes`/`comments` as **objects**, not maps. `json.encode` fixes that on the way to disk (its default `toEncodable` calls `toJson()`), so the disk copy was always right — but every read served from the mirror threw inside `Post.fromJson` and was swallowed as "nothing cached". Chat worked throughout because its models have hand-written `toJson()`s. `_write` now encodes first and mirrors the re-decoded payload, so memory and disk cannot disagree |
+| Own-profile posts cached inconsistently | `ProfileCubit.loadUserPosts` | The "is this me?" lookup ran inside the synchronous success callback, so the cache write only started a microtask later and raced any read that followed. Resolved once up front instead |
 | "Is my message sending, sent, or lost?" | `ChatCubit`, `MessageBubble` | Text messages were fire-and-forget into the socket and the composer cleared regardless; media showed one generic "sending" bubble unattached to the message. Sends are now optimistic, correlated by `client_id`, rendered dimmed while pending, and turned into a tappable retry when they fail |
 | Read receipts stuck on one check — recipient had read the messages | `chat.controller.ts` (`serializeMsg`), `message-status.ts` | Read state only ever existed as a transient `message_status` socket event, upgraded in memory by whoever had that exact chat open at the time. Nothing persisted it and `serializeMsg` had **no `status` field**, so `MessageStatusX.fromString(null)` fell through to `sent` and every message reset to one check as soon as the sender reopened the chat. Status is now derived server-side from `conversation_participants.last_read_at`, returned on every message, and `GET .../messages` also emits a read receipt so a client whose socket hasn't come up still clears the sender's ticks. Voice notes go through the media-upload endpoint, which now carries the same status as a socket-sent text message |
 

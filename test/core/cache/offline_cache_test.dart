@@ -6,6 +6,26 @@ import 'package:riff/core/cache/cache_keys.dart';
 import 'package:riff/core/cache/offline_cache.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+
+/// A model whose `toJson()` leaves a nested object in place instead of a map.
+///
+/// This is not a contrived shape: it is exactly what json_serializable emits
+/// with its default `explicit_to_json: false`, which is how every `Post` in the
+/// app serialises.
+class _Nested {
+  const _Nested(this.name);
+  final String name;
+  Map<String, dynamic> toJson() => {'name': name};
+}
+
+class _Outer {
+  const _Outer(this.id, this.child);
+  final int id;
+  final _Nested child;
+  // Note the raw object, not `child.toJson()`.
+  Map<String, dynamic> toJson() => {'id': id, 'child': child};
+}
+
 /// See offline_cache_test.md for what this covers and why.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -95,6 +115,55 @@ void main() {
           .writeAsStringSync(json.encode([1, 2, 3]));
 
       expect(await cache.readList(CacheKeys.reels), isNull);
+    });
+  });
+
+  // The bug behind "the cached feed shows up once and then disappears": the
+  // in-memory mirror held whatever `toJson()` returned, which is not always
+  // JSON. Disk was always right — `json.encode` calls `toJson()` on anything it
+  // can't encode — so a read after a restart worked while a read in the same
+  // process handed back raw objects and blew up in the caller's `fromJson`.
+  group('JSON normalisation', () {
+    test('an in-memory read is identical to a read after a restart', () async {
+      await cache.writeList(
+        CacheKeys.feedPosts,
+        [const _Outer(1, _Nested('mo')).toJson()],
+        limit: 10,
+      );
+
+      final inProcess = await cache.readList(CacheKeys.feedPosts);
+
+      OfflineCache.resetInstanceForTest();
+      final afterRestart = await (OfflineCache.instance..rootOverride = root)
+          .readList(CacheKeys.feedPosts);
+
+      expect(inProcess, afterRestart);
+      expect(inProcess, [
+        {
+          'id': 1,
+          'child': {'name': 'mo'},
+        }
+      ]);
+    });
+
+    test('a nested object is mirrored as a map, not as itself', () async {
+      await cache.writeList(
+        CacheKeys.feedPosts,
+        [const _Outer(1, _Nested('mo')).toJson()],
+        limit: 10,
+      );
+
+      final child = (await cache.readList(CacheKeys.feedPosts))!.first['child'];
+      expect(child, isA<Map<String, dynamic>>(),
+          reason: 'a caller\'s fromJson casts this to Map and would throw');
+    });
+
+    // Better no cache than one only this process can read.
+    test('a payload that cannot be encoded is not cached at all', () async {
+      await cache.writeMap(CacheKeys.myProfile, {'socket': Object()});
+
+      expect(await cache.readMap(CacheKeys.myProfile), isNull);
+      expect(cache.savedAt(CacheKeys.myProfile), isNull);
     });
   });
 
