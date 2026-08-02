@@ -1,4 +1,6 @@
 // Fullscreen Image Viewer — supports single image or swipeable gallery
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/utils/media_url.dart';
@@ -7,16 +9,30 @@ class FullScreenImage extends StatefulWidget {
   final List<String> images;
   final int initialIndex;
 
+  /// Whether [images] are on-device file paths rather than URLs.
+  ///
+  /// Explicit rather than sniffed: a leading `/` is ambiguous — it means a
+  /// local path for a chat image still uploading, and a legacy relative URL to
+  /// be resolved against the API host for older posts (see [MediaUrl.resolve]).
+  final bool isLocalFile;
+
   const FullScreenImage({
     super.key,
     required this.images,
     this.initialIndex = 0,
-  });
+  }) : isLocalFile = false;
 
   /// Convenience constructor for a single image URL.
   FullScreenImage.single({super.key, required String imageUrl})
       : images = [imageUrl],
-        initialIndex = 0;
+        initialIndex = 0,
+        isLocalFile = false;
+
+  /// A single image that hasn't been uploaded yet, read straight off disk.
+  FullScreenImage.localFile({super.key, required String path})
+      : images = [path],
+        initialIndex = 0,
+        isLocalFile = true;
 
   @override
   State<FullScreenImage> createState() => _FullScreenImageState();
@@ -40,6 +56,27 @@ class _FullScreenImageState extends State<FullScreenImage> {
   }
 
 
+  static const _broken = Icon(
+    Icons.broken_image_outlined,
+    color: Colors.white54,
+    size: 60,
+  );
+
+  Widget _image(String source) {
+    if (widget.isLocalFile) {
+      return Image.file(
+        File(source),
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => _broken,
+      );
+    }
+    return Image.network(
+      MediaUrl.resolveOrEmpty(source),
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => _broken,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final total = widget.images.length;
@@ -53,17 +90,7 @@ class _FullScreenImageState extends State<FullScreenImage> {
             itemCount: total,
             onPageChanged: (i) => setState(() => _currentIndex = i),
             itemBuilder: (_, i) => InteractiveViewer(
-              child: Center(
-                child: Image.network(
-                  MediaUrl.resolveOrEmpty(widget.images[i]),
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Icon(
-                    Icons.broken_image_outlined,
-                    color: Colors.white54,
-                    size: 60,
-                  ),
-                ),
-              ),
+              child: Center(child: _image(widget.images[i])),
             ),
           ),
 

@@ -1,19 +1,22 @@
 # `signup_bloc_listener_test.dart`
 
 Widget tests for `SignupBlocListener` — reacts to `SignupCubit`'s states with a loading dialog,
-navigation to phone verification on success, or an error dialog.
+navigation to new-user onboarding on success, or an error dialog.
 
 ## What's mocked
 
 - **`SignupRepo`** and **`LoginRepo`** — both mocked; a real `SignupCubit` is driven through its
   actual `emitSignupStates()` method.
-- A stub `/phoneVerify` route stands in for the real `PhoneVerifyScreen`.
+- A stub `/newUserOnboarding` route stands in for the real onboarding screen.
 
 ## Scenarios covered
 
 - Shows a loading dialog while signing up.
-- On success: dismisses the dialog and navigates to `/phoneVerify`.
-- On failure: shows an error dialog with the server's message; dismissing it clears the dialog.
+- On success: dismisses the dialog and navigates to `/newUserOnboarding`. Phone verification used
+  to sit between the two; it was removed (see `CLAUDE.md` → Known Bugs Fixed), so signup must land
+  the user directly on onboarding.
+- On failure: shows an error dialog with the server's message, and navigates nowhere; dismissing it
+  clears the dialog.
 
 ## Pitfall this test suite caught: an unstubbed dependent mock hides the real bug
 

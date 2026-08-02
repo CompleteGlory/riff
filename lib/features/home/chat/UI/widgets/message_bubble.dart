@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
+import 'package:riff/features/home/feed/Ui/widgets/post/fullscsreen_image.dart';
 import 'package:riff/generated/l10n.dart';
 import 'package:riff/features/social_share/UI/widgets/link_preview_card.dart';
 import 'package:riff/features/social_share/data/models/link_preview.dart';
@@ -19,6 +20,12 @@ class MessageBubble extends StatelessWidget {
 
   /// Called when the user taps a message whose send failed.
   final VoidCallback? onRetry;
+
+  /// Identifies the tap target that opens the fullscreen image viewer.
+  ///
+  /// Exposed for tests: `Image.file` doesn't resolve under the test binding, so
+  /// a pending image bubble lays out zero-height and can't be tapped for real.
+  static const imageTapKey = Key('chatImageBubble');
 
   const MessageBubble({
     super.key,
@@ -81,7 +88,15 @@ class MessageBubble extends StatelessWidget {
                       ),
                     ),
                   _BubbleContent(
-                      message: message, isMe: isMe, isDark: isDark),
+                    message: message,
+                    isMe: isMe,
+                    isDark: isDark,
+                    // A failed message's tap belongs to the retry handler on
+                    // the whole bubble — opening the viewer instead would
+                    // swallow it and leave no way to resend.
+                    onImageTap:
+                        message.hasFailed ? null : () => _openImage(context),
+                  ),
                   SizedBox(height: 2.h),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 4.w),
@@ -113,6 +128,26 @@ class MessageBubble extends StatelessWidget {
           ],
         ),
     );
+  }
+
+  /// Opens the same fullscreen viewer post images use — pinch to zoom, tap to
+  /// close. An image still uploading is read off disk, so it doesn't have to
+  /// finish before it can be looked at.
+  void _openImage(BuildContext context) {
+    final url = message.mediaUrl;
+    final local = message.localMediaPath;
+
+    if (url != null && url.isNotEmpty) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => FullScreenImage.single(imageUrl: url)),
+      );
+    } else if (local != null && local.isNotEmpty) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => FullScreenImage.localFile(path: local)),
+      );
+    }
   }
 
   String _fmt(DateTime dt) =>
@@ -196,8 +231,15 @@ class _BubbleContent extends StatelessWidget {
   final bool isMe;
   final bool isDark;
 
-  const _BubbleContent(
-      {required this.message, required this.isMe, required this.isDark});
+  /// Opens the fullscreen viewer. Null when the tap belongs to something else.
+  final VoidCallback? onImageTap;
+
+  const _BubbleContent({
+    required this.message,
+    required this.isMe,
+    required this.isDark,
+    this.onImageTap,
+  });
 
   Color get _bg => isMe
       ? ColorManager.accent
@@ -219,6 +261,7 @@ class _BubbleContent extends StatelessWidget {
           // file the user picked so the bubble isn't an empty grey box.
           localPath: message.localMediaPath,
           bg: _bg,
+          onTap: onImageTap,
         );
       case MessageType.video:
         return _VideoBubble(url: message.mediaUrl ?? '', bg: _bg);
@@ -274,10 +317,22 @@ class _ImageBubble extends StatelessWidget {
   final String url;
   final String? localPath;
   final Color bg;
-  const _ImageBubble({required this.url, required this.bg, this.localPath});
+  final VoidCallback? onTap;
+  const _ImageBubble({
+    required this.url,
+    required this.bg,
+    this.localPath,
+    this.onTap,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => GestureDetector(
+        key: MessageBubble.imageTapKey,
+        onTap: onTap,
+        child: _thumbnail(),
+      );
+
+  Widget _thumbnail() {
     final local = localPath;
     if (url.isEmpty && local != null && local.isNotEmpty) {
       return ClipRRect(
