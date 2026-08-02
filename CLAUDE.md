@@ -114,6 +114,12 @@ wiped by the sign-out hook, never throws — a failed read or write degrades to
 | `discoverPosts` | 30 | `SearchCubit` (unfiltered discover only) |
 | `messages_<conversationId>` | 30 | `ChatCubit`, per conversation |
 
+Deleting a post prunes every bucket that could hold it — see `PostEvents` and
+`applyPostDeletion` in `lib/core/logic/`. The prune reads the bucket and writes
+it back rather than rewriting it from what is on screen: `myPosts` holds only
+the signed-in user's posts while `ProfileCubit` may be showing someone else's,
+and `feedPosts`/`reels` hold the first page while the cubit may hold several.
+
 **Anything handed to the cache must be genuinely JSON-encodable.** `OfflineCache`
 normalises on write (encode, then mirror the re-decoded result) so this can't
 bite again, but be aware that `Post.toJson()` — and any other json_serializable
@@ -513,6 +519,7 @@ full widget test.
 | Cached feed showed once then vanished; reels and profile posts never cached | `OfflineCache._write` | The in-memory mirror stored whatever `toJson()` returned. With json_serializable's default `explicit_to_json: false`, `Post.toJson()` leaves nested `author`/`likes`/`comments` as **objects**, not maps. `json.encode` fixes that on the way to disk (its default `toEncodable` calls `toJson()`), so the disk copy was always right — but every read served from the mirror threw inside `Post.fromJson` and was swallowed as "nothing cached". Chat worked throughout because its models have hand-written `toJson()`s. `_write` now encodes first and mirrors the re-decoded payload, so memory and disk cannot disagree |
 | Own-profile posts cached inconsistently | `ProfileCubit.loadUserPosts` | The "is this me?" lookup ran inside the synchronous success callback, so the cache write only started a microtask later and raced any read that followed. Resolved once up front instead |
 | "Is my message sending, sent, or lost?" | `ChatCubit`, `MessageBubble` | Text messages were fire-and-forget into the socket and the composer cleared regardless; media showed one generic "sending" bubble unattached to the message. Sends are now optimistic, correlated by `client_id`, rendered dimmed while pending, and turned into a tappable retry when they fail |
+| A deleted post stayed in the feed | `PostEvents`, feed/reels/discover/profile cubits, `DeletePost` (API) | Deleting a post removed it from the profile it was deleted from and nowhere else — every other list kept its own copy until the next refetch, and the offline cache kept it indefinitely. `PostEvents.deletions` is now a process-wide broadcast: `DeletePostCubit` announces the id on success and `FeedCubit` / `ReelsCubit` / `SearchCubit` / `ProfileCubit` / `UserProfileCubit` each drop it locally and prune their cache bucket. Shares of the post are *kept* — `posts.original_post_id` is `ON DELETE SET NULL`, so the API flags every share `original_post_deleted` before deleting the original and the client renders `UnavailablePostCard` instead of an empty share |
 | Read receipts stuck on one check — recipient had read the messages | `chat.controller.ts` (`serializeMsg`), `message-status.ts` | Read state only ever existed as a transient `message_status` socket event, upgraded in memory by whoever had that exact chat open at the time. Nothing persisted it and `serializeMsg` had **no `status` field**, so `MessageStatusX.fromString(null)` fell through to `sent` and every message reset to one check as soon as the sender reopened the chat. Status is now derived server-side from `conversation_participants.last_read_at`, returned on every message, and `GET .../messages` also emits a read receipt so a client whose socket hasn't come up still clears the sender's ticks. Voice notes go through the media-upload endpoint, which now carries the same status as a socket-sent text message |
 
 ---
