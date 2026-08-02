@@ -13,20 +13,29 @@ class PostCubit extends Cubit<PostState> {
 
   /// Toggle like/unlike for a post.
   ///
-  /// Optimistic update is applied immediately via [onOptimisticUpdate].
-  /// On success the caller's UI state is already correct — no feed-cubit
-  /// cross-talk needed. On failure [onRevert] restores the previous state.
+  /// [onOptimisticUpdate] fires synchronously, before any network work, so the
+  /// caller can repaint on the current frame. On failure [onRevert] restores
+  /// the previous state.
+  ///
+  /// [currentIsLiked] / [currentLikeCount] are what the caller has on screen.
+  /// They default to the values on [post], which is only ever the server's
+  /// answer from when the feed loaded — nothing writes back to the model, so a
+  /// caller that toggles twice without passing its own state recomputes from
+  /// the same stale value and sends a second *like* instead of an unlike.
   Future<void> toggleLike(
     Post post, {
+    bool? currentIsLiked,
+    int? currentLikeCount,
     required Function(bool isLiked, int likeCount) onOptimisticUpdate,
     required Function() onRevert,
     required Function(String error) onError,
   }) async {
     final postId = post.id.toString();
-    final currentIsLiked = post.isLiked ?? false;
-    final currentLikeCount = int.tryParse(post.likesCount ?? '0') ?? 0;
-    final newLikeCount = currentLikeCount + (currentIsLiked ? -1 : 1);
-    final newIsLiked = !currentIsLiked;
+    final isLiked = currentIsLiked ?? post.isLiked ?? false;
+    final likeCount =
+        currentLikeCount ?? int.tryParse(post.likesCount ?? '0') ?? 0;
+    final newLikeCount = likeCount + (isLiked ? -1 : 1);
+    final newIsLiked = !isLiked;
 
     onOptimisticUpdate(newIsLiked, newLikeCount);
 

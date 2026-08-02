@@ -14,6 +14,7 @@ import 'package:riff/features/home/feed/Ui/widgets/feed/trending_post_card.dart'
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/feed/feed_cubit.dart';
+import 'package:riff/features/home/feed/logic/feed_list_builder.dart';
 import 'package:riff/features/home/feed/logic/cubit/feed/feed_state.dart';
 import 'package:riff/generated/l10n.dart';
 import 'package:riff/core/widgets/app_error_widget.dart';
@@ -96,8 +97,8 @@ class _FeedScreenBodyState extends State<FeedScreenBody> {
   /// Insert one ad every [_adEvery] posts.
   static const int _adEvery = 3;
 
-  // Sentinel object used as a placeholder for the trending card in the list
-  static const _trendingSlot = Object();
+  // Placeholder for the trending card in the mixed list — see feed_list_builder.
+  static const _trendingSlot = trendingSlot;
 
   @override
   void initState() {
@@ -144,34 +145,15 @@ class _FeedScreenBodyState extends State<FeedScreenBody> {
     }
   }
 
-  /// Build the mixed list inserting:
-  /// - trending card after the 2nd post (index 2)
-  /// - one ad every [_adEvery] posts
-  List<dynamic> _buildMixedList(List<dynamic> posts, Post? trending) {
-    final mixed = <dynamic>[];
-    int adIndex = 0;
-    for (int i = 0; i < posts.length; i++) {
-      mixed.add(posts[i]);
-
-      // Insert trending after position 1 (after the 2nd post)
-      if (i == 1 && trending != null) {
-        mixed.add(_trendingSlot);
-      }
-
-      if (_ads.isNotEmpty) {
-        final shouldInsert = (i + 1) % _adEvery == 0;
-        if (shouldInsert && adIndex < _ads.length) {
-          mixed.add(_ads[adIndex % _ads.length]);
-          adIndex++;
-        }
-      }
-    }
-    // If no ad was inserted yet (fewer posts than _adEvery), append one at the end
-    if (adIndex == 0 && _ads.isNotEmpty) {
-      mixed.add(_ads[0]);
-    }
-    return mixed;
-  }
+  /// Ordering rules live in [buildFeedItems] so they can be unit-tested
+  /// without booting the feed.
+  List<dynamic> _buildMixedList(List<dynamic> posts, Post? trending) =>
+      buildFeedItems(
+        posts: posts,
+        trending: trending,
+        ads: _ads,
+        adEvery: _adEvery,
+      );
 
   @override
   Widget build(BuildContext context) {
