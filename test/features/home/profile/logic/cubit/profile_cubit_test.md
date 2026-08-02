@@ -34,3 +34,13 @@
   is synchronous, so `_cachePosts` could only start it a microtask later and the
   cache write raced anything reading straight afterwards. It is now resolved
   once at the top of `loadUserPosts`, before the request goes out.
+
+## Deletion
+
+The `deletion` group covers `PostEvents.deletions` → `ProfileCubit.removePostLocally`.
+Worth noting: the cache prune runs **unconditionally**, before the on-screen
+list is even consulted. `my_posts` only ever holds the signed-in user's posts,
+while this cubit may currently be showing someone else's profile — so the prune
+reads the cached copy and writes it back rather than rewriting the cache from
+whatever is on screen, which would overwrite my posts with theirs. The last test
+in the group is exactly that case.

@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:riff/core/cache/cache_keys.dart';
 import 'package:riff/core/cache/offline_cache.dart';
+import 'package:riff/core/logic/post_deletion.dart';
+import 'package:riff/core/logic/post_events.dart';
 import 'package:riff/core/logic/reconnect_refresh.dart';
 import 'package:riff/features/home/feed/data/repos/feed_repo.dart';
 import 'package:riff/features/home/feed/logic/cubit/feed/feed_state.dart';
@@ -27,7 +29,10 @@ class FeedCubit extends Cubit<FeedState> with ReconnectRefresh<FeedState> {
       // would reorder it under the user for no reason.
       if (_isShowingCached || _lastLoadFailed) getPosts(refresh: true);
     });
+    _deletionSub = PostEvents.deletions.listen(removePostLocally);
   }
+
+  StreamSubscription<String>? _deletionSub;
 
   /// Broadcast bus used to tell the currently-mounted feed to reload — e.g. after
   /// a new post finishes uploading. FeedCubit is a factory (each FeedScreen owns
@@ -76,6 +81,46 @@ class FeedCubit extends Cubit<FeedState> with ReconnectRefresh<FeedState> {
   Future<void> retryLoadMore() async {
     _lastError = null;
     await getPosts();
+  }
+
+  /// Drop a deleted post from the feed, and mark any share of it as quoting a
+  /// post that no longer exists.
+  ///
+  /// Driven by [PostEvents.deletions] so a delete performed anywhere — the
+  /// profile, reels, the post detail screen — takes effect here immediately
+  /// instead of at the next refresh.
+  void removePostLocally(String postId) {
+    if (trendingPost?.id.toString() == postId) trendingPost = null;
+
+    // Unconditional, and read-modify-write against the cache rather than a
+    // rewrite from `_posts`: the cached copy is the first page, this cubit may
+    // hold several pages or none at all, and either way the post must not come
+    // back on the next offline start.
+    unawaited(_pruneCache(postId));
+
+    final updated = applyPostDeletion(_posts, postId);
+    // Nothing in this list referenced the deleted post.
+    if (identical(updated, _posts)) return;
+
+    _posts
+      ..clear()
+      ..addAll(updated);
+
+    if (!isClosed && state is Success) {
+      final currentState = state as Success;
+      emit(FeedState.success(PostsResponse(
+        data: List<Post>.from(_posts),
+        pagination: currentState.data.pagination,
+      )));
+    }
+  }
+
+  Future<void> _pruneCache(String postId) async {
+    final cached = await _readCachedPosts();
+    if (cached == null || cached.isEmpty) return;
+    final updated = applyPostDeletion(cached, postId);
+    if (identical(updated, cached)) return;
+    await _cachePosts(updated);
   }
 
   /// Update a post locally in the posts list
@@ -304,4 +349,10 @@ class FeedCubit extends Cubit<FeedState> with ReconnectRefresh<FeedState> {
         posts.map((p) => p.toJson()).toList(),
         limit: CacheKeys.feedPostsLimit,
       );
+
+  @override
+  Future<void> close() {
+    _deletionSub?.cancel();
+    return super.close();
+  }
 }

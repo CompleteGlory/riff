@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:riff/core/logic/post_deletion.dart';
+import 'package:riff/core/logic/post_events.dart';
 import 'package:riff/core/networks/api_result.dart' show ApiResultPatterns;
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/follow/data/repos/follow_repo.dart';
@@ -13,7 +17,21 @@ class UserProfileCubit extends Cubit<UserProfileState> {
   final FollowRepo _followRepo;
 
   UserProfileCubit(this._repo, this._followRepo)
-      : super(const UserProfileState.initial());
+      : super(const UserProfileState.initial()) {
+    _deletionSub = PostEvents.deletions.listen(removePostLocally);
+  }
+
+  StreamSubscription<String>? _deletionSub;
+
+  /// Drop a deleted post from the profile on screen, and mark any share of it
+  /// as quoting a post that no longer exists.
+  void removePostLocally(String postId) {
+    final cur = state;
+    if (cur is! UserProfileLoaded) return;
+    final updated = applyPostDeletion(cur.posts, postId);
+    if (identical(updated, cur.posts) || isClosed) return;
+    emit(UserProfileState.loaded(profile: cur.profile, posts: updated));
+  }
 
   Future<void> loadProfile(String userId) async {
     emit(const UserProfileState.loading());
@@ -104,5 +122,11 @@ class UserProfileCubit extends Cubit<UserProfileState> {
         posts: cur.posts,
       ));
     } catch (_) {}
+  }
+
+  @override
+  Future<void> close() {
+    _deletionSub?.cancel();
+    return super.close();
   }
 }

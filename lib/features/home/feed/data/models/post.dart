@@ -44,6 +44,15 @@ class Post {
   @JsonKey(name: 'original_post')
   final Post? originalPost;
 
+  /// True when this post is a share whose original has since been deleted.
+  ///
+  /// The original row is gone, so [originalPost] is null and nothing else on
+  /// the wire distinguishes a share from a plain post — the API sets this flag
+  /// on every share of a post as it is deleted so the quoted card can say the
+  /// post is unavailable instead of silently rendering an empty share.
+  @JsonKey(name: 'original_post_deleted')
+  final bool? originalPostDeleted;
+
   @JsonKey(name: 'shares_count')
   final int? sharesCount;
 
@@ -70,11 +79,53 @@ class Post {
     this.comments,
     this.commentsCount,
     this.originalPost,
+    this.originalPostDeleted,
     this.sharesCount,
     this.viewsCount,
     this.sourceUrl,
     this.sourcePlatform,
   });
+
+  /// [clearOriginalPost] drops the quoted post entirely — passing
+  /// `originalPost: null` can't, since null is also "leave it alone".
+  Post copyWith({
+    Author? author,
+    String? content,
+    List<String>? media,
+    String? createdAt,
+    String? updatedAt,
+    List<PostLike>? likes,
+    List<Comment>? comments,
+    bool? isLiked,
+    String? likesCount,
+    String? commentsCount,
+    Post? originalPost,
+    bool clearOriginalPost = false,
+    bool? originalPostDeleted,
+    int? sharesCount,
+    int? viewsCount,
+  }) {
+    return Post(
+      id: id,
+      authorId: authorId,
+      author: author ?? this.author,
+      content: content ?? this.content,
+      media: media ?? this.media,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      likes: likes ?? this.likes,
+      comments: comments ?? this.comments,
+      isLiked: isLiked ?? this.isLiked,
+      likesCount: likesCount ?? this.likesCount,
+      commentsCount: commentsCount ?? this.commentsCount,
+      originalPost: clearOriginalPost ? null : (originalPost ?? this.originalPost),
+      originalPostDeleted: originalPostDeleted ?? this.originalPostDeleted,
+      sharesCount: sharesCount ?? this.sharesCount,
+      viewsCount: viewsCount ?? this.viewsCount,
+      sourceUrl: sourceUrl,
+      sourcePlatform: sourcePlatform,
+    );
+  }
 
   factory Post.fromJson(Map<String, dynamic> json) => _$PostFromJson(json);
   Map<String, dynamic> toJson() => _$PostToJson(this);

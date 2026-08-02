@@ -42,3 +42,19 @@ exercised.
 - **The page-1 failure no longer sets `lastError`.** It used to render the
   "couldn't load more posts" footer at the bottom of the list, which described
   the wrong thing entirely.
+
+## Deletion
+
+The `deletion` group covers `PostEvents.deletions` → `FeedCubit.removePostLocally`:
+a post deleted anywhere (profile, reels, post detail) leaves the feed
+immediately, a *share* of it stays but is marked
+`originalPostDeleted`, the trending post is cleared when it is the one deleted,
+and the cached first page is pruned so the post doesn't reappear on the next
+offline start. A delete for a post the feed never held emits nothing — asserted
+by state identity, which is what `applyPostDeletion` returning the same list
+instance is for (see
+[post_deletion_test.md](../../../../../core/logic/post_deletion_test.md)).
+
+`PostEvents` is a process-wide broadcast stream, so the event is delivered
+asynchronously — `await pumpEventQueue()` between `notifyDeleted` and the
+assertion, not a bare `await`.
