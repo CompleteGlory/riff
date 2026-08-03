@@ -498,10 +498,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "noGenresSelected": MessageLookupByLibrary.simpleMessage(
       "اختر نوعاً موسيقياً واحداً على الأقل",
     ),
-    "noLikesYet": MessageLookupByLibrary.simpleMessage("لا توجد إعجابات بعد"),
-    "noLikesYetSubtitle": MessageLookupByLibrary.simpleMessage(
-      "عندما يعجب الآخرون بهذا المنشور، سيظهرون هنا.",
-    ),
     "noMessageRequests": MessageLookupByLibrary.simpleMessage(
       "لا توجد طلبات رسائل",
     ),
@@ -623,12 +619,17 @@ class MessageLookup extends MessageLookupByLibrary {
       "تم حذف المنشور بنجاح!",
     ),
     "postLabel": MessageLookupByLibrary.simpleMessage("منشور"),
-    "postLikesTitle": MessageLookupByLibrary.simpleMessage("الإعجابات"),
     "postNotFoundDeleted": MessageLookupByLibrary.simpleMessage(
       "المنشور غير موجود أو تم حذفه.",
     ),
     "postScreenTitle": MessageLookupByLibrary.simpleMessage("المنشور"),
     "postTextCopied": MessageLookupByLibrary.simpleMessage("تم نسخ نص المنشور"),
+    "postUnavailableReason": MessageLookupByLibrary.simpleMessage(
+      "ربما حذف صاحب المنشور الأصلي، أو تمت إزالته بعد بلاغ أو لمخالفته معاييرنا.",
+    ),
+    "postUnavailableTitle": MessageLookupByLibrary.simpleMessage(
+      "المنشور غير متاح",
+    ),
     "postUpdatedSuccessfully": MessageLookupByLibrary.simpleMessage(
       "تم تحديث المنشور بنجاح!",
     ),

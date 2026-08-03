@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:riff/core/cache/cache_keys.dart';
 import 'package:riff/core/cache/offline_cache.dart';
+import 'package:riff/core/logic/post_deletion.dart';
+import 'package:riff/core/logic/post_events.dart';
 import 'package:riff/core/logic/reconnect_refresh.dart';
 import 'package:riff/core/networks/connectivity_service.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
@@ -21,6 +23,46 @@ class SearchCubit extends Cubit<SearchState> with ReconnectRefresh<SearchState> 
     refreshOnReconnect(() {
       if (_isShowingCached) loadDiscover();
     });
+    _deletionSub = PostEvents.deletions.listen(removePostLocally);
+  }
+
+  StreamSubscription<String>? _deletionSub;
+
+  /// Drop a deleted post from discover or the current search results, and mark
+  /// any share of it as quoting a post that no longer exists.
+  void removePostLocally(String postId) {
+    final current = state;
+    if (current is SearchDiscoverLoaded) {
+      final updated = applyPostDeletion(current.posts, postId);
+      if (!identical(updated, current.posts) && !isClosed) {
+        emit(SearchDiscoverLoaded(
+          posts: updated,
+          activeGenre: current.activeGenre,
+          activeInstrument: current.activeInstrument,
+          isLoadingPosts: current.isLoadingPosts,
+        ));
+      }
+    } else if (current is SearchResultsLoaded) {
+      final updated = applyPostDeletion(current.posts, postId);
+      if (!identical(updated, current.posts) && !isClosed) {
+        emit(SearchResultsLoaded(
+          users: current.users,
+          posts: updated,
+          query: current.query,
+        ));
+      }
+    }
+    unawaited(_pruneCache(postId));
+  }
+
+  /// Discover is cached unfiltered, so prune the stored copy directly rather
+  /// than writing back whatever filtered list happens to be on screen.
+  Future<void> _pruneCache(String postId) async {
+    final cached = await _readCachedPosts();
+    if (cached == null || cached.isEmpty) return;
+    final updated = applyPostDeletion(cached, postId);
+    if (identical(updated, cached)) return;
+    await _cachePosts(updated);
   }
 
   bool _isShowingCached = false;
@@ -146,6 +188,7 @@ class SearchCubit extends Cubit<SearchState> with ReconnectRefresh<SearchState> 
   @override
   Future<void> close() {
     _debounce?.cancel();
+    _deletionSub?.cancel();
     return super.close();
   }
 }

@@ -5,6 +5,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:riff/core/cache/cache_keys.dart';
 import 'package:riff/core/cache/offline_cache.dart';
+import 'package:riff/core/logic/post_events.dart';
 import 'package:riff/core/networks/api_error_model.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/features/home/feed/data/models/author.dart';
@@ -141,5 +142,30 @@ void main() {
 
     expect(idsOf(cubit.state), [9]);
     expect(cubit.isShowingCached, isFalse);
+  });
+
+  group('deletion', () {
+    test('a deleted reel disappears without a refetch', () async {
+      when(repo.getReels(any, any))
+          .thenAnswer((_) async => ok([reel(1), reel(2)]));
+      await cubit.loadReels();
+
+      PostEvents.notifyDeleted('2');
+      await pumpEventQueue();
+
+      expect(idsOf(cubit.state), [1]);
+    });
+
+    test('the cached reels are pruned as well', () async {
+      when(repo.getReels(any, any))
+          .thenAnswer((_) async => ok([reel(1), reel(2)]));
+      await cubit.loadReels();
+
+      PostEvents.notifyDeleted('2');
+      await pumpEventQueue();
+
+      final cached = await cache.readList(CacheKeys.reels);
+      expect(cached!.map((r) => r['id']), [1]);
+    });
   });
 }

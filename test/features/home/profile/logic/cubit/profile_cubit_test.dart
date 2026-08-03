@@ -5,6 +5,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:riff/core/cache/cache_keys.dart';
 import 'package:riff/core/cache/offline_cache.dart';
+import 'package:riff/core/logic/post_events.dart';
 import 'package:riff/core/networks/api_error_model.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/features/home/feed/data/models/author.dart';
@@ -154,5 +155,53 @@ void main() {
 
     expect(idsOf(cubit.state), [9]);
     expect(cubit.isShowingCached, isFalse);
+  });
+
+  group('deletion', () {
+    test('a deleted post disappears from the profile', () async {
+      await seedMyProfile();
+      when(repo.getUserPosts(myId))
+          .thenAnswer((_) async => ApiResult.success([post(1), post(2)]));
+      await cubit.loadUserPosts(myId);
+
+      PostEvents.notifyDeleted('2');
+      await pumpEventQueue();
+
+      expect(idsOf(cubit.state), [1]);
+    });
+
+    test('the cached own-posts copy is pruned as well', () async {
+      await seedMyProfile();
+      when(repo.getUserPosts(myId))
+          .thenAnswer((_) async => ApiResult.success([post(1), post(2)]));
+      await cubit.loadUserPosts(myId);
+
+      PostEvents.notifyDeleted('2');
+      await pumpEventQueue();
+
+      final cached = await cache.readList(CacheKeys.myPosts);
+      expect(cached!.map((p) => p['id']), [1]);
+    });
+
+    // The cache only ever holds *my* posts, so a delete while someone else's
+    // profile is on screen must not write that profile's posts over it.
+    test('viewing another profile does not overwrite my cached posts',
+        () async {
+      await seedMyProfile();
+      await cache.writeList(
+        CacheKeys.myPosts,
+        [post(1), post(2)].map((p) => p.toJson()).toList(),
+        limit: CacheKeys.myPostsLimit,
+      );
+      when(repo.getUserPosts(otherId))
+          .thenAnswer((_) async => ApiResult.success([post(50), post(51)]));
+      await cubit.loadUserPosts(otherId);
+
+      PostEvents.notifyDeleted('2');
+      await pumpEventQueue();
+
+      final cached = await cache.readList(CacheKeys.myPosts);
+      expect(cached!.map((p) => p['id']), [1]);
+    });
   });
 }

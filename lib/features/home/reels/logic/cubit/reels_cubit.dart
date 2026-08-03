@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:riff/core/cache/cache_keys.dart';
 import 'package:riff/core/cache/offline_cache.dart';
+import 'package:riff/core/logic/post_deletion.dart';
+import 'package:riff/core/logic/post_events.dart';
 import 'package:riff/core/logic/reconnect_refresh.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
@@ -20,6 +22,36 @@ class ReelsCubit extends Cubit<ReelsState> with ReconnectRefresh<ReelsState> {
     refreshOnReconnect(() {
       if (_isShowingCached) loadReels(refresh: true);
     });
+    _deletionSub = PostEvents.deletions.listen(removeReelLocally);
+  }
+
+  StreamSubscription<String>? _deletionSub;
+
+  /// Drop a deleted reel, and mark any share of it as quoting a post that no
+  /// longer exists. Driven by [PostEvents.deletions].
+  void removeReelLocally(String postId) {
+    // Unconditional — see FeedCubit.removePostLocally: the cached copy is the
+    // first page and outlives any one instance of this cubit.
+    unawaited(_pruneCache(postId));
+
+    final updated = applyPostDeletion(_reels, postId);
+    if (identical(updated, _reels)) return;
+
+    _reels
+      ..clear()
+      ..addAll(updated);
+
+    if (!isClosed && state is ReelsSuccess) {
+      emit(ReelsSuccess(reels: List.from(_reels), hasMore: _hasMore));
+    }
+  }
+
+  Future<void> _pruneCache(String postId) async {
+    final cached = await _readCachedReels();
+    if (cached == null || cached.isEmpty) return;
+    final updated = applyPostDeletion(cached, postId);
+    if (identical(updated, cached)) return;
+    await _cacheReels(updated);
   }
 
   int _page = 1;
@@ -117,4 +149,10 @@ class ReelsCubit extends Cubit<ReelsState> with ReconnectRefresh<ReelsState> {
         reels.map((r) => r.toJson()).toList(),
         limit: CacheKeys.reelsLimit,
       );
+
+  @override
+  Future<void> close() {
+    _deletionSub?.cancel();
+    return super.close();
+  }
 }

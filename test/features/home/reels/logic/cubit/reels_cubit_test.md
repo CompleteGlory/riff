@@ -36,3 +36,10 @@ in-memory mirror held `Post.toJson()`'s output verbatim, and that leaves
 memory threw inside `Post.fromJson` and was swallowed as "nothing cached". Fixed
 in `OfflineCache._write` — see
 [offline_cache_test.md](../../../../../core/cache/offline_cache_test.md).
+
+## Deletion
+
+The `deletion` group covers `PostEvents.deletions` → `ReelsCubit.removeReelLocally`:
+a reel deleted anywhere disappears without a refetch, and the cached first page
+is pruned with it. `PostEvents` delivers asynchronously, so
+`await pumpEventQueue()` sits between the notify and the assertion.

@@ -126,6 +126,8 @@
   "deletePostDialogTitle": "حذف المنشور؟",
   "deletePostDialogContent": "هل أنت متأكد أنك تريد حذف هذا المنشور؟ لا يمكن التراجع عن هذا الإجراء.",
   "postDeletedSuccessfully": "تم حذف المنشور بنجاح!",
+  "postUnavailableTitle": "المنشور غير متاح",
+  "postUnavailableReason": "ربما حذف صاحب المنشور الأصلي، أو تمت إزالته بعد بلاغ أو لمخالفته معاييرنا.",
   "failedToDeletePost": "فشل حذف المنشور.",
   "failedToUpdatePost": "فشل تحديث المنشور.",
   "deleteBtn": "حذف",

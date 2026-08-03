@@ -18,7 +18,7 @@ import 'package:riff/features/home/feed/Ui/widgets/post/post_content.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_actions.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/shared_post_card.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/share_sheet.dart';
-import 'package:riff/features/home/follow/UI/follow_list_screen.dart';
+import 'package:riff/features/home/feed/Ui/widgets/post/unavailable_post_card.dart';
 import 'package:riff/features/home/feed/Ui/post_detail_screen.dart';
 import 'package:riff/core/routing/animated_page_route.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
@@ -308,7 +308,10 @@ class _PostItemState extends State<PostItem>
                         ),
                       );
                     },
-                  ),
+                  )
+                // The original was deleted; the share stays, quoting nothing.
+                else if (post.originalPostDeleted == true)
+                  const UnavailablePostCard(),
 
                 // Content + images
                 Padding(

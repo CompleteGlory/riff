@@ -28,6 +28,7 @@ Post _$PostFromJson(Map<String, dynamic> json) => Post(
   originalPost: json['original_post'] == null
       ? null
       : Post.fromJson(json['original_post'] as Map<String, dynamic>),
+  originalPostDeleted: json['original_post_deleted'] as bool?,
   sharesCount: (json['shares_count'] as num?)?.toInt(),
   viewsCount: (json['views_count'] as num?)?.toInt() ?? 0,
   sourceUrl: json['source_url'] as String?,
@@ -48,6 +49,7 @@ Map<String, dynamic> _$PostToJson(Post instance) => <String, dynamic>{
   'likes_count': instance.likesCount,
   'comments_count': instance.commentsCount,
   'original_post': instance.originalPost,
+  'original_post_deleted': instance.originalPostDeleted,
   'shares_count': instance.sharesCount,
   'views_count': instance.viewsCount,
   'source_url': instance.sourceUrl,

@@ -506,10 +506,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "noGenresSelected": MessageLookupByLibrary.simpleMessage(
       "Select at least one genre",
     ),
-    "noLikesYet": MessageLookupByLibrary.simpleMessage("No likes yet"),
-    "noLikesYetSubtitle": MessageLookupByLibrary.simpleMessage(
-      "When people like this post, they\'ll show up here.",
-    ),
     "noMessageRequests": MessageLookupByLibrary.simpleMessage(
       "No message requests",
     ),
@@ -635,12 +631,17 @@ class MessageLookup extends MessageLookupByLibrary {
       "Post deleted successfully!",
     ),
     "postLabel": MessageLookupByLibrary.simpleMessage("Post"),
-    "postLikesTitle": MessageLookupByLibrary.simpleMessage("Likes"),
     "postNotFoundDeleted": MessageLookupByLibrary.simpleMessage(
       "Post not found or was deleted.",
     ),
     "postScreenTitle": MessageLookupByLibrary.simpleMessage("Post"),
     "postTextCopied": MessageLookupByLibrary.simpleMessage("Post text copied"),
+    "postUnavailableReason": MessageLookupByLibrary.simpleMessage(
+      "The original post may have been deleted by its author, or removed after a report or for going against our standards.",
+    ),
+    "postUnavailableTitle": MessageLookupByLibrary.simpleMessage(
+      "Post unavailable",
+    ),
     "postUpdatedSuccessfully": MessageLookupByLibrary.simpleMessage(
       "Post updated successfully!",
     ),

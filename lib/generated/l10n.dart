@@ -1149,6 +1149,26 @@ class S {
     );
   }
 
+  /// `Post unavailable`
+  String get postUnavailableTitle {
+    return Intl.message(
+      'Post unavailable',
+      name: 'postUnavailableTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The original post may have been deleted by its author, or removed after a report or for going against our standards.`
+  String get postUnavailableReason {
+    return Intl.message(
+      'The original post may have been deleted by its author, or removed after a report or for going against our standards.',
+      name: 'postUnavailableReason',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Failed to update post.`
   String get failedToUpdatePost {
     return Intl.message(
