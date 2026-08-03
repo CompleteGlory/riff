@@ -1,6 +1,5 @@
 // ignore_for_file: use_build_context_synchronously, deprecated_member_use
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -24,6 +23,7 @@ import 'package:riff/features/home/follow/UI/follow_list_screen.dart';
 import 'package:riff/core/routing/animated_page_route.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 import 'package:riff/features/home/feed/Ui/widgets/feed/lottie_loader.dart';
+import 'package:riff/features/home/follow/UI/follow_list_screen.dart';
 import 'package:riff/features/home/reels/ui/reels_screen.dart';
 import 'package:riff/features/home/feed/logic/cubit/posts/post_cubit.dart';
 import 'package:riff/features/home/feed/logic/cubit/comments/comment_cubit.dart';
