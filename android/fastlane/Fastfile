@@ -17,12 +17,34 @@ platform :android do
       testers: "fadyalaa441@gmail.com, fadyalaa2112@gmail.com, zakymagd@gmail.com, magddevf@gmail.com, Danielgeorge369@gmail.com, marten.atef.eng@gmail.com" ,
       upload_timeout: 600,
       release_notes: <<~RELEASE_NOTES
-        Version 1.0.13
+        Version 1.0.14
 
-        Date: 2026-07-31
+        Date: 2026-08-3
+
+        Added
+
+        - React to a message. Long-press any message — yours or theirs — and
+          pick an emoji. Tap the same one again to take it back. Whoever sent
+          the message gets a notification, the same as for a new message.
+        - Reply to a message. Swipe it sideways, or long-press and choose
+          Reply. The reply shows what it is answering, and tapping that quote
+          jumps back to the original.
+        - Edit a message you have sent. Long-press one of your own messages and
+          choose Edit. Edited messages are marked as edited, so nobody is left
+          wondering whether they misread it.
+        - Pause a voice note while recording it and carry on where you left
+          off. It stays one message instead of several.
 
         Fixed
 
+        - Voice notes no longer play over each other. Starting one stops
+          whichever was already playing, and coming back to a note resumes it
+          rather than starting it again from the beginning. Leaving a chat
+          stops playback instead of letting it follow you.
+        - Deleting a message now updates Chats straight away. The conversation
+          moves to its proper place in the list and the preview underneath it
+          changes to whatever the newest message is now, instead of still
+          showing the message you deleted until the next refresh.
         - Random sign-outs. Writing a comment — or anything else that sent
           several requests at once — could quietly end your session, leaving
           every screen failing until you signed in again.
