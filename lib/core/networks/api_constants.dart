@@ -19,6 +19,7 @@ class ApiConstants {
   static const String updateDeletePost = "/api/posts/{id}";
   static const String likePost = "/api/posts/{id}/like";
   static const String unlikePost = "/api/posts/{id}/unlike";
+  static String postLikes(int postId)         => "/api/posts/$postId/likes";
   static const String postComments = "/api/posts/{id}/comments";
   static const String comments = "/api/comments/{id}";
   static const String likeComment = "/api/comments/{id}/like";

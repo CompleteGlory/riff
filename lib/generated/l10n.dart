@@ -3918,6 +3918,26 @@ class S {
       args: [],
     );
   }
+
+  /// `Likes`
+  String get postLikesTitle {
+    return Intl.message('Likes', name: 'postLikesTitle', desc: '', args: []);
+  }
+
+  /// `No likes yet`
+  String get noLikesYet {
+    return Intl.message('No likes yet', name: 'noLikesYet', desc: '', args: []);
+  }
+
+  /// `When people like this post, they'll show up here.`
+  String get noLikesYetSubtitle {
+    return Intl.message(
+      'When people like this post, they\'ll show up here.',
+      name: 'noLikesYetSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

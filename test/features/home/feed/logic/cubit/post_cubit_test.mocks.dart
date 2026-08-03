@@ -7,10 +7,11 @@ import 'dart:async' as _i4;
 
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:riff/core/networks/api_result.dart' as _i2;
-import 'package:riff/features/home/feed/data/models/post.dart' as _i6;
-import 'package:riff/features/home/feed/data/models/posts_response.dart' as _i7;
-import 'package:riff/features/home/feed/data/repos/feed_repo.dart' as _i5;
+import 'package:riff/features/home/feed/data/models/post.dart' as _i7;
+import 'package:riff/features/home/feed/data/models/posts_response.dart' as _i8;
+import 'package:riff/features/home/feed/data/repos/feed_repo.dart' as _i6;
 import 'package:riff/features/home/feed/data/repos/like_repo.dart' as _i3;
+import 'package:riff/features/home/follow/data/models/follow_user.dart' as _i5;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -39,6 +40,19 @@ class MockLikeRepo extends _i1.Mock implements _i3.LikeRepo {
   MockLikeRepo() {
     _i1.throwOnMissingStub(this);
   }
+
+  @override
+  _i4.Future<_i2.ApiResult<List<_i5.FollowUser>>> getPostLikers(int? postId) =>
+      (super.noSuchMethod(
+            Invocation.method(#getPostLikers, [postId]),
+            returnValue: _i4.Future<_i2.ApiResult<List<_i5.FollowUser>>>.value(
+              _FakeApiResult_0<List<_i5.FollowUser>>(
+                this,
+                Invocation.method(#getPostLikers, [postId]),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.ApiResult<List<_i5.FollowUser>>>);
 
   @override
   _i4.Future<_i2.ApiResult<bool>> likePost(String? postId) =>
@@ -70,55 +84,55 @@ class MockLikeRepo extends _i1.Mock implements _i3.LikeRepo {
 /// A class which mocks [FeedRepo].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockFeedRepo extends _i1.Mock implements _i5.FeedRepo {
+class MockFeedRepo extends _i1.Mock implements _i6.FeedRepo {
   MockFeedRepo() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i4.Future<_i2.ApiResult<_i6.Post>> getPostById(int? postId) =>
+  _i4.Future<_i2.ApiResult<_i7.Post>> getPostById(int? postId) =>
       (super.noSuchMethod(
             Invocation.method(#getPostById, [postId]),
-            returnValue: _i4.Future<_i2.ApiResult<_i6.Post>>.value(
-              _FakeApiResult_0<_i6.Post>(
+            returnValue: _i4.Future<_i2.ApiResult<_i7.Post>>.value(
+              _FakeApiResult_0<_i7.Post>(
                 this,
                 Invocation.method(#getPostById, [postId]),
               ),
             ),
           )
-          as _i4.Future<_i2.ApiResult<_i6.Post>>);
+          as _i4.Future<_i2.ApiResult<_i7.Post>>);
 
   @override
-  _i4.Future<_i2.ApiResult<_i7.PostsResponse>> getPosts(
+  _i4.Future<_i2.ApiResult<_i8.PostsResponse>> getPosts(
     int? page,
     int? limit,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#getPosts, [page, limit]),
-            returnValue: _i4.Future<_i2.ApiResult<_i7.PostsResponse>>.value(
-              _FakeApiResult_0<_i7.PostsResponse>(
+            returnValue: _i4.Future<_i2.ApiResult<_i8.PostsResponse>>.value(
+              _FakeApiResult_0<_i8.PostsResponse>(
                 this,
                 Invocation.method(#getPosts, [page, limit]),
               ),
             ),
           )
-          as _i4.Future<_i2.ApiResult<_i7.PostsResponse>>);
+          as _i4.Future<_i2.ApiResult<_i8.PostsResponse>>);
 
   @override
-  _i4.Future<_i2.ApiResult<_i6.Post>> sharePost(
+  _i4.Future<_i2.ApiResult<_i7.Post>> sharePost(
     String? postId, {
     String? caption,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#sharePost, [postId], {#caption: caption}),
-            returnValue: _i4.Future<_i2.ApiResult<_i6.Post>>.value(
-              _FakeApiResult_0<_i6.Post>(
+            returnValue: _i4.Future<_i2.ApiResult<_i7.Post>>.value(
+              _FakeApiResult_0<_i7.Post>(
                 this,
                 Invocation.method(#sharePost, [postId], {#caption: caption}),
               ),
             ),
           )
-          as _i4.Future<_i2.ApiResult<_i6.Post>>);
+          as _i4.Future<_i2.ApiResult<_i7.Post>>);
 
   @override
   _i4.Future<void> recordView(int? postId) =>
@@ -130,15 +144,15 @@ class MockFeedRepo extends _i1.Mock implements _i5.FeedRepo {
           as _i4.Future<void>);
 
   @override
-  _i4.Future<_i2.ApiResult<_i6.Post?>> getTrendingPost() =>
+  _i4.Future<_i2.ApiResult<_i7.Post?>> getTrendingPost() =>
       (super.noSuchMethod(
             Invocation.method(#getTrendingPost, []),
-            returnValue: _i4.Future<_i2.ApiResult<_i6.Post?>>.value(
-              _FakeApiResult_0<_i6.Post?>(
+            returnValue: _i4.Future<_i2.ApiResult<_i7.Post?>>.value(
+              _FakeApiResult_0<_i7.Post?>(
                 this,
                 Invocation.method(#getTrendingPost, []),
               ),
             ),
           )
-          as _i4.Future<_i2.ApiResult<_i6.Post?>>);
+          as _i4.Future<_i2.ApiResult<_i7.Post?>>);
 }

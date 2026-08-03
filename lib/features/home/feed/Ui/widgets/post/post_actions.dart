@@ -14,6 +14,13 @@ class PostActions extends StatelessWidget {
   final VoidCallback onCommentTap;
   final VoidCallback onShareTap;
 
+  /// Opens the list of people who liked the post.
+  ///
+  /// Split from [onLikeTap] deliberately: the heart toggles your own like, the
+  /// number next to it shows whose likes they are. Putting both on one target
+  /// would mean you can't look without also liking.
+  final VoidCallback? onLikeCountTap;
+
   const PostActions({
     super.key,
     required this.isLiked,
@@ -24,6 +31,7 @@ class PostActions extends StatelessWidget {
     required this.onLikeTap,
     required this.onCommentTap,
     required this.onShareTap,
+    this.onLikeCountTap,
   });
 
   @override
@@ -40,6 +48,7 @@ class PostActions extends StatelessWidget {
           color: isLiked ? ColorManager.red : mutedColor,
           label: _formatCount(likeCount),
           onTap: onLikeTap,
+          onLabelTap: likeCount > 0 ? onLikeCountTap : null,
         ),
         SizedBox(width: 20.w),
         _ActionButton(
@@ -94,12 +103,17 @@ class _ActionButton extends StatefulWidget {
     required this.color,
     required this.label,
     required this.onTap,
+    this.onLabelTap,
   });
 
   final String svgAsset;
   final Color color;
   final String label;
   final VoidCallback onTap;
+
+  /// When set, the count becomes its own tap target instead of part of the
+  /// icon's. Null leaves the whole button behaving as one.
+  final VoidCallback? onLabelTap;
 
   @override
   State<_ActionButton> createState() => _ActionButtonState();
@@ -137,7 +151,9 @@ class _ActionButtonState extends State<_ActionButton>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final onLabelTap = widget.onLabelTap;
+
+    final icon = GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
@@ -164,10 +180,38 @@ class _ActionButtonState extends State<_ActionButton>
                     ColorFilter.mode(widget.color, BlendMode.srcIn),
               ),
             ),
-            SizedBox(width: 5.w),
+            // The count stays inside the icon's tap target unless it has been
+            // given one of its own.
+            if (onLabelTap == null) ...[
+              SizedBox(width: 5.w),
+              _count(),
+            ],
+          ],
+        ),
+      ),
+    );
 
-            // Count — slides up when value changes
-            AnimatedSwitcher(
+    if (onLabelTap == null) return icon;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        icon,
+        GestureDetector(
+          onTap: onLabelTap,
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            // Padding rather than a SizedBox gap, so the count has a target big
+            // enough to hit without stealing area from the icon.
+            padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 4.h),
+            child: _count(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _count() => AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               transitionBuilder: (child, anim) => FadeTransition(
                 opacity: anim,
@@ -181,15 +225,10 @@ class _ActionButtonState extends State<_ActionButton>
                   child: child,
                 ),
               ),
-              child: Text(
-                widget.label,
-                key: ValueKey(widget.label),
-                style: TextStyles.font12semiBold.copyWith(color: widget.color),
-              ),
-            ),
-          ],
+        child: Text(
+          widget.label,
+          key: ValueKey(widget.label),
+          style: TextStyles.font12semiBold.copyWith(color: widget.color),
         ),
-      ),
-    );
-  }
+      );
 }

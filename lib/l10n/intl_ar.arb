@@ -439,5 +439,8 @@
   "messageFailed": "لم تُرسل",
   "messageRetrySend": "إعادة المحاولة",
   "messageDiscard": "تجاهل",
-  "messageFailedSheetTitle": "لم يتم إرسال هذه الرسالة"
+  "messageFailedSheetTitle": "لم يتم إرسال هذه الرسالة",
+  "postLikesTitle": "الإعجابات",
+  "noLikesYet": "لا توجد إعجابات بعد",
+  "noLikesYetSubtitle": "عندما يعجب الآخرون بهذا المنشور، سيظهرون هنا."
 }

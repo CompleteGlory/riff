@@ -208,6 +208,19 @@ class _PostItemState extends State<PostItem>
     );
   }
 
+  /// Opens the list of people who liked [post].
+  void _openLikers(Post post) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FollowListScreen.postLikers(
+          postId: post.id,
+          authorName: post.author?.username ?? '',
+        ),
+      ),
+    );
+  }
+
   void _sharePost() {
     showModalBottomSheet(
       context: context,
@@ -336,6 +349,7 @@ class _PostItemState extends State<PostItem>
                     shareCount: shareCount,
                     viewsCount: viewsCount,
                     onLikeTap: _toggleLike,
+                    onLikeCountTap: () => _openLikers(post),
                     onCommentTap: () => _openComments(post.id.toString()),
                     onShareTap: _sharePost,
                   ),
