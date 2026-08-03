@@ -9,6 +9,7 @@ import 'package:riff/core/logic/reconnect_refresh.dart';
 import '../../data/models/chat_models.dart';
 import '../../data/repos/chat_repo.dart';
 import 'conversation_dedupe.dart';
+import 'conversation_ordering.dart';
 
 part 'chats_list_state.dart';
 
@@ -125,6 +126,11 @@ class ChatsListCubit extends Cubit<ChatsListState>
 
     final conv = cur.conversations[idx];
     conv.latestMessage = msg;
+    // Keep the sort key in step with the row. The explicit move below is what
+    // puts it on top now, but a later re-sort — after a message is deleted
+    // somewhere else in the list — reads this, and a stale value would drop
+    // the conversation back down as if the new message had never arrived.
+    conv.lastMessageAt = msg.createdAt;
     // Only increment if the user isn't actively viewing this conversation
     // AND this message wasn't sent by the current user themselves.
     final isOwnMessage = myId != null && myId.isNotEmpty && msg.sender?.id == myId;
@@ -142,6 +148,59 @@ class ChatsListCubit extends Cubit<ChatsListState>
       ..insert(0, conv);
 
     emit(ChatsListLoaded(conversations: reordered, requests: cur.requests));
+  }
+
+  /// Called when a message is deleted for everyone — re-sorts the list on the
+  /// message that is now the most recent one.
+  ///
+  /// Deleting the newest message in a conversation moves that conversation
+  /// *down*, to wherever the message before it belongs, so unlike
+  /// [onNewMessage] this can't be expressed as "move to the front". The server
+  /// sends the conversation's new `last_message_at` and preview with the
+  /// deletion, and the whole list is re-sorted on the timestamps.
+  ///
+  /// Deleting anything other than the newest message changes neither, so the
+  /// order simply stays as it was.
+  void onMessageDeleted(
+    String conversationId, {
+    required ChatMessage? latestMessage,
+    required DateTime? lastMessageAt,
+  }) {
+    final cur = state;
+    if (cur is! ChatsListLoaded || isClosed) return;
+
+    final idx = cur.conversations.indexWhere((c) => c.id == conversationId);
+    if (idx == -1) return;
+
+    final conv = cur.conversations[idx];
+    conv.latestMessage = latestMessage;
+    conv.lastMessageAt = lastMessageAt;
+
+    emit(ChatsListLoaded(
+      conversations: sortConversationsByRecency(cur.conversations),
+      requests: cur.requests,
+    ));
+  }
+
+  /// Called when a message's text is rewritten — refreshes the row's preview
+  /// when it was the one being previewed. Ordering is untouched: an edit
+  /// doesn't make a conversation any more recent.
+  void onMessageEdited(ChatMessage edited) {
+    final cur = state;
+    if (cur is! ChatsListLoaded || isClosed) return;
+
+    final idx =
+        cur.conversations.indexWhere((c) => c.id == edited.conversationId);
+    if (idx == -1) return;
+    final conv = cur.conversations[idx];
+    if (conv.latestMessage?.id != edited.id) return;
+
+    conv.latestMessage = conv.latestMessage!
+        .copyWith(content: edited.content, editedAt: edited.editedAt);
+    emit(ChatsListLoaded(
+      conversations: cur.conversations,
+      requests: cur.requests,
+    ));
   }
 
   /// Zero out the unread count for a conversation instantly (called when user

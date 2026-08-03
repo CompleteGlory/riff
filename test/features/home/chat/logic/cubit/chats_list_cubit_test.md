@@ -15,6 +15,18 @@ into the list:
 - **`acceptRequest`** — moves the conversation from requests into the list, and
   doesn't duplicate one that a refresh already moved across.
 
+- **`onMessageDeleted`** — the one event that moves a conversation *down* the
+  list. Deleting the newest message leaves the conversation sorting by whatever
+  is left, which can be older than several conversations below it; every other
+  event only ever moves a conversation to the top. Covered: the re-sort when
+  the newest message goes, the order staying put when an older one goes, the
+  row's preview and sort key following the server's payload, a conversation
+  left with nothing falling back to `created_at`, and an unknown conversation
+  id being ignored.
+- **`onMessageEdited`** — refreshes the row's preview when the edited message
+  is the one being previewed, and leaves it alone otherwise. Ordering is
+  untouched: an edit doesn't make a conversation more recent.
+
 ## What's mocked
 
 `ChatRepo` — mockito mock (`@GenerateMocks`). No socket involved.

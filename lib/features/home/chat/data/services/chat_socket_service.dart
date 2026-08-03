@@ -27,6 +27,9 @@ class ChatSocketService {
   final _msgStatusCtrl       = StreamController<Map<String, dynamic>>.broadcast();
   final _convDeletedCtrl     = StreamController<String>.broadcast();
   final _connectionCtrl      = StreamController<bool>.broadcast();
+  final _msgDeletedCtrl      = StreamController<Map<String, dynamic>>.broadcast();
+  final _msgEditedCtrl       = StreamController<ChatMessage>.broadcast();
+  final _msgReactionCtrl     = StreamController<Map<String, dynamic>>.broadcast();
 
   Stream<ChatMessage> get onMessage                => _messageController.stream;
   Stream<Map<String, dynamic>> get onTyping        => _typingController.stream;
@@ -41,6 +44,21 @@ class ChatSocketService {
   Stream<String> get onConversationDeleted         => _convDeletedCtrl.stream;
   /// Emits true on connect, false on disconnect / handshake rejection.
   Stream<bool> get onConnectionChanged             => _connectionCtrl.stream;
+
+  /// A message was deleted for everyone. Payload:
+  /// `{conversation_id, message_id, last_message_at, latest_message}` — the
+  /// last two describe where the conversation now sorts and what its row
+  /// should preview, since deleting the newest message moves it *down* the
+  /// chat list rather than to the top.
+  Stream<Map<String, dynamic>> get onMessageDeleted => _msgDeletedCtrl.stream;
+
+  /// A message's text was rewritten. Carries the whole updated message.
+  Stream<ChatMessage> get onMessageEdited          => _msgEditedCtrl.stream;
+
+  /// A message's reactions changed. Payload:
+  /// `{conversation_id, message_id, reactions, actor_id}` — always the full
+  /// list, never a delta.
+  Stream<Map<String, dynamic>> get onMessageReaction => _msgReactionCtrl.stream;
 
   bool get isConnected => _socket?.connected ?? false;
 
@@ -146,6 +164,25 @@ class ChatSocketService {
     _socket!.on('message_status', (data) {
       try {
         _msgStatusCtrl.add(Map<String, dynamic>.from(data as Map));
+      } catch (_) {}
+    });
+
+    _socket!.on('message_deleted', (data) {
+      try {
+        _msgDeletedCtrl.add(Map<String, dynamic>.from(data as Map));
+      } catch (_) {}
+    });
+
+    _socket!.on('message_edited', (data) {
+      try {
+        _msgEditedCtrl.add(
+            ChatMessage.fromJson(Map<String, dynamic>.from(data as Map)));
+      } catch (_) {}
+    });
+
+    _socket!.on('message_reaction', (data) {
+      try {
+        _msgReactionCtrl.add(Map<String, dynamic>.from(data as Map));
       } catch (_) {}
     });
 
@@ -273,5 +310,8 @@ class ChatSocketService {
     _presenceController.close();
     _convDeletedCtrl.close();
     _connectionCtrl.close();
+    _msgDeletedCtrl.close();
+    _msgEditedCtrl.close();
+    _msgReactionCtrl.close();
   }
 }

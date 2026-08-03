@@ -21,6 +21,13 @@ class MessageBubble extends StatelessWidget {
   /// Called when the user taps a message whose send failed.
   final VoidCallback? onRetry;
 
+  /// The signed-in user's id, so a reaction chip can show whether it is one of
+  /// theirs. Null only before it has been loaded.
+  final String? myId;
+
+  /// Called when the user taps a reaction chip — toggles that emoji.
+  final void Function(String emoji)? onReactionTap;
+
   /// Identifies the tap target that opens the fullscreen image viewer.
   ///
   /// Exposed for tests: `Image.file` doesn't resolve under the test binding, so
@@ -35,6 +42,8 @@ class MessageBubble extends StatelessWidget {
     this.showStatus = false,
     this.onLongPress,
     this.onRetry,
+    this.myId,
+    this.onReactionTap,
   });
 
   @override
@@ -97,12 +106,34 @@ class MessageBubble extends StatelessWidget {
                     onImageTap:
                         message.hasFailed ? null : () => _openImage(context),
                   ),
+                  if (message.reactions.isNotEmpty) ...[
+                    SizedBox(height: 4.h),
+                    _ReactionChips(
+                      summaries:
+                          ReactionSummary.from(message.reactions, myId),
+                      isDark: isDark,
+                      onTap: onReactionTap,
+                    ),
+                  ],
                   SizedBox(height: 2.h),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 4.w),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        if (message.isEdited) ...[
+                          Text(
+                            S.of(context).messageEditedLabel,
+                            style: TextStyles.font12regular.copyWith(
+                              color: isDark
+                                  ? ColorManager.normalGrey
+                                  : ColorManager.darkGrey,
+                              fontSize: 10,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                          SizedBox(width: 4.w),
+                        ],
                         Text(
                           _fmt(message.createdAt),
                           style: TextStyles.font12regular.copyWith(
@@ -152,6 +183,67 @@ class MessageBubble extends StatelessWidget {
 
   String _fmt(DateTime dt) =>
       '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+}
+
+// ─── Reactions ────────────────────────────────────────────────────────────────
+
+/// The row of reaction chips under a bubble — one per distinct emoji, with a
+/// count once more than one person has picked it.
+///
+/// The chip for an emoji the signed-in user picked is outlined, so they can
+/// tell at a glance which one is theirs; tapping it takes their reaction back.
+class _ReactionChips extends StatelessWidget {
+  final List<ReactionSummary> summaries;
+  final bool isDark;
+  final void Function(String emoji)? onTap;
+
+  const _ReactionChips({
+    required this.summaries,
+    required this.isDark,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 4.w,
+      runSpacing: 4.h,
+      children: [
+        for (final s in summaries)
+          GestureDetector(
+            onTap: onTap == null ? null : () => onTap!(s.emoji),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0F0F0),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(
+                  color: s.reactedByMe
+                      ? ColorManager.accent
+                      : Colors.transparent,
+                  width: 1,
+                ),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text(s.emoji, style: TextStyle(fontSize: 12.sp)),
+                if (s.count > 1) ...[
+                  SizedBox(width: 3.w),
+                  Text(
+                    '${s.count}',
+                    style: TextStyles.font12regular.copyWith(
+                      fontSize: 10,
+                      color: isDark
+                          ? ColorManager.normalGrey
+                          : ColorManager.darkGrey,
+                    ),
+                  ),
+                ],
+              ]),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 // ─── Delivery indicator ───────────────────────────────────────────────────────
@@ -641,7 +733,7 @@ class _DeletedBubble extends StatelessWidget {
               size: 14,
               color: isDark ? ColorManager.normalGrey : ColorManager.darkGrey),
           SizedBox(width: 6.w),
-          Text('Message deleted',
+          Text(S.of(context).messageDeletedLabel,
               style: TextStyles.font14regular.copyWith(
                   fontStyle: FontStyle.italic,
                   color: isDark

@@ -23,6 +23,12 @@ class ChatLoaded extends ChatState {
   /// the live conversation.
   final bool isFromCache;
 
+  /// The message the composer is currently rewriting, or null when it is
+  /// composing a new one. Kept in state rather than in the input bar so that
+  /// tapping "Edit" in the long-press sheet — which happens well away from the
+  /// composer — is all it takes to put it into edit mode.
+  final ChatMessage? editingMessage;
+
   ChatLoaded({
     required this.conversation,
     required this.messages,
@@ -32,6 +38,7 @@ class ChatLoaded extends ChatState {
     this.isBlocked = false,
     this.sendingMediaType,
     this.isFromCache = false,
+    this.editingMessage,
   });
 
   ChatLoaded copyWith({
@@ -43,6 +50,7 @@ class ChatLoaded extends ChatState {
     bool? isBlocked,
     bool? isFromCache,
     Object? sendingMediaType = _sentinel,
+    Object? editingMessage = _sentinel,
   }) => ChatLoaded(
     conversation: conversation ?? this.conversation,
     messages: messages ?? this.messages,
@@ -54,6 +62,9 @@ class ChatLoaded extends ChatState {
     sendingMediaType: sendingMediaType == _sentinel
         ? this.sendingMediaType
         : sendingMediaType as String?,
+    editingMessage: editingMessage == _sentinel
+        ? this.editingMessage
+        : editingMessage as ChatMessage?,
   );
 }
 

@@ -81,6 +81,8 @@ class ApiConstants {
   static String chatMessages(String id)        => '/api/chat/conversations/$id/messages';
   static String chatUpload(String id)          => '/api/chat/conversations/$id/messages/upload';
   static String chatDeleteMessage(String c, String m) => '/api/chat/conversations/$c/messages/$m';
+  static String chatEditMessage(String c, String m)   => '/api/chat/conversations/$c/messages/$m';
+  static String chatMessageReactions(String c, String m) => '/api/chat/conversations/$c/messages/$m/reactions';
   static String chatAcceptRequest(String id)   => '/api/chat/requests/$id/accept';
   static String chatDeclineRequest(String id)  => '/api/chat/requests/$id';
   static String chatGroupUpdate(String id)     => '/api/chat/conversations/$id/group';
