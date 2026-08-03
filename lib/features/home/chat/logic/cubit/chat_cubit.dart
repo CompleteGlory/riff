@@ -15,7 +15,7 @@ part 'chat_state.dart';
 
 /// Everything needed to send one message again after it failed.
 class _OutboundMessage {
-  const _OutboundMessage.text(this.text)
+  const _OutboundMessage.text(this.text, {this.replyToId})
       : filePath = null,
         fileName = null,
         mimeType = null,
@@ -26,6 +26,7 @@ class _OutboundMessage {
     required String this.fileName,
     required String this.mimeType,
     this.duration,
+    this.replyToId,
   }) : text = null;
 
   final String? text;
@@ -33,6 +34,10 @@ class _OutboundMessage {
   final String? fileName;
   final String? mimeType;
   final int? duration;
+
+  /// Kept alongside the payload so a retry still answers the same message —
+  /// the reply banner is long gone by the time the user taps retry.
+  final String? replyToId;
 
   bool get isText => text != null;
 }
@@ -361,10 +366,11 @@ class ChatCubit extends Cubit<ChatState> {
       messages: cur.messages
           .map((m) => m.id == messageId ? m.copyWith(isDeleted: true) : m)
           .toList(),
-      // A message being rewritten that someone then deletes would leave the
-      // composer editing something that no longer exists.
+      // A message being rewritten — or answered — that someone then deletes
+      // would leave the composer pointed at something that no longer exists.
       editingMessage:
           cur.editingMessage?.id == messageId ? null : cur.editingMessage,
+      replyingTo: cur.replyingTo?.id == messageId ? null : cur.replyingTo,
     ));
     unawaited(_cacheMessages());
   }
@@ -458,8 +464,14 @@ class ChatCubit extends Cubit<ChatState> {
     final cur = state;
     if (convId == null || cur is! ChatLoaded) return false;
 
+    // Taken before the emit below clears it: the composer's reply banner is
+    // dismissed as the message goes, but the message itself has to keep
+    // answering what it was written against.
+    final quoted = cur.replyingTo;
+
     final clientId = _newClientId();
-    _outbound[clientId] = _OutboundMessage.text(text);
+    _outbound[clientId] =
+        _OutboundMessage.text(text, replyToId: quoted?.id);
     emit(cur.copyWith(messages: [
       ChatMessage(
         id: clientId,
@@ -471,20 +483,44 @@ class ChatCubit extends Cubit<ChatState> {
         sender: _me,
         clientId: clientId,
         delivery: MessageDelivery.pending,
+        // The quote is drawn on the optimistic bubble too, from what is
+        // already on screen — waiting for the server's copy would make the
+        // reply appear detached from the message it answers.
+        replyTo: _quoteOf(quoted),
       ),
       ...cur.messages,
-    ]));
+    ], replyingTo: null));
 
-    return _dispatchText(clientId, convId, text);
+    return _dispatchText(clientId, convId, text, replyToId: quoted?.id);
+  }
+
+  /// Builds the quote block for a message being replied to.
+  RepliedMessage? _quoteOf(ChatMessage? message) {
+    if (message == null) return null;
+    return RepliedMessage(
+      id: message.id,
+      senderId: message.sender?.id ?? '',
+      senderName: message.sender?.username ?? message.sender?.fullName,
+      type: message.type,
+      isDeleted: message.isDeleted,
+      content: message.content,
+      mediaUrl: message.mediaUrl,
+      fileName: message.fileName,
+    );
   }
 
   Future<bool> _dispatchText(
     String clientId,
     String conversationId,
-    String text,
-  ) async {
-    final ok =
-        await _socket.sendTextMessage(conversationId, text, clientId: clientId);
+    String text, {
+    String? replyToId,
+  }) async {
+    final ok = await _socket.sendTextMessage(
+      conversationId,
+      text,
+      clientId: clientId,
+      replyToId: replyToId,
+    );
     if (isClosed) return ok;
     if (!ok) {
       _markFailed(clientId);
@@ -504,12 +540,15 @@ class ChatCubit extends Cubit<ChatState> {
     final cur = state;
     if (convId == null || cur is! ChatLoaded) return;
 
+    final quoted = cur.replyingTo;
+
     final clientId = _newClientId();
     _outbound[clientId] = _OutboundMessage.media(
       filePath: filePath,
       fileName: fileName,
       mimeType: mimeType,
       duration: duration,
+      replyToId: quoted?.id,
     );
 
     emit(cur.copyWith(messages: [
@@ -525,9 +564,10 @@ class ChatCubit extends Cubit<ChatState> {
         clientId: clientId,
         delivery: MessageDelivery.pending,
         localMediaPath: filePath,
+        replyTo: _quoteOf(quoted),
       ),
       ...cur.messages,
-    ]));
+    ], replyingTo: null));
 
     await _dispatchMedia(clientId, convId, _outbound[clientId]!);
   }
@@ -545,6 +585,7 @@ class ChatCubit extends Cubit<ChatState> {
         outbound.mimeType!,
         duration: outbound.duration,
         clientId: clientId,
+        replyToId: outbound.replyToId,
       );
       if (isClosed) return;
       _replaceOptimistic(clientId, msg);
@@ -576,10 +617,39 @@ class ChatCubit extends Cubit<ChatState> {
     ));
 
     if (outbound.isText) {
-      await _dispatchText(clientId, convId, outbound.text!);
+      await _dispatchText(
+        clientId,
+        convId,
+        outbound.text!,
+        replyToId: outbound.replyToId,
+      );
     } else {
       await _dispatchMedia(clientId, convId, outbound);
     }
+  }
+
+  // ── Replying ──────────────────────────────────────────────────────────────
+
+  /// Points the composer at [message], so the next thing sent quotes it.
+  ///
+  /// Clears any edit in progress: rewriting a message and answering one are
+  /// two different things to be doing with the same text field.
+  void startReplying(ChatMessage message) {
+    final cur = state;
+    if (cur is! ChatLoaded || isClosed) return;
+    // Nothing to answer until the server knows the message exists — the quote
+    // would point at a client-side id no one else can resolve.
+    if (message.delivery != MessageDelivery.complete || message.isDeleted) {
+      return;
+    }
+    emit(cur.copyWith(replyingTo: message, editingMessage: null));
+  }
+
+  void cancelReplying() {
+    final cur = state;
+    if (cur is! ChatLoaded || isClosed) return;
+    if (cur.replyingTo == null) return;
+    emit(cur.copyWith(replyingTo: null));
   }
 
   /// Drops a failed message the user has given up on.
@@ -734,7 +804,7 @@ class ChatCubit extends Cubit<ChatState> {
   void startEditing(ChatMessage message) {
     final cur = state;
     if (cur is! ChatLoaded || isClosed || !message.canBeEdited) return;
-    emit(cur.copyWith(editingMessage: message));
+    emit(cur.copyWith(editingMessage: message, replyingTo: null));
   }
 
   void cancelEditing() {

@@ -40,7 +40,9 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m9(time) => "Last seen yesterday at ${time}";
 
-  static String m10(name) =>
+  static String m10(name) => "Replying to ${name}";
+
+  static String m11(name) =>
       "${name} wants to send you a message.\nThey can\'t see that you\'ve viewed this request.";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -138,6 +140,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "cancelBtn": MessageLookupByLibrary.simpleMessage("Cancel"),
     "cancelEditTooltip": MessageLookupByLibrary.simpleMessage("Cancel edit"),
+    "cancelReplyTooltip": MessageLookupByLibrary.simpleMessage("Cancel reply"),
     "changePasswordBtn": MessageLookupByLibrary.simpleMessage(
       "Change Password",
     ),
@@ -574,6 +577,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Only approved followers can see your posts",
     ),
     "orDivider": MessageLookupByLibrary.simpleMessage("Or"),
+    "originalMessageUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Original message unavailable",
+    ),
     "otherReason": MessageLookupByLibrary.simpleMessage("Other"),
     "passwordChangedFailure": MessageLookupByLibrary.simpleMessage(
       "Failed to change password. Please try again.",
@@ -785,6 +791,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "reactToMessageTitle": MessageLookupByLibrary.simpleMessage("React"),
     "recordVideo": MessageLookupByLibrary.simpleMessage("Record Video"),
+    "recordingInProgress": MessageLookupByLibrary.simpleMessage("Recording…"),
+    "recordingPaused": MessageLookupByLibrary.simpleMessage("Paused"),
     "reelsTitle": MessageLookupByLibrary.simpleMessage("Reels"),
     "removeBtn": MessageLookupByLibrary.simpleMessage("Remove"),
     "removeFollowerTitle": MessageLookupByLibrary.simpleMessage(
@@ -793,6 +801,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "removeReactionOption": MessageLookupByLibrary.simpleMessage(
       "Remove my reaction",
     ),
+    "replyMessageOption": MessageLookupByLibrary.simpleMessage("Reply"),
+    "replyToYou": MessageLookupByLibrary.simpleMessage("You"),
+    "replyingToLabel": m10,
     "reportABugDrawer": MessageLookupByLibrary.simpleMessage("Report a Bug"),
     "reportABugTitle": MessageLookupByLibrary.simpleMessage("Report a Bug"),
     "reportCommentTitle": MessageLookupByLibrary.simpleMessage(
@@ -808,7 +819,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Request a Feature",
     ),
     "requestBtn": MessageLookupByLibrary.simpleMessage("Request"),
-    "requestInfoMessage": m10,
+    "requestInfoMessage": m11,
     "requestedBtn": MessageLookupByLibrary.simpleMessage("Requested"),
     "requestedToFollowYou": MessageLookupByLibrary.simpleMessage(
       "requested to follow you.",

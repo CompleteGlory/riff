@@ -321,6 +321,74 @@ extension MessageTypeX on MessageType {
   }
 }
 
+/// The message a reply quotes, as shown in the quote block above it.
+///
+/// A flat snippet rather than a nested [ChatMessage]: the block needs a name,
+/// a one-line preview and an id to scroll to. Nesting the whole message would
+/// recurse through *its* reply, so a chain of replies would carry the entire
+/// thread in every payload.
+class RepliedMessage {
+  final String id;
+  final String senderId;
+  final String? senderName;
+  final MessageType type;
+
+  /// True when the quoted message has since been deleted for everyone. Its
+  /// text does not come back over the wire in that case, so the block renders
+  /// the same "message deleted" placeholder the bubble does.
+  final bool isDeleted;
+  final String? content;
+  final String? mediaUrl;
+  final String? fileName;
+
+  const RepliedMessage({
+    required this.id,
+    required this.senderId,
+    this.senderName,
+    this.type = MessageType.text,
+    this.isDeleted = false,
+    this.content,
+    this.mediaUrl,
+    this.fileName,
+  });
+
+  factory RepliedMessage.fromJson(Map<String, dynamic> j) => RepliedMessage(
+        id: j['id'] as String,
+        senderId: j['sender_id'] as String? ?? '',
+        senderName: j['sender_name'] as String?,
+        type: MessageTypeX.fromString(j['type'] as String? ?? 'text'),
+        isDeleted: j['is_deleted'] as bool? ?? false,
+        content: j['content'] as String?,
+        mediaUrl: ApiConstants.resolveUrl(j['media_url'] as String?),
+        fileName: j['file_name'] as String?,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'sender_id': senderId,
+        'sender_name': senderName,
+        'type': type.value,
+        'is_deleted': isDeleted,
+        'content': content,
+        'media_url': mediaUrl,
+        'file_name': fileName,
+      };
+
+  /// The one line shown in the quote block.
+  String get preview {
+    if (isDeleted) return '';
+    switch (type) {
+      case MessageType.text:
+      case MessageType.link:
+        return content ?? '';
+      case MessageType.image: return '📷 Photo';
+      case MessageType.video: return '🎥 Video';
+      case MessageType.audio: return '🎤 Voice message';
+      case MessageType.file: return '📎 ${fileName ?? 'File'}';
+    }
+  }
+}
+
 /// 'sent' = saved on server | 'delivered' = device received | 'read' = seen
 enum MessageStatus { sent, delivered, read }
 
@@ -366,6 +434,9 @@ class ChatMessage {
   /// Everyone who has reacted to this message, in the order they reacted.
   final List<MessageReaction> reactions;
 
+  /// The message this one replies to, or null when it replies to nothing.
+  final RepliedMessage? replyTo;
+
   /// Client-generated correlation id for an optimistic message.
   ///
   /// The socket echoes it back on the server's copy (`client_id`), which is how
@@ -394,6 +465,7 @@ class ChatMessage {
     this.status = MessageStatus.sent,
     this.editedAt,
     this.reactions = const [],
+    this.replyTo,
     this.clientId,
     this.delivery = MessageDelivery.complete,
     this.localMediaPath,
@@ -418,6 +490,10 @@ class ChatMessage {
             .map((r) => MessageReaction.fromJson(
                 Map<String, dynamic>.from(r as Map)))
             .toList(),
+        replyTo: j['reply_to'] != null
+            ? RepliedMessage.fromJson(
+                Map<String, dynamic>.from(j['reply_to'] as Map))
+            : null,
         clientId: j['client_id'] as String?,
       );
 
@@ -438,6 +514,7 @@ class ChatMessage {
         'status': status.name,
         'edited_at': editedAt?.toUtc().toIso8601String(),
         'reactions': reactions.map((r) => r.toJson()).toList(),
+        'reply_to': replyTo?.toJson(),
       };
 
   ChatMessage copyWith({
@@ -449,6 +526,7 @@ class ChatMessage {
     DateTime? createdAt,
     DateTime? editedAt,
     List<MessageReaction>? reactions,
+    RepliedMessage? replyTo,
     bool? isDeleted,
   }) =>
       ChatMessage(
@@ -465,6 +543,7 @@ class ChatMessage {
         status: status ?? this.status,
         editedAt: editedAt ?? this.editedAt,
         reactions: reactions ?? this.reactions,
+        replyTo: replyTo ?? this.replyTo,
         clientId: clientId,
         delivery: delivery ?? this.delivery,
         localMediaPath: localMediaPath,

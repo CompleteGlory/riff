@@ -40,7 +40,9 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m9(time) => "آخر ظهور أمس الساعة ${time}";
 
-  static String m10(name) =>
+  static String m10(name) => "رد على ${name}";
+
+  static String m11(name) =>
       "${name} يريد إرسال رسالة إليك.\nلا يمكنه رؤية أنك اطلعت على هذا الطلب.";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -138,6 +140,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "cancelBtn": MessageLookupByLibrary.simpleMessage("إلغاء"),
     "cancelEditTooltip": MessageLookupByLibrary.simpleMessage("إلغاء التعديل"),
+    "cancelReplyTooltip": MessageLookupByLibrary.simpleMessage("إلغاء الرد"),
     "changePasswordBtn": MessageLookupByLibrary.simpleMessage(
       "تغيير كلمة المرور",
     ),
@@ -566,6 +569,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "فقط المتابعون المعتمدون يمكنهم رؤية منشوراتك",
     ),
     "orDivider": MessageLookupByLibrary.simpleMessage("أو"),
+    "originalMessageUnavailable": MessageLookupByLibrary.simpleMessage(
+      "الرسالة الأصلية غير متاحة",
+    ),
     "otherReason": MessageLookupByLibrary.simpleMessage("أخرى"),
     "passwordChangedFailure": MessageLookupByLibrary.simpleMessage(
       "فشل تغيير كلمة المرور. يرجى المحاولة مجدداً.",
@@ -773,6 +779,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "reactToMessageTitle": MessageLookupByLibrary.simpleMessage("تفاعل"),
     "recordVideo": MessageLookupByLibrary.simpleMessage("تسجيل فيديو"),
+    "recordingInProgress": MessageLookupByLibrary.simpleMessage(
+      "جارٍ التسجيل…",
+    ),
+    "recordingPaused": MessageLookupByLibrary.simpleMessage("متوقف مؤقتًا"),
     "reelsTitle": MessageLookupByLibrary.simpleMessage("ريلز"),
     "removeBtn": MessageLookupByLibrary.simpleMessage("إزالة"),
     "removeFollowerTitle": MessageLookupByLibrary.simpleMessage(
@@ -781,6 +791,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "removeReactionOption": MessageLookupByLibrary.simpleMessage(
       "إزالة تفاعلي",
     ),
+    "replyMessageOption": MessageLookupByLibrary.simpleMessage("رد"),
+    "replyToYou": MessageLookupByLibrary.simpleMessage("أنت"),
+    "replyingToLabel": m10,
     "reportABugDrawer": MessageLookupByLibrary.simpleMessage("الإبلاغ عن خطأ"),
     "reportABugTitle": MessageLookupByLibrary.simpleMessage("الإبلاغ عن خطأ"),
     "reportCommentTitle": MessageLookupByLibrary.simpleMessage(
@@ -796,7 +809,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "requestAFeatureDrawer": MessageLookupByLibrary.simpleMessage("طلب ميزة"),
     "requestBtn": MessageLookupByLibrary.simpleMessage("طلب متابعة"),
-    "requestInfoMessage": m10,
+    "requestInfoMessage": m11,
     "requestedBtn": MessageLookupByLibrary.simpleMessage("تم الطلب"),
     "requestedToFollowYou": MessageLookupByLibrary.simpleMessage(
       "طلب متابعتك.",

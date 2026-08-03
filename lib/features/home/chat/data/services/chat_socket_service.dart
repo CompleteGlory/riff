@@ -266,6 +266,7 @@ class ChatSocketService {
     String conversationId,
     String text, {
     String? clientId,
+    String? replyToId,
   }) async {
     if (!await ensureConnected()) return false;
     _socket?.emit('send_message', {
@@ -273,6 +274,7 @@ class ChatSocketService {
       'type': 'text',
       'content': text,
       if (clientId != null) 'client_id': clientId,
+      if (replyToId != null) 'reply_to_id': replyToId,
     });
     return true;
   }

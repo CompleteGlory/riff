@@ -4004,6 +4004,66 @@ class S {
     );
   }
 
+  /// `Recording…`
+  String get recordingInProgress {
+    return Intl.message(
+      'Recording…',
+      name: 'recordingInProgress',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Paused`
+  String get recordingPaused {
+    return Intl.message('Paused', name: 'recordingPaused', desc: '', args: []);
+  }
+
+  /// `Reply`
+  String get replyMessageOption {
+    return Intl.message(
+      'Reply',
+      name: 'replyMessageOption',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Replying to {name}`
+  String replyingToLabel(Object name) {
+    return Intl.message(
+      'Replying to $name',
+      name: 'replyingToLabel',
+      desc: '',
+      args: [name],
+    );
+  }
+
+  /// `Cancel reply`
+  String get cancelReplyTooltip {
+    return Intl.message(
+      'Cancel reply',
+      name: 'cancelReplyTooltip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `You`
+  String get replyToYou {
+    return Intl.message('You', name: 'replyToYou', desc: '', args: []);
+  }
+
+  /// `Original message unavailable`
+  String get originalMessageUnavailable {
+    return Intl.message(
+      'Original message unavailable',
+      name: 'originalMessageUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Likes`
   String get postLikesTitle {
     return Intl.message('Likes', name: 'postLikesTitle', desc: '', args: []);

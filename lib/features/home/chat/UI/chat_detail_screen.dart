@@ -1,4 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -11,6 +13,7 @@ import 'package:riff/features/home/chat/logic/cubit/chat_cubit.dart';
 import 'package:riff/features/home/chat/UI/widgets/message_bubble.dart';
 import 'package:riff/features/home/chat/UI/widgets/chat_input_bar.dart';
 import 'package:riff/features/home/chat/logic/cubit/chats_list_cubit.dart';
+import 'package:riff/features/home/chat/logic/voice_note_playback.dart';
 import 'package:riff/features/home/user_profile/ui/user_profile_screen.dart';
 import 'package:riff/features/home/chat/UI/group_details_screen.dart';
 import 'package:riff/core/widgets/app_error_widget.dart';
@@ -28,6 +31,15 @@ class ChatDetailScreen extends StatefulWidget {
 class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final _scrollCtrl = ScrollController();
   String _myId = '';
+
+  /// Rough height of one bubble, used to aim the jump-to-quoted-message
+  /// scroll. Bubbles vary, so this lands the message on screen rather than at
+  /// an exact offset — good enough for "show me what this answers".
+  static const _estimatedBubbleExtent = 72.0;
+
+  /// The message briefly tinted after jumping to it from a reply's quote.
+  String? _highlightedMessageId;
+  Timer? _highlightTimer;
 
   @override
   void initState() {
@@ -69,7 +81,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   @override
   void dispose() {
+    _highlightTimer?.cancel();
     _scrollCtrl.dispose();
+    // Leaving the chat silences whatever voice note was playing. The bubbles go
+    // away with the list, but their audio isn't tied to being on screen —
+    // without this, a note kept talking over whatever the user moved on to.
+    unawaited(VoiceNotePlayback.instance.stopAll());
     super.dispose();
   }
 
@@ -205,8 +222,17 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     final isMe = msg.sender?.id == _myId ||
                         (msg.clientId != null && msg.sender == null);
                     // Show checkmarks on all own messages (WhatsApp-style)
-                    return Padding(
-                      padding: EdgeInsets.only(bottom: 6.h),
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      margin: EdgeInsets.only(bottom: 6.h),
+                      decoration: BoxDecoration(
+                        // Tints the message a reply's quote just jumped to, so
+                        // it's findable among bubbles that otherwise look alike.
+                        color: _highlightedMessageId == msg.id
+                            ? ColorManager.accent.withValues(alpha: 0.15)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
                       child: MessageBubble(
                         message: msg,
                         isMe: isMe,
@@ -227,6 +253,14 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                         // once the message is gone: reacting to — or deleting
                         // "for everyone" — a message the server has never
                         // heard of means nothing.
+                        onQuoteTap: _jumpToMessage,
+                        // A message still in flight has no server id to quote,
+                        // and a deleted one has nothing left to answer.
+                        onSwipeReply: msg.isPending ||
+                                msg.hasFailed ||
+                                msg.isDeleted
+                            ? null
+                            : () => ctx.read<ChatCubit>().startReplying(msg),
                         onLongPress: msg.isPending || msg.isDeleted
                             ? null
                             : () => msg.hasFailed
@@ -347,6 +381,38 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     );
   }
 
+  /// Scrolls to the message a reply quotes.
+  ///
+  /// Only reaches messages already loaded — the quoted message may be far
+  /// enough back that it hasn't been paged in, and there is no endpoint for
+  /// "fetch around this id". In that case the tap does nothing rather than
+  /// jumping somewhere arbitrary; scrolling up to load more history brings it
+  /// into range.
+  void _jumpToMessage(String messageId) {
+    final state = context.read<ChatCubit>().state;
+    if (state is! ChatLoaded) return;
+    final index = state.messages.indexWhere((m) => m.id == messageId);
+    if (index == -1 || !_scrollCtrl.hasClients) return;
+
+    // The list is reverse:true, so index 0 sits at the bottom and the offset
+    // grows going back in time. Bubbles vary in height, so this is an estimate
+    // that lands the message on screen rather than an exact position.
+    final target = (index * _estimatedBubbleExtent)
+        .clamp(0.0, _scrollCtrl.position.maxScrollExtent);
+    _scrollCtrl.animateTo(
+      target,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+    setState(() => _highlightedMessageId = messageId);
+    // The highlight is a pointer, not a selection — it fades on its own so the
+    // user doesn't have to dismiss it.
+    _highlightTimer?.cancel();
+    _highlightTimer = Timer(const Duration(milliseconds: 1600), () {
+      if (mounted) setState(() => _highlightedMessageId = null);
+    });
+  }
+
   /// The emoji the signed-in user has on [msg], or null if they haven't
   /// reacted — a user holds at most one reaction per message.
   String? _myReactionEmoji(ChatMessage msg) {
@@ -387,6 +453,14 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             onPick: (emoji) {
               Navigator.pop(ctx);
               cubit.toggleReaction(msg.id, emoji);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.reply_rounded),
+            title: Text(s.replyMessageOption),
+            onTap: () {
+              Navigator.pop(ctx);
+              cubit.startReplying(msg);
             },
           ),
           if (myEmoji != null)

@@ -449,6 +449,18 @@
   "messageEditFailed": "تعذّر حفظ التعديل",
   "reactToMessageTitle": "تفاعل",
   "removeReactionOption": "إزالة تفاعلي",
+  "recordingInProgress": "جارٍ التسجيل…",
+  "recordingPaused": "متوقف مؤقتًا",
+  "replyMessageOption": "رد",
+  "replyingToLabel": "رد على {name}",
+  "@replyingToLabel": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "cancelReplyTooltip": "إلغاء الرد",
+  "replyToYou": "أنت",
+  "originalMessageUnavailable": "الرسالة الأصلية غير متاحة",
   "postLikesTitle": "الإعجابات",
   "noLikesYet": "لا توجد إعجابات بعد",
   "noLikesYetSubtitle": "عندما يعجب الآخرون بهذا المنشور، سيظهرون هنا."

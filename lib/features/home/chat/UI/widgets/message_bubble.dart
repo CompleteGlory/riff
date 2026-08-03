@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/fullscsreen_image.dart';
+import 'package:riff/features/home/chat/logic/voice_note_playback.dart';
 import 'package:riff/generated/l10n.dart';
 import 'package:riff/features/social_share/UI/widgets/link_preview_card.dart';
 import 'package:riff/features/social_share/data/models/link_preview.dart';
@@ -28,6 +29,13 @@ class MessageBubble extends StatelessWidget {
   /// Called when the user taps a reaction chip — toggles that emoji.
   final void Function(String emoji)? onReactionTap;
 
+  /// Called when the user taps the quote block above a reply, to jump to the
+  /// message being answered.
+  final void Function(String messageId)? onQuoteTap;
+
+  /// Called when the user swipes the bubble sideways to reply to it.
+  final VoidCallback? onSwipeReply;
+
   /// Identifies the tap target that opens the fullscreen image viewer.
   ///
   /// Exposed for tests: `Image.file` doesn't resolve under the test binding, so
@@ -44,6 +52,8 @@ class MessageBubble extends StatelessWidget {
     this.onRetry,
     this.myId,
     this.onReactionTap,
+    this.onQuoteTap,
+    this.onSwipeReply,
   });
 
   @override
@@ -62,11 +72,14 @@ class MessageBubble extends StatelessWidget {
       child: _body(context, isDark),
     );
 
-    return GestureDetector(
+    final gestures = GestureDetector(
       onLongPress: onLongPress,
       onTap: message.hasFailed ? onRetry : null,
       child: bubble,
     );
+
+    if (onSwipeReply == null) return gestures;
+    return _SwipeToReply(onReply: onSwipeReply!, child: gestures);
   }
 
   Widget _body(BuildContext context, bool isDark) {
@@ -94,6 +107,18 @@ class MessageBubble extends StatelessWidget {
                             '',
                         style: TextStyles.font12semiBold
                             .copyWith(color: ColorManager.accent),
+                      ),
+                    ),
+                  if (message.replyTo != null)
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 3.h),
+                      child: _QuoteBlock(
+                        quoted: message.replyTo!,
+                        isDark: isDark,
+                        myId: myId,
+                        onTap: onQuoteTap == null
+                            ? null
+                            : () => onQuoteTap!(message.replyTo!.id),
                       ),
                     ),
                   _BubbleContent(
@@ -183,6 +208,156 @@ class MessageBubble extends StatelessWidget {
 
   String _fmt(DateTime dt) =>
       '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+}
+
+// ─── Reply quote ──────────────────────────────────────────────────────────────
+
+/// The quoted message shown above a reply — an accent bar, who is being
+/// quoted, and one line of what they said. Tapping it jumps to the original.
+class _QuoteBlock extends StatelessWidget {
+  final RepliedMessage quoted;
+  final bool isDark;
+
+  /// The signed-in user's id, so the quote can say "You" rather than repeating
+  /// the user's own name back at them.
+  final String? myId;
+  final VoidCallback? onTap;
+
+  /// Identifies the quote block's tap target for tests.
+  static const tapKey = Key('chatQuoteBlock');
+
+  const _QuoteBlock({
+    required this.quoted,
+    required this.isDark,
+    this.myId,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final name = (myId != null && myId!.isNotEmpty && quoted.senderId == myId)
+        ? S.of(context).replyToYou
+        : (quoted.senderName ?? '');
+    // A quote of a message that was deleted for everyone has no text to show —
+    // the server withholds it — so it reads as the deleted placeholder rather
+    // than as an empty box.
+    final line =
+        quoted.isDeleted ? S.of(context).messageDeletedLabel : quoted.preview;
+
+    return GestureDetector(
+      key: tapKey,
+      onTap: onTap,
+      child: Container(
+        constraints: BoxConstraints(maxWidth: 0.72.sw),
+        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.07)
+              : Colors.black.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border(
+            left: BorderSide(color: ColorManager.accent, width: 3.w),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (name.isNotEmpty)
+              Text(
+                name,
+                style: TextStyles.font12semiBold
+                    .copyWith(color: ColorManager.accent, fontSize: 11),
+              ),
+            Text(
+              line,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyles.font12regular.copyWith(
+                fontSize: 11,
+                fontStyle: quoted.isDeleted ? FontStyle.italic : null,
+                color:
+                    isDark ? ColorManager.normalGrey : ColorManager.darkGrey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Swipe to reply ───────────────────────────────────────────────────────────
+
+/// Drags the bubble a short way sideways and fires [onReply] past a threshold,
+/// the way every other chat app starts a reply.
+///
+/// Horizontal-drag only, and capped at [_maxDrag], so it can't be mistaken for
+/// a scroll and can't pull the bubble off its side of the screen.
+class _SwipeToReply extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onReply;
+
+  const _SwipeToReply({required this.child, required this.onReply});
+
+  @override
+  State<_SwipeToReply> createState() => _SwipeToReplyState();
+}
+
+class _SwipeToReplyState extends State<_SwipeToReply> {
+  static const _maxDrag = 64.0;
+  static const _triggerAt = 44.0;
+
+  double _offset = 0;
+  bool _fired = false;
+
+  void _onUpdate(DragUpdateDetails d) {
+    setState(() {
+      _offset = (_offset + d.delta.dx).clamp(0.0, _maxDrag);
+    });
+    // Fire on crossing the threshold rather than on release, so the reply
+    // banner is already up as the finger lifts — releasing early then feels
+    // like a cancel, which is what it is.
+    if (!_fired && _offset >= _triggerAt) {
+      _fired = true;
+      widget.onReply();
+    }
+  }
+
+  void _onEnd(DragEndDetails _) {
+    setState(() {
+      _offset = 0;
+      _fired = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onHorizontalDragUpdate: _onUpdate,
+      onHorizontalDragEnd: _onEnd,
+      onHorizontalDragCancel: () => setState(() {
+        _offset = 0;
+        _fired = false;
+      }),
+      child: Stack(
+        alignment: Alignment.centerLeft,
+        children: [
+          if (_offset > 8)
+            Opacity(
+              opacity: (_offset / _triggerAt).clamp(0.0, 1.0),
+              child: Icon(Icons.reply_rounded,
+                  size: 18.r, color: ColorManager.normalGrey),
+            ),
+          AnimatedContainer(
+            duration: Duration(milliseconds: _offset == 0 ? 150 : 0),
+            transform: Matrix4.translationValues(_offset, 0, 0),
+            child: widget.child,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ─── Reactions ────────────────────────────────────────────────────────────────
@@ -556,7 +731,14 @@ class _AudioBubbleState extends State<_AudioBubble> {
     _total = Duration(seconds: widget.duration);
 
     _stateSub = _player.onPlayerStateChanged.listen((s) {
-      if (mounted) setState(() => _pState = s);
+      if (!mounted) return;
+      setState(() => _pState = s);
+      // A note that ran to the end isn't holding playback any more; leaving the
+      // claim in place would make the next note stop a player that had already
+      // finished.
+      if (s == PlayerState.completed || s == PlayerState.stopped) {
+        VoiceNotePlayback.instance.release(this);
+      }
     });
     _posSub = _player.onPositionChanged.listen((p) {
       if (mounted) setState(() => _pos = p);
@@ -571,6 +753,10 @@ class _AudioBubbleState extends State<_AudioBubble> {
     _stateSub?.cancel();
     _posSub?.cancel();
     _durSub?.cancel();
+    // Give up the claim before the player goes away, or a bubble scrolled off
+    // screen mid-playback would leave the coordinator holding a stop callback
+    // for a disposed player.
+    VoiceNotePlayback.instance.release(this);
     _player.dispose();
     super.dispose();
   }
@@ -578,16 +764,34 @@ class _AudioBubbleState extends State<_AudioBubble> {
   Future<void> _toggle() async {
     if (_pState == PlayerState.playing) {
       await _player.pause();
-    } else {
-      if (_pState == PlayerState.completed) {
-        await _player.seek(Duration.zero);
-      }
-      if (widget.url.isNotEmpty) {
-        await _player.play(UrlSource(widget.url));
-      } else if (widget.localPath != null && widget.localPath!.isNotEmpty) {
-        await _player.play(DeviceFileSource(widget.localPath!));
-      }
+      VoiceNotePlayback.instance.release(this);
+      return;
     }
+
+    if (_pState == PlayerState.completed) {
+      await _player.seek(Duration.zero);
+    }
+
+    // Claim playback first and let the coordinator stop whoever had it — two
+    // voice notes talking over each other is the thing this prevents. Awaited,
+    // so the previous one is silent before this one starts.
+    await VoiceNotePlayback.instance.claim(this, _pauseForAnotherNote);
+    if (!mounted) return;
+
+    if (widget.url.isNotEmpty) {
+      await _player.play(UrlSource(widget.url));
+    } else if (widget.localPath != null && widget.localPath!.isNotEmpty) {
+      await _player.play(DeviceFileSource(widget.localPath!));
+    }
+  }
+
+  /// Silences this note because another one is starting.
+  ///
+  /// Pauses rather than stops, so coming back to it resumes where the listener
+  /// left off instead of restarting a two-minute message from the top.
+  Future<void> _pauseForAnotherNote() async {
+    if (!mounted) return;
+    await _player.pause();
   }
 
   String _fmt(Duration d) {

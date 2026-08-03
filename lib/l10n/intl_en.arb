@@ -511,6 +511,18 @@
   "messageEditFailed": "Couldn't save the edit",
   "reactToMessageTitle": "React",
   "removeReactionOption": "Remove my reaction",
+  "recordingInProgress": "Recording…",
+  "recordingPaused": "Paused",
+  "replyMessageOption": "Reply",
+  "replyingToLabel": "Replying to {name}",
+  "@replyingToLabel": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "cancelReplyTooltip": "Cancel reply",
+  "replyToYou": "You",
+  "originalMessageUnavailable": "Original message unavailable",
   "postLikesTitle": "Likes",
   "noLikesYet": "No likes yet",
   "noLikesYetSubtitle": "When people like this post, they'll show up here."

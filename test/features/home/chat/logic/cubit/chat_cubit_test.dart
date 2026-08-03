@@ -85,14 +85,17 @@ class _FakeChatSocketService extends ChatSocketService {
     String conversationId,
     String text, {
     String? clientId,
+    String? replyToId,
   }) async {
     if (!await ensureConnected()) return false;
     sent.add((conversationId: conversationId, text: text));
     sentClientIds.add(clientId);
+    sentReplyToIds.add(replyToId);
     return true;
   }
 
   final sentClientIds = <String?>[];
+  final sentReplyToIds = <String?>[];
 }
 
 @GenerateMocks([ChatRepo])
@@ -751,6 +754,109 @@ void main() {
     });
   });
 
+  group('replying', () {
+    test('startReplying points the composer at the message', () async {
+      await openWith([serverMessage('m1')]);
+
+      cubit.startReplying(messageInState('m1'));
+
+      expect((cubit.state as ChatLoaded).replyingTo?.id, 'm1');
+    });
+
+    // The quote would point at a client-side id nobody else can resolve.
+    test('refuses to reply to a message that is still sending', () async {
+      await openWith([]);
+      await cubit.sendText('hi');
+      final pending = (cubit.state as ChatLoaded).messages.first;
+
+      cubit.startReplying(pending);
+
+      expect((cubit.state as ChatLoaded).replyingTo, isNull);
+    });
+
+    test('sends the quoted id with the reply', () async {
+      await openWith([serverMessage('m1')]);
+      cubit.startReplying(messageInState('m1'));
+
+      await cubit.sendText('answering');
+
+      expect(socket.sentReplyToIds.last, 'm1');
+    });
+
+    // The reply has to be visibly attached to what it answers straight away —
+    // waiting for the server's copy would show it detached for a moment.
+    test('the optimistic bubble already carries the quote', () async {
+      await openWith([serverMessage('m1', content: 'question?')]);
+      cubit.startReplying(messageInState('m1'));
+
+      await cubit.sendText('answering');
+
+      final sent = (cubit.state as ChatLoaded).messages.first;
+      expect(sent.replyTo?.id, 'm1');
+      expect(sent.replyTo?.content, 'question?');
+    });
+
+    test('the banner clears once the reply is sent', () async {
+      await openWith([serverMessage('m1')]);
+      cubit.startReplying(messageInState('m1'));
+
+      await cubit.sendText('answering');
+
+      expect((cubit.state as ChatLoaded).replyingTo, isNull);
+    });
+
+    // The banner is long gone by the time the user taps retry, so the quote
+    // has to be held with the outbound payload rather than read from state.
+    test('a retry still answers the same message', () async {
+      await openWith([serverMessage('m1')]);
+      cubit.startReplying(messageInState('m1'));
+      socket.connects = false;
+      await cubit.sendText('answering');
+      final clientId = (cubit.state as ChatLoaded).messages.first.clientId!;
+      socket.connects = true;
+      socket.sentReplyToIds.clear();
+
+      await cubit.retryMessage(clientId);
+
+      expect(socket.sentReplyToIds.last, 'm1');
+    });
+
+    test('cancelReplying clears the banner', () async {
+      await openWith([serverMessage('m1')]);
+      cubit.startReplying(messageInState('m1'));
+
+      cubit.cancelReplying();
+
+      expect((cubit.state as ChatLoaded).replyingTo, isNull);
+    });
+
+    // Rewriting a message and answering one are two different things to be
+    // doing with the same text field.
+    test('replying and editing are mutually exclusive', () async {
+      await openWith([serverMessage('m1'), serverMessage('m2')]);
+
+      cubit.startReplying(messageInState('m1'));
+      cubit.startEditing(messageInState('m2'));
+
+      expect((cubit.state as ChatLoaded).replyingTo, isNull);
+      expect((cubit.state as ChatLoaded).editingMessage?.id, 'm2');
+
+      cubit.startReplying(messageInState('m1'));
+
+      expect((cubit.state as ChatLoaded).editingMessage, isNull);
+      expect((cubit.state as ChatLoaded).replyingTo?.id, 'm1');
+    });
+
+    test('a message sent with no reply carries no quote', () async {
+      await openWith([]);
+
+      await cubit.sendText('plain');
+
+      expect(socket.sentReplyToIds.last, isNull);
+      expect((cubit.state as ChatLoaded).messages.first.replyTo, isNull);
+    });
+  });
+
   group('remote deletion', () {
     test('marks the message deleted when the other side deletes it', () async {
       await openWith([serverMessage('m1')]);
@@ -771,6 +877,18 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect((cubit.state as ChatLoaded).editingMessage, isNull);
+    });
+
+    // Same for a reply in progress — the quote would point at a message that
+    // is no longer there to answer.
+    test('drops the reply banner if it quoted that message', () async {
+      await openWith([serverMessage('m1')]);
+      cubit.startReplying(messageInState('m1'));
+
+      socket.emitDeleted({'conversation_id': 'conv-1', 'message_id': 'm1'});
+      await Future<void>.delayed(Duration.zero);
+
+      expect((cubit.state as ChatLoaded).replyingTo, isNull);
     });
 
     test('ignores a deletion in another conversation', () async {

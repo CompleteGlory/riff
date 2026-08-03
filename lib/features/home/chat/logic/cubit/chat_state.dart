@@ -29,6 +29,13 @@ class ChatLoaded extends ChatState {
   /// composer — is all it takes to put it into edit mode.
   final ChatMessage? editingMessage;
 
+  /// The message the composer is quoting, or null when it isn't.
+  ///
+  /// Mutually exclusive with [editingMessage] — you are either rewriting a
+  /// message or answering one, never both. The cubit enforces that, so the
+  /// composer never has to reconcile two banners fighting for the same space.
+  final ChatMessage? replyingTo;
+
   ChatLoaded({
     required this.conversation,
     required this.messages,
@@ -39,6 +46,7 @@ class ChatLoaded extends ChatState {
     this.sendingMediaType,
     this.isFromCache = false,
     this.editingMessage,
+    this.replyingTo,
   });
 
   ChatLoaded copyWith({
@@ -51,6 +59,7 @@ class ChatLoaded extends ChatState {
     bool? isFromCache,
     Object? sendingMediaType = _sentinel,
     Object? editingMessage = _sentinel,
+    Object? replyingTo = _sentinel,
   }) => ChatLoaded(
     conversation: conversation ?? this.conversation,
     messages: messages ?? this.messages,
@@ -65,6 +74,9 @@ class ChatLoaded extends ChatState {
     editingMessage: editingMessage == _sentinel
         ? this.editingMessage
         : editingMessage as ChatMessage?,
+    replyingTo: replyingTo == _sentinel
+        ? this.replyingTo
+        : replyingTo as ChatMessage?,
   );
 }
 

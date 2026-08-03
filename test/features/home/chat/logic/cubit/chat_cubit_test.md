@@ -121,10 +121,28 @@ composer.
   reacting at once would otherwise leave each client applying its own change to
   a list that had already moved on
 
+## `replying`
+
+- `startReplying` points the composer at a message; a message still **sending**
+  is refused, since the quote would carry a client-side id nobody else can
+  resolve
+- the quoted id goes out with the send, and the **optimistic** bubble already
+  carries the quote — waiting for the server's copy would show the reply
+  detached from what it answers for a moment
+- the banner clears once the reply is sent
+- a **retry** still answers the same message. The banner is long gone by then,
+  so the quoted id is held with the outbound payload rather than read back out
+  of state — the same reason the payload itself survives a failure
+- replying and editing are mutually exclusive in both directions: they are two
+  different things to be doing with one text field, and the cubit enforces it
+  so the composer never has to reconcile two banners fighting for the space
+- a message sent with no reply carries no quote
+
 ## `remote deletion`
 
 The `message_deleted` broadcast reaches the deleter too (via their personal
 room), on top of the optimistic update they already applied, so the handler has
 to be idempotent. It also closes the composer when it was editing the message
-that just went — otherwise the user could save an edit to something that no
+that just went — and drops the reply banner when it quoted it — otherwise the
+user could save an edit, or send a quote, pointing at something that no
 longer exists.
