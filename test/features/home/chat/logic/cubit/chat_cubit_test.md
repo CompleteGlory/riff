@@ -86,3 +86,45 @@ notification and couldn't send anything until I restarted" bug.
 `_markFailed` clears the pending timeout but **not** the outbound payload. An
 earlier version dropped both, so "retry" on a failed message had nothing left to
 send and silently did nothing.
+
+## `editing`
+
+The composer's edit mode lives in `ChatLoaded.editingMessage` rather than in the
+input bar, because "Edit" is tapped in the long-press sheet — nowhere near the
+composer.
+
+- `startEditing` opens it; only text qualifies (replacing an image would be a
+  different image, which is a new message)
+- the new text is on screen before the server confirms it, and the composer
+  closes at submit rather than at the response
+- a **failed** save puts the original message back — including clearing the
+  optimistic `editedAt`, so a message that had never been edited doesn't keep
+  the "edited" marker a lost edit gave it
+- unchanged text just closes the composer without a request
+- a broadcast edit changes the text and `editedAt` **only**. The payload is
+  serialized for the conversation as a whole, so its `status` is not this
+  viewer's read state — applying it wholesale would knock the sender's own
+  message back to a single check
+
+## `reactions`
+
+- optimistic: the chip appears before the request resolves, attributed to the
+  signed-in user
+- one reaction per person — a different emoji replaces the previous one, the
+  same emoji again takes it back. Both rules match the server's, so the
+  optimistic result and the broadcast that follows agree
+- other people's reactions survive changes to yours
+- a failed request rolls back to the previous list
+- a still-sending message can't be reacted to: there is nothing on the server
+  to attach the reaction to yet, and no request is made
+- a broadcast replaces the **whole** list rather than merging — two people
+  reacting at once would otherwise leave each client applying its own change to
+  a list that had already moved on
+
+## `remote deletion`
+
+The `message_deleted` broadcast reaches the deleter too (via their personal
+room), on top of the optimistic update they already applied, so the handler has
+to be idempotent. It also closes the composer when it was editing the message
+that just went — otherwise the user could save an edit to something that no
+longer exists.

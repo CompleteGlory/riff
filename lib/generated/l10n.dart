@@ -3919,6 +3919,91 @@ class S {
     );
   }
 
+  /// `Message deleted`
+  String get messageDeletedLabel {
+    return Intl.message(
+      'Message deleted',
+      name: 'messageDeletedLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Edit message`
+  String get editMessageOption {
+    return Intl.message(
+      'Edit message',
+      name: 'editMessageOption',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `edited`
+  String get messageEditedLabel {
+    return Intl.message(
+      'edited',
+      name: 'messageEditedLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Editing message`
+  String get editingMessageTitle {
+    return Intl.message(
+      'Editing message',
+      name: 'editingMessageTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Cancel edit`
+  String get cancelEditTooltip {
+    return Intl.message(
+      'Cancel edit',
+      name: 'cancelEditTooltip',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Save`
+  String get saveEditBtn {
+    return Intl.message('Save', name: 'saveEditBtn', desc: '', args: []);
+  }
+
+  /// `Couldn't save the edit`
+  String get messageEditFailed {
+    return Intl.message(
+      'Couldn\'t save the edit',
+      name: 'messageEditFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `React`
+  String get reactToMessageTitle {
+    return Intl.message(
+      'React',
+      name: 'reactToMessageTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Remove my reaction`
+  String get removeReactionOption {
+    return Intl.message(
+      'Remove my reaction',
+      name: 'removeReactionOption',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Likes`
   String get postLikesTitle {
     return Intl.message('Likes', name: 'postLikesTitle', desc: '', args: []);

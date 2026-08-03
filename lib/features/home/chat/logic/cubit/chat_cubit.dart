@@ -48,6 +48,9 @@ class ChatCubit extends Cubit<ChatState> {
   StreamSubscription<Map<String, dynamic>>? _presenceSub;
   StreamSubscription<String>? _convDeletedSub;
   StreamSubscription<bool>? _connectivitySub;
+  StreamSubscription<Map<String, dynamic>>? _msgDeletedSub;
+  StreamSubscription<ChatMessage>? _msgEditedSub;
+  StreamSubscription<Map<String, dynamic>>? _reactionSub;
   String? _conversationId;
   String? _otherUserId;
 
@@ -207,6 +210,9 @@ class ChatCubit extends Cubit<ChatState> {
     });
   }
 
+  /// The signed-in user's id, once [_loadMe] has run.
+  String? get myId => _me?.id;
+
   void _listenSocket() {
     _msgSub?.cancel();
     _typingSub?.cancel();
@@ -214,6 +220,9 @@ class ChatCubit extends Cubit<ChatState> {
     _statusSub?.cancel();
     _presenceSub?.cancel();
     _convDeletedSub?.cancel();
+    _msgDeletedSub?.cancel();
+    _msgEditedSub?.cancel();
+    _reactionSub?.cancel();
 
     // New incoming message — prepend (newest at index 0)
     _msgSub = _socket.onMessage.listen((msg) {
@@ -312,6 +321,84 @@ class ChatCubit extends Cubit<ChatState> {
         conversation: cur.conversation.withOtherUserPresence(online, lastSeen: lastSeen),
       ));
     });
+
+    // A message was deleted for everyone — by the other participant, or by
+    // this user on another device.
+    _msgDeletedSub = _socket.onMessageDeleted.listen((data) {
+      if (data['conversation_id'] != _conversationId) return;
+      final msgId = data['message_id'] as String?;
+      if (msgId == null) return;
+      _applyMessageDeleted(msgId);
+    });
+
+    _msgEditedSub = _socket.onMessageEdited.listen((msg) {
+      if (msg.conversationId != _conversationId) return;
+      _applyEdit(msg);
+    });
+
+    _reactionSub = _socket.onMessageReaction.listen((data) {
+      if (data['conversation_id'] != _conversationId) return;
+      final msgId = data['message_id'] as String?;
+      if (msgId == null) return;
+      _applyReactions(msgId, _reactionsFrom(data['reactions']));
+    });
+  }
+
+  List<MessageReaction> _reactionsFrom(dynamic raw) =>
+      (raw as List<dynamic>? ?? const [])
+          .map((r) =>
+              MessageReaction.fromJson(Map<String, dynamic>.from(r as Map)))
+          .toList();
+
+  /// Marks [messageId] deleted wherever it is on screen. Idempotent: the
+  /// broadcast reaches this client through both the conversation room and its
+  /// personal room, and the deleter has already applied it optimistically.
+  void _applyMessageDeleted(String messageId) {
+    final cur = state;
+    if (cur is! ChatLoaded || isClosed) return;
+    if (!cur.messages.any((m) => m.id == messageId && !m.isDeleted)) return;
+    emit(cur.copyWith(
+      messages: cur.messages
+          .map((m) => m.id == messageId ? m.copyWith(isDeleted: true) : m)
+          .toList(),
+      // A message being rewritten that someone then deletes would leave the
+      // composer editing something that no longer exists.
+      editingMessage:
+          cur.editingMessage?.id == messageId ? null : cur.editingMessage,
+    ));
+    unawaited(_cacheMessages());
+  }
+
+  /// Swaps in the server's copy of an edited message.
+  ///
+  /// Everything except the text is taken from the local copy: the broadcast is
+  /// serialized for the conversation as a whole, so its `status` is not this
+  /// viewer's read state and its `client_id` is absent — applying it wholesale
+  /// would knock the sender's own message back to a single check.
+  void _applyEdit(ChatMessage edited) {
+    final cur = state;
+    if (cur is! ChatLoaded || isClosed) return;
+    if (!cur.messages.any((m) => m.id == edited.id)) return;
+    emit(cur.copyWith(
+      messages: cur.messages
+          .map((m) => m.id == edited.id
+              ? m.copyWith(content: edited.content, editedAt: edited.editedAt)
+              : m)
+          .toList(),
+    ));
+    unawaited(_cacheMessages());
+  }
+
+  void _applyReactions(String messageId, List<MessageReaction> reactions) {
+    final cur = state;
+    if (cur is! ChatLoaded || isClosed) return;
+    if (!cur.messages.any((m) => m.id == messageId)) return;
+    emit(cur.copyWith(
+      messages: cur.messages
+          .map((m) => m.id == messageId ? m.copyWith(reactions: reactions) : m)
+          .toList(),
+    ));
+    unawaited(_cacheMessages());
   }
 
   /// Finds the optimistic bubble [incoming] is the confirmed version of.
@@ -630,10 +717,143 @@ class ChatCubit extends Cubit<ChatState> {
     final updated = cur.messages
         .map((m) => m.id == messageId ? m.copyWith(isDeleted: true) : m)
         .toList();
-    if (!isClosed) emit(cur.copyWith(messages: updated));
+    if (!isClosed) {
+      emit(cur.copyWith(
+        messages: updated,
+        editingMessage:
+            cur.editingMessage?.id == messageId ? null : cur.editingMessage,
+      ));
+    }
     try { await _repo.deleteMessage(_conversationId!, messageId); } catch (_) {}
     unawaited(_cacheMessages());
   }
+
+  // ── Editing ───────────────────────────────────────────────────────────────
+
+  /// Puts the composer into edit mode for [message].
+  void startEditing(ChatMessage message) {
+    final cur = state;
+    if (cur is! ChatLoaded || isClosed || !message.canBeEdited) return;
+    emit(cur.copyWith(editingMessage: message));
+  }
+
+  void cancelEditing() {
+    final cur = state;
+    if (cur is! ChatLoaded || isClosed) return;
+    if (cur.editingMessage == null) return;
+    emit(cur.copyWith(editingMessage: null));
+  }
+
+  /// Saves the message currently being edited.
+  ///
+  /// Applied on screen first and rolled back if the request fails, so a lost
+  /// edit is visible rather than silently discarded — the composer stays
+  /// closed either way, since the failure puts the original text back where
+  /// the user can see it.
+  ///
+  /// Returns false when the edit could not be saved.
+  Future<bool> submitEdit(String text) async {
+    final cur = state;
+    final convId = _conversationId;
+    final editing = cur is ChatLoaded ? cur.editingMessage : null;
+    if (cur is! ChatLoaded || convId == null || editing == null) return false;
+
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return false;
+    if (trimmed == editing.content) {
+      emit(cur.copyWith(editingMessage: null));
+      return true;
+    }
+
+    emit(cur.copyWith(
+      messages: _mapById(
+        cur.messages,
+        editing.id,
+        (m) => m.copyWith(content: trimmed, editedAt: DateTime.now()),
+      ),
+      editingMessage: null,
+    ));
+
+    try {
+      final saved = await _repo.editMessage(convId, editing.id, trimmed);
+      if (isClosed) return true;
+      _applyEdit(saved);
+      return true;
+    } catch (_) {
+      if (isClosed) return false;
+      final now = state;
+      if (now is! ChatLoaded) return false;
+      emit(now.copyWith(
+        messages: _mapById(
+          now.messages,
+          editing.id,
+          // Restored from the pre-edit copy rather than by undoing the change,
+          // so a message that had never been edited doesn't keep the "edited"
+          // marker the optimistic update gave it.
+          (_) => editing,
+        ),
+      ));
+      return false;
+    }
+  }
+
+  // ── Reactions ─────────────────────────────────────────────────────────────
+
+  /// Adds, replaces, or clears the signed-in user's reaction to a message.
+  ///
+  /// Reacting with the emoji already picked takes the reaction back — the
+  /// server applies the same rule, so the optimistic result and the broadcast
+  /// that follows agree.
+  Future<void> toggleReaction(String messageId, String emoji) async {
+    final cur = state;
+    final convId = _conversationId;
+    final me = _me?.id;
+    if (cur is! ChatLoaded || convId == null || isClosed) return;
+
+    final index = cur.messages.indexWhere((m) => m.id == messageId);
+    if (index == -1) return;
+    final message = cur.messages[index];
+    // Nothing to react to until the server knows the message exists.
+    if (message.delivery != MessageDelivery.complete || message.isDeleted) {
+      return;
+    }
+
+    final previous = message.reactions;
+    if (me != null && me.isNotEmpty) {
+      final removing =
+          previous.any((r) => r.userId == me && r.emoji == emoji);
+      final optimistic = [
+        ...previous.where((r) => r.userId != me),
+        if (!removing)
+          MessageReaction(
+            emoji: emoji,
+            userId: me,
+            username: _me?.username,
+            fullName: _me?.fullName,
+          ),
+      ];
+      emit(cur.copyWith(
+        messages: _mapById(
+            cur.messages, messageId, (m) => m.copyWith(reactions: optimistic)),
+      ));
+    }
+
+    try {
+      final reactions = await _repo.reactToMessage(convId, messageId, emoji);
+      if (isClosed) return;
+      _applyReactions(messageId, reactions);
+    } catch (_) {
+      if (isClosed) return;
+      _applyReactions(messageId, previous);
+    }
+  }
+
+  List<ChatMessage> _mapById(
+    List<ChatMessage> messages,
+    String messageId,
+    ChatMessage Function(ChatMessage) transform,
+  ) =>
+      messages.map((m) => m.id == messageId ? transform(m) : m).toList();
 
   /// Delete the conversation for all participants.
   Future<void> deleteConversation() async {
@@ -659,6 +879,9 @@ class ChatCubit extends Cubit<ChatState> {
     _presenceSub?.cancel();
     _convDeletedSub?.cancel();
     _connectivitySub?.cancel();
+    _msgDeletedSub?.cancel();
+    _msgEditedSub?.cancel();
+    _reactionSub?.cancel();
     return super.close();
   }
 }

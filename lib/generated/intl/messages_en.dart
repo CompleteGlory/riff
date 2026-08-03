@@ -137,6 +137,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "By signing up you are accepting our",
     ),
     "cancelBtn": MessageLookupByLibrary.simpleMessage("Cancel"),
+    "cancelEditTooltip": MessageLookupByLibrary.simpleMessage("Cancel edit"),
     "changePasswordBtn": MessageLookupByLibrary.simpleMessage(
       "Change Password",
     ),
@@ -263,12 +264,16 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "editCommentTitle": MessageLookupByLibrary.simpleMessage("Edit Comment"),
     "editLabel": MessageLookupByLibrary.simpleMessage("Edit"),
+    "editMessageOption": MessageLookupByLibrary.simpleMessage("Edit message"),
     "editPostOption": MessageLookupByLibrary.simpleMessage("Edit Post"),
     "editYourComment": MessageLookupByLibrary.simpleMessage(
       "Edit your comment...",
     ),
     "editYourProfile": MessageLookupByLibrary.simpleMessage(
       "Edit your profile info",
+    ),
+    "editingMessageTitle": MessageLookupByLibrary.simpleMessage(
+      "Editing message",
     ),
     "emailInvalid": MessageLookupByLibrary.simpleMessage(
       "Enter a valid email address",
@@ -478,7 +483,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "mediaLabel": MessageLookupByLibrary.simpleMessage("Media"),
     "mediumSeverity": MessageLookupByLibrary.simpleMessage("Medium"),
     "messageBtn": MessageLookupByLibrary.simpleMessage("Message"),
+    "messageDeletedLabel": MessageLookupByLibrary.simpleMessage(
+      "Message deleted",
+    ),
     "messageDiscard": MessageLookupByLibrary.simpleMessage("Discard"),
+    "messageEditFailed": MessageLookupByLibrary.simpleMessage(
+      "Couldn\'t save the edit",
+    ),
+    "messageEditedLabel": MessageLookupByLibrary.simpleMessage("edited"),
     "messageFailed": MessageLookupByLibrary.simpleMessage("Not sent"),
     "messageFailedSheetTitle": MessageLookupByLibrary.simpleMessage(
       "This message wasn\'t sent",
@@ -505,6 +517,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "noFollowersYet": MessageLookupByLibrary.simpleMessage("No followers yet"),
     "noGenresSelected": MessageLookupByLibrary.simpleMessage(
       "Select at least one genre",
+    ),
+    "noLikesYet": MessageLookupByLibrary.simpleMessage("No likes yet"),
+    "noLikesYetSubtitle": MessageLookupByLibrary.simpleMessage(
+      "When people like this post, they\'ll show up here.",
     ),
     "noMessageRequests": MessageLookupByLibrary.simpleMessage(
       "No message requests",
@@ -631,6 +647,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Post deleted successfully!",
     ),
     "postLabel": MessageLookupByLibrary.simpleMessage("Post"),
+    "postLikesTitle": MessageLookupByLibrary.simpleMessage("Likes"),
     "postNotFoundDeleted": MessageLookupByLibrary.simpleMessage(
       "Post not found or was deleted.",
     ),
@@ -766,11 +783,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "profileSettingsUnavailable": MessageLookupByLibrary.simpleMessage(
       "Couldn\'t open profile settings. Please try again.",
     ),
+    "reactToMessageTitle": MessageLookupByLibrary.simpleMessage("React"),
     "recordVideo": MessageLookupByLibrary.simpleMessage("Record Video"),
     "reelsTitle": MessageLookupByLibrary.simpleMessage("Reels"),
     "removeBtn": MessageLookupByLibrary.simpleMessage("Remove"),
     "removeFollowerTitle": MessageLookupByLibrary.simpleMessage(
       "Remove Follower?",
+    ),
+    "removeReactionOption": MessageLookupByLibrary.simpleMessage(
+      "Remove my reaction",
     ),
     "reportABugDrawer": MessageLookupByLibrary.simpleMessage("Report a Bug"),
     "reportABugTitle": MessageLookupByLibrary.simpleMessage("Report a Bug"),
@@ -806,6 +827,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "retryBtn": MessageLookupByLibrary.simpleMessage("Retry"),
     "saveAndContinue": MessageLookupByLibrary.simpleMessage("Save & Continue"),
     "saveChangesBtn": MessageLookupByLibrary.simpleMessage("Save Changes"),
+    "saveEditBtn": MessageLookupByLibrary.simpleMessage("Save"),
     "saveProfileBtn": MessageLookupByLibrary.simpleMessage("Save Changes"),
     "savingBtn": MessageLookupByLibrary.simpleMessage("Saving…"),
     "searchConversationsHint": MessageLookupByLibrary.simpleMessage(

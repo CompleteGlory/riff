@@ -24,6 +24,9 @@ class _FakeChatSocketService extends ChatSocketService {
   // private to ChatSocketService, so a subclass can't reach them.
   final _statusCtrl = StreamController<Map<String, dynamic>>.broadcast();
   final _messageCtrl = StreamController<ChatMessage>.broadcast();
+  final _deletedCtrl = StreamController<Map<String, dynamic>>.broadcast();
+  final _editedCtrl = StreamController<ChatMessage>.broadcast();
+  final _reactionCtrl = StreamController<Map<String, dynamic>>.broadcast();
 
   @override
   Stream<Map<String, dynamic>> get onMessageStatus => _statusCtrl.stream;
@@ -31,15 +34,31 @@ class _FakeChatSocketService extends ChatSocketService {
   @override
   Stream<ChatMessage> get onMessage => _messageCtrl.stream;
 
+  @override
+  Stream<Map<String, dynamic>> get onMessageDeleted => _deletedCtrl.stream;
+
+  @override
+  Stream<ChatMessage> get onMessageEdited => _editedCtrl.stream;
+
+  @override
+  Stream<Map<String, dynamic>> get onMessageReaction => _reactionCtrl.stream;
+
   /// Pushes a `message_status` event, as the gateway would.
   void emitStatus(Map<String, dynamic> data) => _statusCtrl.add(data);
 
   /// Pushes a `message_received` event, as the gateway would.
   void emitMessage(ChatMessage msg) => _messageCtrl.add(msg);
 
+  void emitDeleted(Map<String, dynamic> data) => _deletedCtrl.add(data);
+  void emitEdited(ChatMessage msg) => _editedCtrl.add(msg);
+  void emitReaction(Map<String, dynamic> data) => _reactionCtrl.add(data);
+
   Future<void> closeFakes() async {
     await _statusCtrl.close();
     await _messageCtrl.close();
+    await _deletedCtrl.close();
+    await _editedCtrl.close();
+    await _reactionCtrl.close();
   }
 
   int ensureConnectedCalls = 0;
@@ -489,6 +508,278 @@ void main() {
       expect(await cubit.ensureConnected(), isFalse);
       expect(socket.joined, isEmpty,
           reason: 'nothing to re-join into on a dead socket');
+    });
+  });
+
+  // ── Editing, reactions, remote deletion ────────────────────────────────────
+
+  ChatMessage serverMessage(
+    String id, {
+    String content = 'hello',
+    String senderId = 'user-1',
+    DateTime? editedAt,
+    List<MessageReaction> reactions = const [],
+  }) =>
+      ChatMessage(
+        id: id,
+        conversationId: 'conv-1',
+        type: MessageType.text,
+        content: content,
+        isDeleted: false,
+        createdAt: DateTime(2026, 8, 1, 10),
+        sender: MessageSender(id: senderId),
+        editedAt: editedAt,
+        reactions: reactions,
+      );
+
+  /// Opens the conversation with [msgs] already in it.
+  Future<void> openWith(List<ChatMessage> msgs) async {
+    when(repo.getMessages(any, beforeId: anyNamed('beforeId')))
+        .thenAnswer((_) async => msgs);
+    await cubit.open(conversation);
+  }
+
+  ChatMessage messageInState(String id) =>
+      (cubit.state as ChatLoaded).messages.firstWhere((m) => m.id == id);
+
+  group('editing', () {
+    test('startEditing puts the message in state', () async {
+      await openWith([serverMessage('m1')]);
+
+      cubit.startEditing(messageInState('m1'));
+
+      expect((cubit.state as ChatLoaded).editingMessage?.id, 'm1');
+    });
+
+    // Replacing an image would be a different image, which is a new message.
+    test('refuses to edit anything but text', () async {
+      await openWith([
+        ChatMessage(
+          id: 'm1',
+          conversationId: 'conv-1',
+          type: MessageType.image,
+          isDeleted: false,
+          createdAt: DateTime(2026, 8, 1),
+        ),
+      ]);
+
+      cubit.startEditing(messageInState('m1'));
+
+      expect((cubit.state as ChatLoaded).editingMessage, isNull);
+    });
+
+    test('shows the new text before the server confirms it', () async {
+      await openWith([serverMessage('m1', content: 'befor')]);
+      cubit.startEditing(messageInState('m1'));
+
+      final completer = Completer<ChatMessage>();
+      when(repo.editMessage(any, any, any))
+          .thenAnswer((_) => completer.future);
+
+      final pending = cubit.submitEdit('before');
+
+      expect(messageInState('m1').content, 'before');
+      expect(messageInState('m1').isEdited, isTrue);
+      expect((cubit.state as ChatLoaded).editingMessage, isNull,
+          reason: 'the composer closes as soon as the edit is submitted');
+
+      completer.complete(
+          serverMessage('m1', content: 'before', editedAt: DateTime(2026, 8, 2)));
+      await pending;
+    });
+
+    // A lost edit has to be visible: silently keeping the new text on screen
+    // would leave the user believing the other side can see it.
+    test('puts the original text back when the save fails', () async {
+      await openWith([serverMessage('m1', content: 'original')]);
+      cubit.startEditing(messageInState('m1'));
+      when(repo.editMessage(any, any, any)).thenThrow(Exception('offline'));
+
+      expect(await cubit.submitEdit('rewritten'), isFalse);
+      expect(messageInState('m1').content, 'original');
+      expect(messageInState('m1').isEdited, isFalse,
+          reason: 'a failed edit must not leave the "edited" marker behind');
+    });
+
+    test('unchanged text just closes the composer', () async {
+      await openWith([serverMessage('m1', content: 'same')]);
+      cubit.startEditing(messageInState('m1'));
+
+      expect(await cubit.submitEdit('same'), isTrue);
+      expect((cubit.state as ChatLoaded).editingMessage, isNull);
+      verifyNever(repo.editMessage(any, any, any));
+    });
+
+    test('cancelEditing closes the composer', () async {
+      await openWith([serverMessage('m1')]);
+      cubit.startEditing(messageInState('m1'));
+
+      cubit.cancelEditing();
+
+      expect((cubit.state as ChatLoaded).editingMessage, isNull);
+    });
+
+    // The broadcast is serialized for the conversation as a whole, so its
+    // status is not this viewer's read state. Taking it wholesale would knock
+    // the sender's own message back to a single check.
+    test('a broadcast edit changes the text without touching the status',
+        () async {
+      await openWith([
+        serverMessage('m1', content: 'old').copyWith(status: MessageStatus.read),
+      ]);
+
+      socket.emitEdited(serverMessage('m1',
+          content: 'new', editedAt: DateTime(2026, 8, 2)));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(messageInState('m1').content, 'new');
+      expect(messageInState('m1').isEdited, isTrue);
+      expect(messageInState('m1').status, MessageStatus.read);
+    });
+
+    test('ignores an edit for another conversation', () async {
+      await openWith([serverMessage('m1', content: 'mine')]);
+
+      socket.emitEdited(ChatMessage(
+        id: 'm1',
+        conversationId: 'other-conv',
+        type: MessageType.text,
+        content: 'theirs',
+        isDeleted: false,
+        createdAt: DateTime(2026, 8, 1),
+      ));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(messageInState('m1').content, 'mine');
+    });
+  });
+
+  group('reactions', () {
+    final heart = [
+      const MessageReaction(emoji: '❤️', userId: 'user-1', username: 'me'),
+    ];
+
+    test('shows the reaction before the server confirms it', () async {
+      await openWith([serverMessage('m1')]);
+
+      final completer = Completer<List<MessageReaction>>();
+      when(repo.reactToMessage(any, any, any))
+          .thenAnswer((_) => completer.future);
+
+      final pending = cubit.toggleReaction('m1', '❤️');
+
+      expect(messageInState('m1').reactions.single.emoji, '❤️');
+      expect(messageInState('m1').reactions.single.userId, 'user-1');
+
+      completer.complete(heart);
+      await pending;
+    });
+
+    // One reaction per person: picking a second emoji replaces the first
+    // rather than stacking, which is the rule the server applies too.
+    test('a different emoji replaces the previous one', () async {
+      await openWith([serverMessage('m1', reactions: heart)]);
+      when(repo.reactToMessage(any, any, any)).thenAnswer((_) async => [
+            const MessageReaction(emoji: '😂', userId: 'user-1'),
+          ]);
+
+      await cubit.toggleReaction('m1', '😂');
+
+      expect(messageInState('m1').reactions.map((r) => r.emoji), ['😂']);
+    });
+
+    test('the same emoji again takes the reaction back', () async {
+      await openWith([serverMessage('m1', reactions: heart)]);
+      when(repo.reactToMessage(any, any, any))
+          .thenAnswer((_) async => <MessageReaction>[]);
+
+      await cubit.toggleReaction('m1', '❤️');
+
+      expect(messageInState('m1').reactions, isEmpty);
+    });
+
+    test('someone else\'s reaction survives mine', () async {
+      await openWith([
+        serverMessage('m1', reactions: const [
+          MessageReaction(emoji: '👍', userId: 'user-2'),
+        ]),
+      ]);
+      when(repo.reactToMessage(any, any, any)).thenAnswer((_) async => const [
+            MessageReaction(emoji: '👍', userId: 'user-2'),
+            MessageReaction(emoji: '❤️', userId: 'user-1'),
+          ]);
+
+      await cubit.toggleReaction('m1', '❤️');
+
+      expect(messageInState('m1').reactions.length, 2);
+    });
+
+    test('rolls back when the request fails', () async {
+      await openWith([serverMessage('m1', reactions: heart)]);
+      when(repo.reactToMessage(any, any, any)).thenThrow(Exception('offline'));
+
+      await cubit.toggleReaction('m1', '😂');
+
+      expect(messageInState('m1').reactions.map((r) => r.emoji), ['❤️']);
+    });
+
+    // There is nothing on the server to attach a reaction to yet.
+    test('does nothing to a message that is still sending', () async {
+      await openWith([]);
+      await cubit.sendText('hi');
+      final pendingId = (cubit.state as ChatLoaded).messages.first.id;
+
+      await cubit.toggleReaction(pendingId, '❤️');
+
+      expect(messageInState(pendingId).reactions, isEmpty);
+      verifyNever(repo.reactToMessage(any, any, any));
+    });
+
+    test('a broadcast replaces the whole reaction list', () async {
+      await openWith([serverMessage('m1', reactions: heart)]);
+
+      socket.emitReaction({
+        'conversation_id': 'conv-1',
+        'message_id': 'm1',
+        'reactions': [
+          {'emoji': '😂', 'user_id': 'user-2', 'username': 'them'},
+        ],
+      });
+      await Future<void>.delayed(Duration.zero);
+
+      expect(messageInState('m1').reactions.single.emoji, '😂');
+    });
+  });
+
+  group('remote deletion', () {
+    test('marks the message deleted when the other side deletes it', () async {
+      await openWith([serverMessage('m1')]);
+
+      socket.emitDeleted({'conversation_id': 'conv-1', 'message_id': 'm1'});
+      await Future<void>.delayed(Duration.zero);
+
+      expect(messageInState('m1').isDeleted, isTrue);
+    });
+
+    // Leaving the composer open on a message that no longer exists would let
+    // the user save an edit to nothing.
+    test('closes the composer if it was editing that message', () async {
+      await openWith([serverMessage('m1')]);
+      cubit.startEditing(messageInState('m1'));
+
+      socket.emitDeleted({'conversation_id': 'conv-1', 'message_id': 'm1'});
+      await Future<void>.delayed(Duration.zero);
+
+      expect((cubit.state as ChatLoaded).editingMessage, isNull);
+    });
+
+    test('ignores a deletion in another conversation', () async {
+      await openWith([serverMessage('m1')]);
+
+      socket.emitDeleted({'conversation_id': 'other', 'message_id': 'm1'});
+      await Future<void>.delayed(Duration.zero);
+
+      expect(messageInState('m1').isDeleted, isFalse);
     });
   });
 }

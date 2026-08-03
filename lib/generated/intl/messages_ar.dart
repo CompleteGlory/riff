@@ -137,6 +137,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "بالتسجيل، أنت توافق على",
     ),
     "cancelBtn": MessageLookupByLibrary.simpleMessage("إلغاء"),
+    "cancelEditTooltip": MessageLookupByLibrary.simpleMessage("إلغاء التعديل"),
     "changePasswordBtn": MessageLookupByLibrary.simpleMessage(
       "تغيير كلمة المرور",
     ),
@@ -249,10 +250,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "dontHaveAnAccount": MessageLookupByLibrary.simpleMessage("ليس لديك حساب؟"),
     "editCommentTitle": MessageLookupByLibrary.simpleMessage("تعديل التعليق"),
     "editLabel": MessageLookupByLibrary.simpleMessage("تعديل"),
+    "editMessageOption": MessageLookupByLibrary.simpleMessage("تعديل الرسالة"),
     "editPostOption": MessageLookupByLibrary.simpleMessage("تعديل المنشور"),
     "editYourComment": MessageLookupByLibrary.simpleMessage("عدّل تعليقك..."),
     "editYourProfile": MessageLookupByLibrary.simpleMessage(
       "تعديل معلومات ملفك الشخصي",
+    ),
+    "editingMessageTitle": MessageLookupByLibrary.simpleMessage(
+      "تعديل الرسالة",
     ),
     "emailInvalid": MessageLookupByLibrary.simpleMessage(
       "أدخل بريداً إلكترونياً صحيحاً",
@@ -464,7 +469,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "mediaLabel": MessageLookupByLibrary.simpleMessage("الوسائط"),
     "mediumSeverity": MessageLookupByLibrary.simpleMessage("متوسطة"),
     "messageBtn": MessageLookupByLibrary.simpleMessage("رسالة"),
+    "messageDeletedLabel": MessageLookupByLibrary.simpleMessage(
+      "تم حذف الرسالة",
+    ),
     "messageDiscard": MessageLookupByLibrary.simpleMessage("تجاهل"),
+    "messageEditFailed": MessageLookupByLibrary.simpleMessage(
+      "تعذّر حفظ التعديل",
+    ),
+    "messageEditedLabel": MessageLookupByLibrary.simpleMessage("تم التعديل"),
     "messageFailed": MessageLookupByLibrary.simpleMessage("لم تُرسل"),
     "messageFailedSheetTitle": MessageLookupByLibrary.simpleMessage(
       "لم يتم إرسال هذه الرسالة",
@@ -497,6 +509,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "noGenresSelected": MessageLookupByLibrary.simpleMessage(
       "اختر نوعاً موسيقياً واحداً على الأقل",
+    ),
+    "noLikesYet": MessageLookupByLibrary.simpleMessage("لا توجد إعجابات بعد"),
+    "noLikesYetSubtitle": MessageLookupByLibrary.simpleMessage(
+      "عندما يعجب الآخرون بهذا المنشور، سيظهرون هنا.",
     ),
     "noMessageRequests": MessageLookupByLibrary.simpleMessage(
       "لا توجد طلبات رسائل",
@@ -619,6 +635,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "تم حذف المنشور بنجاح!",
     ),
     "postLabel": MessageLookupByLibrary.simpleMessage("منشور"),
+    "postLikesTitle": MessageLookupByLibrary.simpleMessage("الإعجابات"),
     "postNotFoundDeleted": MessageLookupByLibrary.simpleMessage(
       "المنشور غير موجود أو تم حذفه.",
     ),
@@ -754,11 +771,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "profileSettingsUnavailable": MessageLookupByLibrary.simpleMessage(
       "تعذّر فتح إعدادات الملف الشخصي. حاول مرة أخرى.",
     ),
+    "reactToMessageTitle": MessageLookupByLibrary.simpleMessage("تفاعل"),
     "recordVideo": MessageLookupByLibrary.simpleMessage("تسجيل فيديو"),
     "reelsTitle": MessageLookupByLibrary.simpleMessage("ريلز"),
     "removeBtn": MessageLookupByLibrary.simpleMessage("إزالة"),
     "removeFollowerTitle": MessageLookupByLibrary.simpleMessage(
       "إزالة المتابع؟",
+    ),
+    "removeReactionOption": MessageLookupByLibrary.simpleMessage(
+      "إزالة تفاعلي",
     ),
     "reportABugDrawer": MessageLookupByLibrary.simpleMessage("الإبلاغ عن خطأ"),
     "reportABugTitle": MessageLookupByLibrary.simpleMessage("الإبلاغ عن خطأ"),
@@ -794,6 +815,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "retryBtn": MessageLookupByLibrary.simpleMessage("إعادة المحاولة"),
     "saveAndContinue": MessageLookupByLibrary.simpleMessage("حفظ ومتابعة"),
     "saveChangesBtn": MessageLookupByLibrary.simpleMessage("حفظ التغييرات"),
+    "saveEditBtn": MessageLookupByLibrary.simpleMessage("حفظ"),
     "saveProfileBtn": MessageLookupByLibrary.simpleMessage("حفظ التغييرات"),
     "savingBtn": MessageLookupByLibrary.simpleMessage("جارٍ الحفظ…"),
     "searchConversationsHint": MessageLookupByLibrary.simpleMessage(

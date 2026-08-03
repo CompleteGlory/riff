@@ -5,6 +5,7 @@ import 'package:riff/features/home/add_post/ui/widgets/create_post_wrapper.dart'
 import 'package:riff/generated/l10n.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:riff/core/helpers/app_date_time.dart';
 import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
 import 'package:riff/core/cache/offline_cache.dart';
@@ -40,6 +41,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
   StreamSubscription<void>? _pushRefreshSub;
   StreamSubscription<ChatMessage>? _chatMsgSub;
   StreamSubscription<String>? _convDeletedSub;
+  StreamSubscription<Map<String, dynamic>>? _msgDeletedSub;
+  StreamSubscription<ChatMessage>? _msgEditedSub;
   // Cached current-user ID so we can skip own messages in onNewMessage().
   // The server now echoes message_received to the sender's personal room too
   // (to fix the cold-start race), so without this filter the sender's own
@@ -124,6 +127,30 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     _convDeletedSub?.cancel();
     _convDeletedSub = socket.onConversationDeleted.listen((convId) {
       if (mounted) getIt<ChatsListCubit>().removeConversation(convId);
+    });
+
+    // Deleting a message can move its conversation *down* the list — if it was
+    // the newest one, the conversation now sorts by whatever is left. The
+    // server sends the new position and preview along with the deletion.
+    _msgDeletedSub?.cancel();
+    _msgDeletedSub = socket.onMessageDeleted.listen((data) {
+      if (!mounted) return;
+      final convId = data['conversation_id'] as String?;
+      if (convId == null) return;
+      final latestRaw = data['latest_message'];
+      getIt<ChatsListCubit>().onMessageDeleted(
+        convId,
+        latestMessage: latestRaw == null
+            ? null
+            : ChatMessage.fromJson(Map<String, dynamic>.from(latestRaw as Map)),
+        lastMessageAt: parseServerDateTime(data['last_message_at'] as String?),
+      );
+    });
+
+    // An edit to the previewed message should show in the list right away.
+    _msgEditedSub?.cancel();
+    _msgEditedSub = socket.onMessageEdited.listen((msg) {
+      if (mounted) getIt<ChatsListCubit>().onMessageEdited(msg);
     });
   }
 
@@ -224,6 +251,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     _pushRefreshSub?.cancel();
     _chatMsgSub?.cancel();
     _convDeletedSub?.cancel();
+    _msgDeletedSub?.cancel();
+    _msgEditedSub?.cancel();
     ShareReceiverService.instance.receivedContent.removeListener(_onSharedContent);
     ShareReceiverService.instance.receivedMedia.removeListener(_onSharedMedia);
     ShareReceiverService.instance.dispose();

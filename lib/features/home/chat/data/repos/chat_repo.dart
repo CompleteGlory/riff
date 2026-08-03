@@ -81,6 +81,53 @@ class ChatRepo {
     await _dio.delete(ApiConstants.chatDeleteMessage(conversationId, messageId));
   }
 
+  /// Rewrites a message's text and returns the server's copy, which carries the
+  /// authoritative `edited_at`.
+  Future<ChatMessage> editMessage(
+    String conversationId,
+    String messageId,
+    String content,
+  ) async {
+    final res = await _dio.patch(
+      ApiConstants.chatEditMessage(conversationId, messageId),
+      data: {'content': content},
+    );
+    return ChatMessage.fromJson(res.data as Map<String, dynamic>);
+  }
+
+  /// Sets the signed-in user's reaction, or clears it when [emoji] is the one
+  /// they already picked. Returns the message's full reaction list afterwards —
+  /// the whole list rather than a delta, so two people reacting at once can't
+  /// leave a client applying its change to a list that has moved on.
+  Future<List<MessageReaction>> reactToMessage(
+    String conversationId,
+    String messageId,
+    String emoji,
+  ) async {
+    final res = await _dio.post(
+      ApiConstants.chatMessageReactions(conversationId, messageId),
+      data: {'emoji': emoji},
+    );
+    return _reactionsFrom(res.data);
+  }
+
+  Future<List<MessageReaction>> removeReaction(
+    String conversationId,
+    String messageId,
+  ) async {
+    final res = await _dio.delete(
+      ApiConstants.chatMessageReactions(conversationId, messageId),
+    );
+    return _reactionsFrom(res.data);
+  }
+
+  List<MessageReaction> _reactionsFrom(dynamic data) {
+    final list = (data as Map<String, dynamic>)['reactions'] as List<dynamic>?;
+    return (list ?? const [])
+        .map((r) => MessageReaction.fromJson(Map<String, dynamic>.from(r as Map)))
+        .toList();
+  }
+
   Future<void> deleteConversation(String conversationId) async {
     await _dio.delete(ApiConstants.chatConversation(conversationId));
   }

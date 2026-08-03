@@ -212,19 +212,26 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                         isMe: isMe,
                         showSender: conv.isGroup,
                         showStatus: isMe,
+                        myId: _myId,
+                        onReactionTap: msg.isDeleted
+                            ? null
+                            : (emoji) => ctx
+                                .read<ChatCubit>()
+                                .toggleReaction(msg.id, emoji),
                         onRetry: msg.hasFailed
                             ? () => ctx
                                 .read<ChatCubit>()
                                 .retryMessage(msg.clientId!)
                             : null,
-                        // Nothing to offer while a send is still in flight:
-                        // "delete for everyone" would be talking about a
-                        // message the server has never heard of.
-                        onLongPress: !isMe || msg.isPending
+                        // Nothing to offer while a send is still in flight, or
+                        // once the message is gone: reacting to — or deleting
+                        // "for everyone" — a message the server has never
+                        // heard of means nothing.
+                        onLongPress: msg.isPending || msg.isDeleted
                             ? null
                             : () => msg.hasFailed
                                 ? _showFailedOptions(ctx, msg.clientId!)
-                                : _showDeleteOption(ctx, msg.id),
+                                : _showMessageOptions(ctx, msg, isMe: isMe),
                       ),
                     );
                   },
@@ -340,28 +347,126 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     );
   }
 
-  void _showDeleteOption(BuildContext ctx, String messageId) {
+  /// The emoji the signed-in user has on [msg], or null if they haven't
+  /// reacted — a user holds at most one reaction per message.
+  String? _myReactionEmoji(ChatMessage msg) {
+    if (_myId.isEmpty) return null;
+    for (final r in msg.reactions) {
+      if (r.userId == _myId) return r.emoji;
+    }
+    return null;
+  }
+
+  /// The long-press sheet: react to any message, plus edit and delete on your
+  /// own.
+  ///
+  /// Reactions come first and are available on everyone's messages — they're
+  /// the thing you reach for most and the only thing you can do to someone
+  /// else's message.
+  void _showMessageOptions(
+    BuildContext ctx,
+    ChatMessage msg, {
+    required bool isMe,
+  }) {
     final s = S.of(ctx);
+    final cubit = ctx.read<ChatCubit>();
+    final myEmoji = _myReactionEmoji(msg);
+
     showModalBottomSheet(
       context: ctx,
       builder: (_) => SafeArea(
         child: Wrap(children: [
           ListTile(
-            leading:
-                const Icon(Icons.delete_outline_rounded, color: ColorManager.red),
-            title: Text(s.deleteMessageOption,
-                style: const TextStyle(color: ColorManager.red)),
-            onTap: () {
+            dense: true,
+            title: Text(s.reactToMessageTitle,
+                style: TextStyles.font12regular
+                    .copyWith(color: ColorManager.normalGrey)),
+          ),
+          _ReactionPickerRow(
+            selected: myEmoji,
+            onPick: (emoji) {
               Navigator.pop(ctx);
-              ctx.read<ChatCubit>().deleteMessage(messageId);
+              cubit.toggleReaction(msg.id, emoji);
             },
           ),
+          if (myEmoji != null)
+            ListTile(
+              leading: const Icon(Icons.remove_circle_outline_rounded),
+              title: Text(s.removeReactionOption),
+              onTap: () {
+                Navigator.pop(ctx);
+                // Toggling the emoji they already picked is how the server
+                // clears it, so there's no separate "remove" call to make.
+                cubit.toggleReaction(msg.id, myEmoji);
+              },
+            ),
+          if (isMe && msg.canBeEdited)
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: Text(s.editMessageOption),
+              onTap: () {
+                Navigator.pop(ctx);
+                cubit.startEditing(msg);
+              },
+            ),
+          if (isMe)
+            ListTile(
+              leading: const Icon(Icons.delete_outline_rounded,
+                  color: ColorManager.red),
+              title: Text(s.deleteMessageOption,
+                  style: const TextStyle(color: ColorManager.red)),
+              onTap: () {
+                Navigator.pop(ctx);
+                cubit.deleteMessage(msg.id);
+              },
+            ),
           ListTile(
             leading: const Icon(Icons.close_rounded),
             title: Text(s.cancelBtn),
             onTap: () => Navigator.pop(ctx),
           ),
         ]),
+      ),
+    );
+  }
+}
+
+// ─── Quick reaction picker ────────────────────────────────────────────────────
+
+/// The row of emoji at the top of the long-press sheet.
+///
+/// A fixed short set rather than a full picker: these cover almost every
+/// reaction anyone sends, and one tap beats a search field.
+class _ReactionPickerRow extends StatelessWidget {
+  static const emojis = ['❤️', '😂', '👍', '😮', '😢', '🙏'];
+
+  final String? selected;
+  final void Function(String emoji) onPick;
+
+  const _ReactionPickerRow({required this.onPick, this.selected});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          for (final emoji in emojis)
+            GestureDetector(
+              onTap: () => onPick(emoji),
+              child: Container(
+                padding: EdgeInsets.all(8.r),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: emoji == selected
+                      ? ColorManager.accent.withValues(alpha: 0.25)
+                      : Colors.transparent,
+                ),
+                child: Text(emoji, style: TextStyle(fontSize: 22.sp)),
+              ),
+            ),
+        ],
       ),
     );
   }

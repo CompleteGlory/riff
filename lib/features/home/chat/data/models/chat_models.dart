@@ -94,12 +94,21 @@ class Conversation {
   final String? description;
   final String? imageUrl;
   final bool isRequest;
-  final DateTime? lastMessageAt;
   final DateTime createdAt;
   final List<ChatParticipant> participants;
   final ConversationOtherUser? otherUser;
+
+  /// When this conversation last had a message — the key the chat list is
+  /// sorted on. Mutable alongside [latestMessage] because deleting the newest
+  /// message moves it *backwards*, to whatever is now on top.
+  DateTime? lastMessageAt;
   ChatMessage? latestMessage;
   int unreadCount;
+
+  /// The instant this conversation sorts by. A conversation nobody has spoken
+  /// in yet — or one whose only message was just deleted — falls back to when
+  /// it was created rather than to the bottom of the list.
+  DateTime get sortedAt => lastMessageAt ?? createdAt;
 
   Conversation({
     required this.id,
@@ -214,6 +223,78 @@ class MessageSender {
       };
 }
 
+/// One person's reaction to one message.
+///
+/// A user holds at most one reaction per message — reacting again with a
+/// different emoji replaces it — so the identity of a reaction is the user,
+/// not the emoji.
+class MessageReaction {
+  final String emoji;
+  final String userId;
+  final String? username;
+  final String? fullName;
+
+  const MessageReaction({
+    required this.emoji,
+    required this.userId,
+    this.username,
+    this.fullName,
+  });
+
+  factory MessageReaction.fromJson(Map<String, dynamic> j) => MessageReaction(
+        emoji: j['emoji'] as String? ?? '',
+        userId: j['user_id'] as String? ?? '',
+        username: j['username'] as String?,
+        fullName: j['full_name'] as String?,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'emoji': emoji,
+        'user_id': userId,
+        'username': username,
+        'full_name': fullName,
+      };
+
+  String get displayName => username ?? fullName ?? '';
+}
+
+/// The reactions on one message, grouped into the chips the bubble draws:
+/// one chip per distinct emoji, with how many people picked it.
+class ReactionSummary {
+  const ReactionSummary({
+    required this.emoji,
+    required this.count,
+    required this.reactedByMe,
+  });
+
+  final String emoji;
+  final int count;
+  final bool reactedByMe;
+
+  /// Groups [reactions] in first-seen order, so chips don't jump around as
+  /// people react.
+  static List<ReactionSummary> from(
+    List<MessageReaction> reactions,
+    String? myId,
+  ) {
+    final order = <String>[];
+    final counts = <String, int>{};
+    final mine = <String>{};
+    for (final r in reactions) {
+      if (!counts.containsKey(r.emoji)) order.add(r.emoji);
+      counts[r.emoji] = (counts[r.emoji] ?? 0) + 1;
+      if (myId != null && myId.isNotEmpty && r.userId == myId) mine.add(r.emoji);
+    }
+    return order
+        .map((e) => ReactionSummary(
+              emoji: e,
+              count: counts[e]!,
+              reactedByMe: mine.contains(e),
+            ))
+        .toList();
+  }
+}
+
 enum MessageType { text, image, video, audio, file, link }
 
 extension MessageTypeX on MessageType {
@@ -276,6 +357,15 @@ class ChatMessage {
   final MessageSender? sender;
   final MessageStatus status;
 
+  /// When the sender last rewrote the text, or null if they never have.
+  /// Presence — not a comparison against [createdAt] — is what draws the
+  /// "edited" marker, so a message saved twice for unrelated reasons is never
+  /// mislabelled.
+  final DateTime? editedAt;
+
+  /// Everyone who has reacted to this message, in the order they reacted.
+  final List<MessageReaction> reactions;
+
   /// Client-generated correlation id for an optimistic message.
   ///
   /// The socket echoes it back on the server's copy (`client_id`), which is how
@@ -302,6 +392,8 @@ class ChatMessage {
     required this.createdAt,
     this.sender,
     this.status = MessageStatus.sent,
+    this.editedAt,
+    this.reactions = const [],
     this.clientId,
     this.delivery = MessageDelivery.complete,
     this.localMediaPath,
@@ -321,6 +413,11 @@ class ChatMessage {
             ? MessageSender.fromJson(j['sender'] as Map<String, dynamic>)
             : null,
         status: MessageStatusX.fromString(j['status'] as String?),
+        editedAt: parseServerDateTime(j['edited_at'] as String?),
+        reactions: (j['reactions'] as List<dynamic>? ?? const [])
+            .map((r) => MessageReaction.fromJson(
+                Map<String, dynamic>.from(r as Map)))
+            .toList(),
         clientId: j['client_id'] as String?,
       );
 
@@ -339,21 +436,26 @@ class ChatMessage {
         'created_at': createdAt.toUtc().toIso8601String(),
         'sender': sender?.toJson(),
         'status': status.name,
+        'edited_at': editedAt?.toUtc().toIso8601String(),
+        'reactions': reactions.map((r) => r.toJson()).toList(),
       };
 
   ChatMessage copyWith({
     String? id,
+    String? content,
     MessageStatus? status,
     MessageDelivery? delivery,
     String? mediaUrl,
     DateTime? createdAt,
+    DateTime? editedAt,
+    List<MessageReaction>? reactions,
     bool? isDeleted,
   }) =>
       ChatMessage(
         id: id ?? this.id,
         conversationId: conversationId,
         type: type,
-        content: content,
+        content: content ?? this.content,
         mediaUrl: mediaUrl ?? this.mediaUrl,
         fileName: fileName,
         duration: duration,
@@ -361,6 +463,8 @@ class ChatMessage {
         createdAt: createdAt ?? this.createdAt,
         sender: sender,
         status: status ?? this.status,
+        editedAt: editedAt ?? this.editedAt,
+        reactions: reactions ?? this.reactions,
         clientId: clientId,
         delivery: delivery ?? this.delivery,
         localMediaPath: localMediaPath,
@@ -373,6 +477,16 @@ class ChatMessage {
 
   /// True when the send failed and the user can retry it.
   bool get hasFailed => delivery == MessageDelivery.failed;
+
+  /// True once the sender has rewritten the text at least once.
+  bool get isEdited => editedAt != null;
+
+  /// Only text can be rewritten — replacing an image is a new message, not an
+  /// edit — and only while it exists on the server and hasn't been deleted.
+  bool get canBeEdited =>
+      (type == MessageType.text || type == MessageType.link) &&
+      !isDeleted &&
+      delivery == MessageDelivery.complete;
 
   String get preview {
     if (isDeleted) return 'Message deleted';

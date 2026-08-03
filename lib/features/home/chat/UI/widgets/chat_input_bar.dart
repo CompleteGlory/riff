@@ -9,7 +9,10 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
+import 'package:riff/core/themes/text_styles/text_styles.dart';
+import 'package:riff/features/home/chat/data/models/chat_models.dart';
 import 'package:riff/features/home/chat/logic/cubit/chat_cubit.dart';
+import 'package:riff/generated/l10n.dart';
 
 class ChatInputBar extends StatefulWidget {
   final ChatCubit cubit;
@@ -21,8 +24,17 @@ class ChatInputBar extends StatefulWidget {
 
 class _ChatInputBarState extends State<ChatInputBar> {
   final _controller = TextEditingController();
+  final _focusNode = FocusNode();
   bool _hasText = false;
   Timer? _typingTimer;
+
+  /// The message being rewritten, mirrored from the cubit.
+  ///
+  /// "Edit" is tapped in the long-press sheet, nowhere near the composer, so
+  /// the cubit owns the flag and this bar follows it rather than being told
+  /// directly.
+  ChatMessage? _editing;
+  StreamSubscription<ChatState>? _stateSub;
 
   // Recording
   final _audioRecorder = AudioRecorder();
@@ -35,11 +47,52 @@ class _ChatInputBarState extends State<ChatInputBar> {
   void initState() {
     super.initState();
     _controller.addListener(_onTextChanged);
+    _syncEditing(widget.cubit.state);
+    _stateSub = widget.cubit.stream.listen(_syncEditing);
+  }
+
+  /// Opens or closes edit mode to match the cubit.
+  ///
+  /// Only acts on a *change* of which message is being edited: the cubit emits
+  /// on every incoming message and read receipt, and reloading the field on
+  /// each of those would wipe out whatever the user had typed since.
+  void _syncEditing(ChatState state) {
+    final editing = state is ChatLoaded ? state.editingMessage : null;
+    if (editing?.id == _editing?.id) return;
+    setState(() => _editing = editing);
+    if (editing != null) {
+      _controller.text = editing.content ?? '';
+      _controller.selection =
+          TextSelection.collapsed(offset: _controller.text.length);
+      _focusNode.requestFocus();
+    } else {
+      _controller.clear();
+    }
+  }
+
+  void _cancelEdit() {
+    // The cubit clearing it is what drives _syncEditing to reset the field.
+    widget.cubit.cancelEditing();
+  }
+
+  Future<void> _submitEdit() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+    final ok = await widget.cubit.submitEdit(text);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(S.of(context).messageEditFailed)),
+      );
+    }
   }
 
   void _onTextChanged() {
     final has = _controller.text.trim().isNotEmpty;
     if (has != _hasText) setState(() => _hasText = has);
+
+    // Rewriting an existing message isn't "typing" — the other side sees no
+    // indicator for it, since nothing new is on its way to them.
+    if (_editing != null) return;
 
     if (has) {
       widget.cubit.startTyping();
@@ -187,6 +240,8 @@ class _ChatInputBarState extends State<ChatInputBar> {
   void dispose() {
     _typingTimer?.cancel();
     _recordTimer?.cancel();
+    _stateSub?.cancel();
+    _focusNode.dispose();
     _controller.dispose();
     _audioRecorder.dispose();
     super.dispose();
@@ -218,15 +273,26 @@ class _ChatInputBarState extends State<ChatInputBar> {
       ),
       child: SafeArea(
         top: false,
-        child: Row(children: [
-          IconButton(
-            icon: Icon(Icons.add_circle_outline_rounded,
-                color: isDark ? ColorManager.lightGrey : ColorManager.darkGrey),
-            onPressed: _showMediaPicker,
-            padding: EdgeInsets.zero,
-            constraints: BoxConstraints(minWidth: 36.w, minHeight: 36.h),
-          ),
-          SizedBox(width: 8.w),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          if (_editing != null)
+            _EditingBanner(
+              message: _editing!,
+              isDark: isDark,
+              onCancel: _cancelEdit,
+            ),
+          Row(children: [
+          // Attaching media is composing a new message, not rewriting one.
+          if (_editing == null) ...[
+            IconButton(
+              icon: Icon(Icons.add_circle_outline_rounded,
+                  color:
+                      isDark ? ColorManager.lightGrey : ColorManager.darkGrey),
+              onPressed: _showMediaPicker,
+              padding: EdgeInsets.zero,
+              constraints: BoxConstraints(minWidth: 36.w, minHeight: 36.h),
+            ),
+            SizedBox(width: 8.w),
+          ],
           Expanded(
             child: Container(
               constraints: BoxConstraints(maxHeight: 120.h),
@@ -236,6 +302,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
               ),
               child: TextField(
                 controller: _controller,
+                focusNode: _focusNode,
                 maxLines: null,
                 textCapitalization: TextCapitalization.sentences,
                 style: TextStyle(
@@ -258,7 +325,26 @@ class _ChatInputBarState extends State<ChatInputBar> {
           SizedBox(width: 8.w),
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
-            child: _hasText
+            child: _editing != null
+                // No mic while editing: an empty field means "the message you
+                // are rewriting", not "record a voice note".
+                ? GestureDetector(
+                    key: const ValueKey('saveEdit'),
+                    onTap: _hasText ? _submitEdit : null,
+                    child: Container(
+                      width: 40.w,
+                      height: 40.h,
+                      decoration: BoxDecoration(
+                        color: _hasText
+                            ? ColorManager.accent
+                            : ColorManager.accent.withValues(alpha: 0.4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.check_rounded,
+                          color: ColorManager.black, size: 20),
+                    ),
+                  )
+                : _hasText
                 ? GestureDetector(
                     key: const ValueKey('send'),
                     onTap: _sendText,
@@ -285,7 +371,62 @@ class _ChatInputBarState extends State<ChatInputBar> {
                   ),
           ),
         ]),
+        ]),
       ),
+    );
+  }
+}
+
+// ─── Editing banner ───────────────────────────────────────────────────────────
+
+/// The strip above the composer while a message is being rewritten, showing
+/// which one — without it, edit mode is indistinguishable from having typed
+/// the same text again.
+class _EditingBanner extends StatelessWidget {
+  final ChatMessage message;
+  final bool isDark;
+  final VoidCallback onCancel;
+
+  const _EditingBanner({
+    required this.message,
+    required this.isDark,
+    required this.onCancel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8.h),
+      child: Row(children: [
+        Container(width: 3.w, height: 34.h, color: ColorManager.accent),
+        SizedBox(width: 10.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                S.of(context).editingMessageTitle,
+                style: TextStyles.font12semiBold
+                    .copyWith(color: ColorManager.accent),
+              ),
+              Text(
+                message.content ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyles.font12regular
+                    .copyWith(color: ColorManager.normalGrey),
+              ),
+            ],
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.close_rounded, size: 20),
+          tooltip: S.of(context).cancelEditTooltip,
+          onPressed: onCancel,
+          color: isDark ? ColorManager.lightGrey : ColorManager.darkGrey,
+        ),
+      ]),
     );
   }
 }
