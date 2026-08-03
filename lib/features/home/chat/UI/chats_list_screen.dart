@@ -17,6 +17,7 @@ import 'package:riff/features/home/search/data/repos/search_repo.dart';
 import 'package:riff/features/home/search/data/models/search_user.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
 import 'package:riff/core/widgets/app_error_widget.dart';
+import 'package:riff/core/widgets/offline_banner.dart';
 import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/generated/l10n.dart';
 
@@ -291,6 +292,15 @@ class _ChatsListScreenState extends State<ChatsListScreen>
 
         // Loading indicator for user search
         if (_searchingUsers) const LinearProgressIndicator(minHeight: 2),
+
+        // Says which list is a snapshot; the global banner says why.
+        BlocBuilder<ChatsListCubit, ChatsListState>(
+          builder: (ctx, _) {
+            final cubit = ctx.read<ChatsListCubit>();
+            if (!cubit.isShowingCached) return const SizedBox.shrink();
+            return OfflineCachedNotice(savedAt: cubit.cacheSavedAt);
+          },
+        ),
 
         Expanded(
           child: BlocBuilder<ChatsListCubit, ChatsListState>(

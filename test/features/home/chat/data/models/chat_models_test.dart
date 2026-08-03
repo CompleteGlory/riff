@@ -56,6 +56,56 @@ void main() {
     });
   });
 
+  // The sender's checkmarks. Read state is derived server-side from
+  // conversation_participants.last_read_at and sent on every message, so it now
+  // survives the sender closing and reopening the chat.
+  group('ChatMessage status', () {
+    ChatMessage parse(String? status) => ChatMessage.fromJson({
+          'id': 'm1',
+          'conversation_id': 'c1',
+          'type': 'text',
+          'created_at': withZ,
+          if (status != null) 'status': status,
+        });
+
+    test('reads each status the API sends', () {
+      expect(parse('sent').status, MessageStatus.sent);
+      expect(parse('delivered').status, MessageStatus.delivered);
+      expect(parse('read').status, MessageStatus.read);
+    });
+
+    // This is the shape the API used to return for *every* message: serializeMsg
+    // had no status field at all, so a message read days ago came back as a
+    // single check the moment the sender reopened the chat.
+    test('falls back to sent when the field is missing', () {
+      expect(parse(null).status, MessageStatus.sent);
+    });
+
+    test('falls back to sent for an unrecognised value', () {
+      expect(parse('something-else').status, MessageStatus.sent);
+    });
+
+    test('withStatus upgrades without losing anything else', () {
+      final msg = ChatMessage.fromJson({
+        'id': 'm1',
+        'conversation_id': 'c1',
+        'type': 'audio',
+        'duration': 12,
+        'media_url': 'https://example.test/voice.m4a',
+        'created_at': withZ,
+        'status': 'sent',
+      });
+
+      final read = msg.withStatus(MessageStatus.read);
+
+      expect(read.status, MessageStatus.read);
+      expect(read.id, msg.id);
+      expect(read.duration, 12);
+      expect(read.mediaUrl, msg.mediaUrl);
+      expect(read.createdAt, msg.createdAt);
+    });
+  });
+
   group('Conversation.fromJson', () {
     Map<String, dynamic> json({String? lastMessageAt, String? lastSeen}) => {
           'id': 'c1',

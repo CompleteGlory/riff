@@ -115,6 +115,22 @@ class UserProfile {
         followersCount: json['followersCount'] as int? ?? 0,
         followingCount: json['followingCount'] as int? ?? 0,
       );
+
+  /// Round-trips through [UserProfile.fromJson], for the offline cache — the
+  /// profile tab is the one screen a user expects to work with no signal at all.
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'full_name': fullName,
+        'username': username,
+        'email': email,
+        'provider': provider,
+        'bio': bio,
+        'instruments': instruments,
+        'genres': genres,
+        'profile_image_url': profileImageUrl,
+        'followersCount': followersCount,
+        'followingCount': followingCount,
+      };
 }
 
 // ---------------------------------------------------------------------------
@@ -750,6 +766,20 @@ class _PostThumbnailState extends State<_PostThumbnail> {
             children: [
               if (isShared) ...[
                 Icon(Icons.repeat, size: 16.r, color: ColorManager.normalGrey),
+                SizedBox(height: 4.h),
+              ] else if (widget.post.originalPostDeleted == true) ...[
+                // Share of a post that has since been deleted.
+                Icon(Icons.visibility_off_outlined,
+                    size: 16.r, color: ColorManager.normalGrey),
+                SizedBox(height: 4.h),
+                Text(
+                  S.of(context).postUnavailableTitle,
+                  style: TextStyles.font12Medium.copyWith(
+                    color: ColorManager.normalGrey,
+                    fontSize: 10.sp,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
                 SizedBox(height: 4.h),
               ],
               Text(

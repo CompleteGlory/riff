@@ -1449,6 +1449,19 @@ class _PostThumbnailState extends State<_PostThumbnail> {
             if (isShared) ...[
               Icon(Icons.repeat, size: 14.r, color: const Color(0xFF888888)),
               SizedBox(height: 4.h),
+            ] else if (widget.post.originalPostDeleted == true) ...[
+              // Share of a post that has since been deleted.
+              Icon(Icons.visibility_off_outlined,
+                  size: 14.r, color: const Color(0xFF888888)),
+              SizedBox(height: 4.h),
+              Text(S.of(context).postUnavailableTitle,
+                  style: TextStyle(
+                    fontFamily: 'GeneralSans',
+                    fontSize: 10,
+                    color: const Color(0xFF888888),
+                  ),
+                  textAlign: TextAlign.center),
+              SizedBox(height: 4.h),
             ],
             Text(displayText,
                 style: TextStyle(

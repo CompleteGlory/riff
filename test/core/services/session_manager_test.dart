@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riff/core/helpers/constants.dart';
+import 'package:riff/core/networks/connectivity_service.dart';
 import 'package:riff/core/routing/navigation_service.dart';
 import 'package:riff/core/services/session_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,7 +16,11 @@ void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     SessionManager.resetInstanceForTest();
+    ConnectivityService.resetInstanceForTest();
     session = SessionManager.instance;
+    // A refresh now retries on a backoff before giving up. Skip the waiting so
+    // the suite doesn't sit through ten real seconds per failure case.
+    session.sleep = (_) async {};
     // No MaterialApp here, so the login redirect has no navigator to find.
     // Without this it would poll for the full production timeout.
     NavigationService.readyTimeout = const Duration(milliseconds: 20);
@@ -24,6 +29,7 @@ void main() {
 
   tearDown(() {
     NavigationService.readyTimeout = const Duration(seconds: 10);
+    ConnectivityService.resetInstanceForTest();
   });
 
   /// Builds an unsigned JWT whose payload carries [exp].
@@ -208,6 +214,96 @@ void main() {
 
       expect(await session.refreshAccessToken(), isNull);
       expect(called, isFalse);
+    });
+  });
+
+  // Everything here exists because of one report: "I get signed out for no
+  // reason." A single 401 on /auth/refresh is not proof the session is over —
+  // the endpoint rotates the token, so it can equally mean this caller lost a
+  // race — and none of it is trustworthy at all when the device is offline.
+  group('refresh resilience', () {
+    test('a transient failure is retried before the caller gives up', () async {
+      await storeTokens(access: 'old-access', refresh: 'old-refresh');
+      var attempts = 0;
+      session.refreshTransport = (_) async {
+        attempts++;
+        if (attempts < 3) return const RefreshOutcome.transientFailure();
+        return const RefreshOutcome.success(accessToken: 'fresh-access');
+      };
+
+      expect(await session.refreshAccessToken(), 'fresh-access');
+      expect(attempts, 3);
+    });
+
+    test('one rejection is not enough to end the session', () async {
+      await storeTokens(access: 'old-access', refresh: 'old-refresh');
+      var attempts = 0;
+      session.refreshTransport = (_) async {
+        attempts++;
+        if (attempts == 1) return const RefreshOutcome.rejected();
+        return const RefreshOutcome.success(accessToken: 'fresh-access');
+      };
+
+      expect(await session.refreshAccessToken(), 'fresh-access');
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString(SharedPrefKeys.userToken), 'fresh-access');
+    });
+
+    test('a rejection while offline never ends the session', () async {
+      await storeTokens(access: 'old-access', refresh: 'old-refresh');
+      // Force the offline verdict the way the network layer would.
+      ConnectivityService.instance.probe = () async => false;
+      await ConnectivityService.instance.checkNow();
+      expect(ConnectivityService.instance.isOffline, isTrue);
+
+      var attempts = 0;
+      session.refreshTransport = (_) async {
+        attempts++;
+        return const RefreshOutcome.rejected();
+      };
+
+      expect(await session.refreshAccessToken(), isNull);
+      // Believed once, acted on never.
+      expect(attempts, 1);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString(SharedPrefKeys.userToken), 'old-access');
+      expect(prefs.getString(SharedPrefKeys.refreshToken), 'old-refresh');
+    });
+
+    // The exact shape of the original bug: a concurrent refresh rotated the
+    // token, this one came back 401 holding the stale one, and the user was
+    // signed out mid-scroll.
+    test('a rejection for a token storage has since rotated is retried with '
+        'the new one', () async {
+      await storeTokens(access: 'old-access', refresh: 'old-refresh');
+      final sent = <String>[];
+      session.refreshTransport = (token) async {
+        sent.add(token);
+        if (token == 'old-refresh') {
+          // Simulate the winner of the race writing its rotated token.
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(SharedPrefKeys.refreshToken, 'rotated-refresh');
+          return const RefreshOutcome.rejected();
+        }
+        return const RefreshOutcome.success(accessToken: 'fresh-access');
+      };
+
+      expect(await session.refreshAccessToken(), 'fresh-access');
+      expect(sent, ['old-refresh', 'rotated-refresh']);
+    });
+
+    test('two confirmed rejections do end the session', () async {
+      await storeTokens(access: 'old-access', refresh: 'old-refresh');
+      var attempts = 0;
+      session.refreshTransport = (_) async {
+        attempts++;
+        return const RefreshOutcome.rejected();
+      };
+
+      expect(await session.refreshAccessToken(), isNull);
+      expect(attempts, SessionManager.requiredRejections);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString(SharedPrefKeys.refreshToken), isNull);
     });
   });
 

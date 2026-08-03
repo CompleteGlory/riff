@@ -27,6 +27,9 @@ class ChatSocketService {
   final _msgStatusCtrl       = StreamController<Map<String, dynamic>>.broadcast();
   final _convDeletedCtrl     = StreamController<String>.broadcast();
   final _connectionCtrl      = StreamController<bool>.broadcast();
+  final _msgDeletedCtrl      = StreamController<Map<String, dynamic>>.broadcast();
+  final _msgEditedCtrl       = StreamController<ChatMessage>.broadcast();
+  final _msgReactionCtrl     = StreamController<Map<String, dynamic>>.broadcast();
 
   Stream<ChatMessage> get onMessage                => _messageController.stream;
   Stream<Map<String, dynamic>> get onTyping        => _typingController.stream;
@@ -41,6 +44,21 @@ class ChatSocketService {
   Stream<String> get onConversationDeleted         => _convDeletedCtrl.stream;
   /// Emits true on connect, false on disconnect / handshake rejection.
   Stream<bool> get onConnectionChanged             => _connectionCtrl.stream;
+
+  /// A message was deleted for everyone. Payload:
+  /// `{conversation_id, message_id, last_message_at, latest_message}` — the
+  /// last two describe where the conversation now sorts and what its row
+  /// should preview, since deleting the newest message moves it *down* the
+  /// chat list rather than to the top.
+  Stream<Map<String, dynamic>> get onMessageDeleted => _msgDeletedCtrl.stream;
+
+  /// A message's text was rewritten. Carries the whole updated message.
+  Stream<ChatMessage> get onMessageEdited          => _msgEditedCtrl.stream;
+
+  /// A message's reactions changed. Payload:
+  /// `{conversation_id, message_id, reactions, actor_id}` — always the full
+  /// list, never a delta.
+  Stream<Map<String, dynamic>> get onMessageReaction => _msgReactionCtrl.stream;
 
   bool get isConnected => _socket?.connected ?? false;
 
@@ -149,6 +167,25 @@ class ChatSocketService {
       } catch (_) {}
     });
 
+    _socket!.on('message_deleted', (data) {
+      try {
+        _msgDeletedCtrl.add(Map<String, dynamic>.from(data as Map));
+      } catch (_) {}
+    });
+
+    _socket!.on('message_edited', (data) {
+      try {
+        _msgEditedCtrl.add(
+            ChatMessage.fromJson(Map<String, dynamic>.from(data as Map)));
+      } catch (_) {}
+    });
+
+    _socket!.on('message_reaction', (data) {
+      try {
+        _msgReactionCtrl.add(Map<String, dynamic>.from(data as Map));
+      } catch (_) {}
+    });
+
     _socket!.on('conversation_deleted', (data) {
       try {
         final convId = (data as Map)['conversation_id'] as String?;
@@ -218,15 +255,26 @@ class ChatSocketService {
 
   /// Sends a text message, reconnecting first if the socket is down.
   ///
+  /// [clientId] is echoed back by the gateway on the saved message, so the
+  /// optimistic bubble the sender is already looking at can be replaced by the
+  /// real one rather than duplicated next to it.
+  ///
   /// Returns false when the message could not be handed to a live socket, so
   /// the caller can tell the user instead of leaving them staring at a message
   /// that silently never sent.
-  Future<bool> sendTextMessage(String conversationId, String text) async {
+  Future<bool> sendTextMessage(
+    String conversationId,
+    String text, {
+    String? clientId,
+    String? replyToId,
+  }) async {
     if (!await ensureConnected()) return false;
     _socket?.emit('send_message', {
       'conversation_id': conversationId,
       'type': 'text',
       'content': text,
+      if (clientId != null) 'client_id': clientId,
+      if (replyToId != null) 'reply_to_id': replyToId,
     });
     return true;
   }
@@ -264,5 +312,8 @@ class ChatSocketService {
     _presenceController.close();
     _convDeletedCtrl.close();
     _connectionCtrl.close();
+    _msgDeletedCtrl.close();
+    _msgEditedCtrl.close();
+    _msgReactionCtrl.close();
   }
 }

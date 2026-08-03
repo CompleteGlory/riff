@@ -1,4 +1,5 @@
 // ignore_for_file: use_build_context_synchronously, deprecated_member_use
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,7 +17,9 @@ import 'package:riff/features/home/feed/Ui/widgets/post/post_content.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/post_actions.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/shared_post_card.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/share_sheet.dart';
+import 'package:riff/features/home/feed/Ui/widgets/post/unavailable_post_card.dart';
 import 'package:riff/features/home/feed/Ui/post_detail_screen.dart';
+import 'package:riff/features/home/follow/UI/follow_list_screen.dart';
 import 'package:riff/core/routing/animated_page_route.dart';
 import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 import 'package:riff/features/home/feed/Ui/widgets/feed/lottie_loader.dart';
@@ -73,28 +76,52 @@ class _PostItemState extends State<PostItem>
     super.dispose();
   }
 
-  void _toggleLike() async {
-    HapticFeedback.mediumImpact();
-
-    final postCubit = getIt<PostCubit>();
-
-    if (!isLiked) {
-      setState(() => showHeart = true);
-      await _heartController.forward();
+  /// The big heart that pops over the image on a like.
+  ///
+  /// Deliberately not awaited by [_toggleLike] — see the note there.
+  Future<void> _playHeartBurst() async {
+    if (!mounted) return;
+    setState(() => showHeart = true);
+    try {
+      // from: 0 so a quick re-like restarts the burst instead of no-opping on
+      // an already-completed controller.
+      await _heartController.forward(from: 0);
       await Future.delayed(const Duration(milliseconds: 200));
       await _heartController.reverse();
-      setState(() => showHeart = false);
+    } on TickerCanceled {
+      // Scrolled away mid-animation; nothing to do.
     }
+    if (mounted) setState(() => showHeart = false);
+  }
 
-    await postCubit.toggleLike(
+  Future<void> _toggleLike() async {
+    HapticFeedback.mediumImpact();
+
+    final wasLiked = isLiked;
+
+    // The burst plays *alongside* the state change, not before it. This used to
+    // be awaited first — 400 ms forward, 200 ms hold, 400 ms reverse — so the
+    // icon and the count sat frozen for a full second on every like. The
+    // network was never the delay: PostCubit.toggleLike applies its optimistic
+    // update before it touches the wire.
+    if (!wasLiked) unawaited(_playHeartBurst());
+
+    await getIt<PostCubit>().toggleLike(
       widget.post,
+      // What's on screen, not what the server said when the feed loaded.
+      // Nothing writes back to the Post model, so a second tap recomputed from
+      // the same stale value and sent another *like* instead of an unlike.
+      currentIsLiked: isLiked,
+      currentLikeCount: likeCount,
       onOptimisticUpdate: (newIsLiked, newLikeCount) {
+        if (!mounted) return;
         setState(() {
           isLiked = newIsLiked;
           likeCount = newLikeCount;
         });
       },
       onRevert: () {
+        if (!mounted) return;
         setState(() {
           isLiked = !isLiked;
           likeCount += isLiked ? 1 : -1;
@@ -178,6 +205,19 @@ class _PostItemState extends State<PostItem>
           SnackBar(content: Text(S.of(context).failedToLoadComments)),
         );
       },
+    );
+  }
+
+  /// Opens the list of people who liked [post].
+  void _openLikers(Post post) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FollowListScreen.postLikers(
+          postId: post.id,
+          authorName: post.author?.username ?? '',
+        ),
+      ),
     );
   }
 
@@ -268,7 +308,10 @@ class _PostItemState extends State<PostItem>
                         ),
                       );
                     },
-                  ),
+                  )
+                // The original was deleted; the share stays, quoting nothing.
+                else if (post.originalPostDeleted == true)
+                  const UnavailablePostCard(),
 
                 // Content + images
                 Padding(
@@ -306,6 +349,7 @@ class _PostItemState extends State<PostItem>
                     shareCount: shareCount,
                     viewsCount: viewsCount,
                     onLikeTap: _toggleLike,
+                    onLikeCountTap: () => _openLikers(post),
                     onCommentTap: () => _openComments(post.id.toString()),
                     onShareTap: _sharePost,
                   ),

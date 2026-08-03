@@ -1,39 +1,57 @@
 // ignore_for_file: non_constant_identifier_names, constant_identifier_names
 import 'package:dio/dio.dart';
+import 'package:riff/core/networks/connectivity_service.dart';
 import 'api_error_model.dart';
+
+/// Sentinel `statusCode` for "the request never reached the server".
+///
+/// Nothing about a socket failure produces an HTTP status, but the UI still
+/// needs to tell an offline device apart from a server that answered with an
+/// error — one gets cached content and a "you're offline" notice, the other
+/// gets a real error page. Marking the model beats re-sniffing the English
+/// message for the word "connection" at every call site, which is what the
+/// screens used to do and which broke outright in Arabic.
+const int kOfflineStatusCode = -1;
+
+extension ApiErrorModelX on ApiErrorModel {
+  /// True when this failure was a transport failure rather than a server
+  /// response.
+  bool get isOffline => statusCode == kOfflineStatusCode;
+}
 
 class ApiErrorHandler {
   static ApiErrorModel handle(dynamic error) {
     if (error is DioException) {
       switch (error.type) {
         case DioExceptionType.connectionError:
-          return ApiErrorModel(message: "Connection to server failed");
+          return _offline("Connection to server failed");
         case DioExceptionType.cancel:
           return ApiErrorModel(message: "Request to the server was cancelled");
         case DioExceptionType.connectionTimeout:
-          return ApiErrorModel(message: "Connection timeout with the server");
+          return _offline("Connection timeout with the server");
         case DioExceptionType.unknown:
-          return ApiErrorModel(
-            message:
-                "Connection to the server failed due to internet connection",
-          );
+          return ConnectivityService.isNetworkFailure(error)
+              ? _offline(
+                  "Connection to the server failed due to internet connection")
+              : ApiErrorModel(message: "Something went wrong");
         case DioExceptionType.receiveTimeout:
-          return ApiErrorModel(
-            message: "Receive timeout in connection with the server",
-          );
+          return _offline("Receive timeout in connection with the server");
         case DioExceptionType.badResponse:
           return _handleError(error.response?.data, error.response);
         case DioExceptionType.sendTimeout:
-          return ApiErrorModel(
-            message: "Send timeout in connection with the server",
-          );
+          return _offline("Send timeout in connection with the server");
         case DioExceptionType.badCertificate:
           return ApiErrorModel(message: "Bad certificate");
       }
+    } else if (ConnectivityService.isNetworkFailure(error)) {
+      return _offline("Connection to server failed");
     } else {
       return ApiErrorModel(message: "Something went wrong");
     }
   }
+
+  static ApiErrorModel _offline(String message) =>
+      ApiErrorModel(statusCode: kOfflineStatusCode, message: message);
 }
 
 ApiErrorModel _handleError(dynamic data, Response? response) {

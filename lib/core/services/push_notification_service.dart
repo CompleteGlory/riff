@@ -41,6 +41,24 @@ class PushNotificationService {
   static const _channelId = 'riff_default';
   static const _channelName = 'Riff Notifications';
 
+  /// Small icon for every notification this app raises itself.
+  ///
+  /// Must be the white-on-transparent silhouette, *not* `@mipmap/ic_launcher`.
+  /// Android renders a small icon by taking only its alpha channel and painting
+  /// it white; the launcher icon is a fully opaque square (and, on API 26+, an
+  /// adaptive icon with a solid colour background), so it came out as a plain
+  /// white blob. Notifications the OS draws from an FCM payload already use
+  /// this drawable via `default_notification_icon` in AndroidManifest.xml —
+  /// which is why only the foreground banners looked wrong.
+  static const _androidIcon = '@drawable/ic_notification';
+
+  /// Backdrop for the small icon on Android 12+, which draws it inside a
+  /// tinted circle. Mirrors `@color/notification_color` (values/colors.xml),
+  /// the value the OS-drawn notifications already pick up from the manifest —
+  /// without it Android derives a colour from the launcher icon and the
+  /// foreground banner ends up a different colour to the background one.
+  static const _androidColor = Color(0xFF111111);
+
   bool _initialized = false;
 
   /// Foreground messages awaiting a banner tap, keyed by the local-notification
@@ -89,7 +107,7 @@ class PushNotificationService {
   // ── Local notifications (foreground display) ──────────────────────────────
 
   Future<void> _setupLocalNotifications() async {
-    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const android = AndroidInitializationSettings(_androidIcon);
     const ios = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -180,7 +198,8 @@ class PushNotificationService {
               _channelName,
               importance: Importance.high,
               priority: Priority.high,
-              icon: '@mipmap/ic_launcher',
+              icon: _androidIcon,
+              color: _androidColor,
             ),
             iOS: const DarwinNotificationDetails(
               presentAlert: true,

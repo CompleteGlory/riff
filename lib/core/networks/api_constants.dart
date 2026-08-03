@@ -19,6 +19,7 @@ class ApiConstants {
   static const String updateDeletePost = "/api/posts/{id}";
   static const String likePost = "/api/posts/{id}/like";
   static const String unlikePost = "/api/posts/{id}/unlike";
+  static String postLikes(int postId)         => "/api/posts/$postId/likes";
   static const String postComments = "/api/posts/{id}/comments";
   static const String comments = "/api/comments/{id}";
   static const String likeComment = "/api/comments/{id}/like";
@@ -80,6 +81,8 @@ class ApiConstants {
   static String chatMessages(String id)        => '/api/chat/conversations/$id/messages';
   static String chatUpload(String id)          => '/api/chat/conversations/$id/messages/upload';
   static String chatDeleteMessage(String c, String m) => '/api/chat/conversations/$c/messages/$m';
+  static String chatEditMessage(String c, String m)   => '/api/chat/conversations/$c/messages/$m';
+  static String chatMessageReactions(String c, String m) => '/api/chat/conversations/$c/messages/$m/reactions';
   static String chatAcceptRequest(String id)   => '/api/chat/requests/$id/accept';
   static String chatDeclineRequest(String id)  => '/api/chat/requests/$id';
   static String chatGroupUpdate(String id)     => '/api/chat/conversations/$id/group';

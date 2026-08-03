@@ -27,6 +27,15 @@ class ChatParticipant {
         fullName: j['full_name'] as String?,
         profileImageUrl: ApiConstants.resolveUrl(j['profile_image_url'] as String?),
       );
+
+  Map<String, dynamic> toJson() => {
+        'user_id': userId,
+        'role': role,
+        'is_request': isRequest,
+        'username': username,
+        'full_name': fullName,
+        'profile_image_url': profileImageUrl,
+      };
 }
 
 class ConversationOtherUser {
@@ -56,6 +65,17 @@ class ConversationOtherUser {
         lastSeen: parseServerDateTime(j['last_seen'] as String?),
       );
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'username': username,
+        'full_name': fullName,
+        'profile_image_url': profileImageUrl,
+        // Presence is a live fact; a cached copy of it would be a lie the next
+        // time the app opens offline, so it is never restored as "online".
+        'is_online': false,
+        'last_seen': lastSeen?.toUtc().toIso8601String(),
+      };
+
   ConversationOtherUser copyWith({bool? isOnline, DateTime? lastSeen}) =>
       ConversationOtherUser(
         id: id,
@@ -74,12 +94,21 @@ class Conversation {
   final String? description;
   final String? imageUrl;
   final bool isRequest;
-  final DateTime? lastMessageAt;
   final DateTime createdAt;
   final List<ChatParticipant> participants;
   final ConversationOtherUser? otherUser;
+
+  /// When this conversation last had a message — the key the chat list is
+  /// sorted on. Mutable alongside [latestMessage] because deleting the newest
+  /// message moves it *backwards*, to whatever is now on top.
+  DateTime? lastMessageAt;
   ChatMessage? latestMessage;
   int unreadCount;
+
+  /// The instant this conversation sorts by. A conversation nobody has spoken
+  /// in yet — or one whose only message was just deleted — falls back to when
+  /// it was created rather than to the bottom of the list.
+  DateTime get sortedAt => lastMessageAt ?? createdAt;
 
   Conversation({
     required this.id,
@@ -120,6 +149,21 @@ class Conversation {
             ? ChatMessage.fromJson(
                 j['latest_message'] as Map<String, dynamic>)
             : null;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': type,
+        'name': name,
+        'description': description,
+        'image_url': imageUrl,
+        'is_request': isRequest,
+        'last_message_at': lastMessageAt?.toUtc().toIso8601String(),
+        'created_at': createdAt.toUtc().toIso8601String(),
+        'participants': participants.map((p) => p.toJson()).toList(),
+        'other_user': otherUser?.toJson(),
+        'latest_message': latestMessage?.toJson(),
+        'unread_count': unreadCount,
+      };
 
   Conversation withOtherUserPresence(bool online, {DateTime? lastSeen}) => Conversation(
         id: id,
@@ -170,6 +214,85 @@ class MessageSender {
         fullName: j['full_name'] as String?,
         profileImageUrl: ApiConstants.resolveUrl(j['profile_image_url'] as String?),
       );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'username': username,
+        'full_name': fullName,
+        'profile_image_url': profileImageUrl,
+      };
+}
+
+/// One person's reaction to one message.
+///
+/// A user holds at most one reaction per message — reacting again with a
+/// different emoji replaces it — so the identity of a reaction is the user,
+/// not the emoji.
+class MessageReaction {
+  final String emoji;
+  final String userId;
+  final String? username;
+  final String? fullName;
+
+  const MessageReaction({
+    required this.emoji,
+    required this.userId,
+    this.username,
+    this.fullName,
+  });
+
+  factory MessageReaction.fromJson(Map<String, dynamic> j) => MessageReaction(
+        emoji: j['emoji'] as String? ?? '',
+        userId: j['user_id'] as String? ?? '',
+        username: j['username'] as String?,
+        fullName: j['full_name'] as String?,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'emoji': emoji,
+        'user_id': userId,
+        'username': username,
+        'full_name': fullName,
+      };
+
+  String get displayName => username ?? fullName ?? '';
+}
+
+/// The reactions on one message, grouped into the chips the bubble draws:
+/// one chip per distinct emoji, with how many people picked it.
+class ReactionSummary {
+  const ReactionSummary({
+    required this.emoji,
+    required this.count,
+    required this.reactedByMe,
+  });
+
+  final String emoji;
+  final int count;
+  final bool reactedByMe;
+
+  /// Groups [reactions] in first-seen order, so chips don't jump around as
+  /// people react.
+  static List<ReactionSummary> from(
+    List<MessageReaction> reactions,
+    String? myId,
+  ) {
+    final order = <String>[];
+    final counts = <String, int>{};
+    final mine = <String>{};
+    for (final r in reactions) {
+      if (!counts.containsKey(r.emoji)) order.add(r.emoji);
+      counts[r.emoji] = (counts[r.emoji] ?? 0) + 1;
+      if (myId != null && myId.isNotEmpty && r.userId == myId) mine.add(r.emoji);
+    }
+    return order
+        .map((e) => ReactionSummary(
+              emoji: e,
+              count: counts[e]!,
+              reactedByMe: mine.contains(e),
+            ))
+        .toList();
+  }
 }
 
 enum MessageType { text, image, video, audio, file, link }
@@ -198,6 +321,74 @@ extension MessageTypeX on MessageType {
   }
 }
 
+/// The message a reply quotes, as shown in the quote block above it.
+///
+/// A flat snippet rather than a nested [ChatMessage]: the block needs a name,
+/// a one-line preview and an id to scroll to. Nesting the whole message would
+/// recurse through *its* reply, so a chain of replies would carry the entire
+/// thread in every payload.
+class RepliedMessage {
+  final String id;
+  final String senderId;
+  final String? senderName;
+  final MessageType type;
+
+  /// True when the quoted message has since been deleted for everyone. Its
+  /// text does not come back over the wire in that case, so the block renders
+  /// the same "message deleted" placeholder the bubble does.
+  final bool isDeleted;
+  final String? content;
+  final String? mediaUrl;
+  final String? fileName;
+
+  const RepliedMessage({
+    required this.id,
+    required this.senderId,
+    this.senderName,
+    this.type = MessageType.text,
+    this.isDeleted = false,
+    this.content,
+    this.mediaUrl,
+    this.fileName,
+  });
+
+  factory RepliedMessage.fromJson(Map<String, dynamic> j) => RepliedMessage(
+        id: j['id'] as String,
+        senderId: j['sender_id'] as String? ?? '',
+        senderName: j['sender_name'] as String?,
+        type: MessageTypeX.fromString(j['type'] as String? ?? 'text'),
+        isDeleted: j['is_deleted'] as bool? ?? false,
+        content: j['content'] as String?,
+        mediaUrl: ApiConstants.resolveUrl(j['media_url'] as String?),
+        fileName: j['file_name'] as String?,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'sender_id': senderId,
+        'sender_name': senderName,
+        'type': type.value,
+        'is_deleted': isDeleted,
+        'content': content,
+        'media_url': mediaUrl,
+        'file_name': fileName,
+      };
+
+  /// The one line shown in the quote block.
+  String get preview {
+    if (isDeleted) return '';
+    switch (type) {
+      case MessageType.text:
+      case MessageType.link:
+        return content ?? '';
+      case MessageType.image: return '📷 Photo';
+      case MessageType.video: return '🎥 Video';
+      case MessageType.audio: return '🎤 Voice message';
+      case MessageType.file: return '📎 ${fileName ?? 'File'}';
+    }
+  }
+}
+
 /// 'sent' = saved on server | 'delivered' = device received | 'read' = seen
 enum MessageStatus { sent, delivered, read }
 
@@ -210,6 +401,16 @@ extension MessageStatusX on MessageStatus {
     }
   }
 }
+
+/// Where a message is in the *local* send pipeline, as opposed to
+/// [MessageStatus], which is where the server says it is.
+///
+/// A message the user just typed exists on screen before it exists anywhere
+/// else. [pending] is that window — the bubble renders dimmed with a clock so
+/// the send is visibly in progress rather than silently maybe-happening — and
+/// [failed] is what it becomes when the send never landed, so the user gets an
+/// explicit retry instead of a message they believe was delivered.
+enum MessageDelivery { complete, pending, failed }
 
 class ChatMessage {
   final String id;
@@ -224,6 +425,32 @@ class ChatMessage {
   final MessageSender? sender;
   final MessageStatus status;
 
+  /// When the sender last rewrote the text, or null if they never have.
+  /// Presence — not a comparison against [createdAt] — is what draws the
+  /// "edited" marker, so a message saved twice for unrelated reasons is never
+  /// mislabelled.
+  final DateTime? editedAt;
+
+  /// Everyone who has reacted to this message, in the order they reacted.
+  final List<MessageReaction> reactions;
+
+  /// The message this one replies to, or null when it replies to nothing.
+  final RepliedMessage? replyTo;
+
+  /// Client-generated correlation id for an optimistic message.
+  ///
+  /// The socket echoes it back on the server's copy (`client_id`), which is how
+  /// the real message replaces the optimistic one instead of appearing beside
+  /// it. Null on anything that came from the server unprompted.
+  final String? clientId;
+
+  /// Local send state. See [MessageDelivery].
+  final MessageDelivery delivery;
+
+  /// On-device path of the media being uploaded, so a pending image or voice
+  /// note renders from disk instead of waiting for a URL that doesn't exist yet.
+  final String? localMediaPath;
+
   const ChatMessage({
     required this.id,
     required this.conversationId,
@@ -236,6 +463,12 @@ class ChatMessage {
     required this.createdAt,
     this.sender,
     this.status = MessageStatus.sent,
+    this.editedAt,
+    this.reactions = const [],
+    this.replyTo,
+    this.clientId,
+    this.delivery = MessageDelivery.complete,
+    this.localMediaPath,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> j) => ChatMessage(
@@ -252,21 +485,87 @@ class ChatMessage {
             ? MessageSender.fromJson(j['sender'] as Map<String, dynamic>)
             : null,
         status: MessageStatusX.fromString(j['status'] as String?),
+        editedAt: parseServerDateTime(j['edited_at'] as String?),
+        reactions: (j['reactions'] as List<dynamic>? ?? const [])
+            .map((r) => MessageReaction.fromJson(
+                Map<String, dynamic>.from(r as Map)))
+            .toList(),
+        replyTo: j['reply_to'] != null
+            ? RepliedMessage.fromJson(
+                Map<String, dynamic>.from(j['reply_to'] as Map))
+            : null,
+        clientId: j['client_id'] as String?,
       );
 
-  ChatMessage withStatus(MessageStatus s) => ChatMessage(
-        id: id,
+  /// Serialises the server-visible fields, for the offline message cache.
+  /// Local-only send state is deliberately dropped: a pending message that was
+  /// never confirmed must not come back looking sent.
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'conversation_id': conversationId,
+        'type': type.value,
+        'content': content,
+        'media_url': mediaUrl,
+        'file_name': fileName,
+        'duration': duration,
+        'is_deleted': isDeleted,
+        'created_at': createdAt.toUtc().toIso8601String(),
+        'sender': sender?.toJson(),
+        'status': status.name,
+        'edited_at': editedAt?.toUtc().toIso8601String(),
+        'reactions': reactions.map((r) => r.toJson()).toList(),
+        'reply_to': replyTo?.toJson(),
+      };
+
+  ChatMessage copyWith({
+    String? id,
+    String? content,
+    MessageStatus? status,
+    MessageDelivery? delivery,
+    String? mediaUrl,
+    DateTime? createdAt,
+    DateTime? editedAt,
+    List<MessageReaction>? reactions,
+    RepliedMessage? replyTo,
+    bool? isDeleted,
+  }) =>
+      ChatMessage(
+        id: id ?? this.id,
         conversationId: conversationId,
         type: type,
-        content: content,
-        mediaUrl: mediaUrl,
+        content: content ?? this.content,
+        mediaUrl: mediaUrl ?? this.mediaUrl,
         fileName: fileName,
         duration: duration,
-        isDeleted: isDeleted,
-        createdAt: createdAt,
+        isDeleted: isDeleted ?? this.isDeleted,
+        createdAt: createdAt ?? this.createdAt,
         sender: sender,
-        status: s,
+        status: status ?? this.status,
+        editedAt: editedAt ?? this.editedAt,
+        reactions: reactions ?? this.reactions,
+        replyTo: replyTo ?? this.replyTo,
+        clientId: clientId,
+        delivery: delivery ?? this.delivery,
+        localMediaPath: localMediaPath,
       );
+
+  ChatMessage withStatus(MessageStatus s) => copyWith(status: s);
+
+  /// True while the message only exists on this device.
+  bool get isPending => delivery == MessageDelivery.pending;
+
+  /// True when the send failed and the user can retry it.
+  bool get hasFailed => delivery == MessageDelivery.failed;
+
+  /// True once the sender has rewritten the text at least once.
+  bool get isEdited => editedAt != null;
+
+  /// Only text can be rewritten — replacing an image is a new message, not an
+  /// edit — and only while it exists on the server and hasn't been deleted.
+  bool get canBeEdited =>
+      (type == MessageType.text || type == MessageType.link) &&
+      !isDeleted &&
+      delivery == MessageDelivery.complete;
 
   String get preview {
     if (isDeleted) return 'Message deleted';

@@ -140,12 +140,14 @@ class MockChatRepo extends _i1.Mock implements _i3.ChatRepo {
     String? fileName,
     String? mimeType, {
     int? duration,
+    String? clientId,
+    String? replyToId,
   }) =>
       (super.noSuchMethod(
             Invocation.method(
               #uploadMedia,
               [conversationId, filePath, fileName, mimeType],
-              {#duration: duration},
+              {#duration: duration, #clientId: clientId, #replyToId: replyToId},
             ),
             returnValue: _i4.Future<_i2.ChatMessage>.value(
               _FakeChatMessage_1(
@@ -153,7 +155,11 @@ class MockChatRepo extends _i1.Mock implements _i3.ChatRepo {
                 Invocation.method(
                   #uploadMedia,
                   [conversationId, filePath, fileName, mimeType],
-                  {#duration: duration},
+                  {
+                    #duration: duration,
+                    #clientId: clientId,
+                    #replyToId: replyToId,
+                  },
                 ),
               ),
             ),
@@ -186,6 +192,62 @@ class MockChatRepo extends _i1.Mock implements _i3.ChatRepo {
             returnValueForMissingStub: _i4.Future<void>.value(),
           )
           as _i4.Future<void>);
+
+  @override
+  _i4.Future<_i2.ChatMessage> editMessage(
+    String? conversationId,
+    String? messageId,
+    String? content,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#editMessage, [
+              conversationId,
+              messageId,
+              content,
+            ]),
+            returnValue: _i4.Future<_i2.ChatMessage>.value(
+              _FakeChatMessage_1(
+                this,
+                Invocation.method(#editMessage, [
+                  conversationId,
+                  messageId,
+                  content,
+                ]),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.ChatMessage>);
+
+  @override
+  _i4.Future<List<_i2.MessageReaction>> reactToMessage(
+    String? conversationId,
+    String? messageId,
+    String? emoji,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#reactToMessage, [
+              conversationId,
+              messageId,
+              emoji,
+            ]),
+            returnValue: _i4.Future<List<_i2.MessageReaction>>.value(
+              <_i2.MessageReaction>[],
+            ),
+          )
+          as _i4.Future<List<_i2.MessageReaction>>);
+
+  @override
+  _i4.Future<List<_i2.MessageReaction>> removeReaction(
+    String? conversationId,
+    String? messageId,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#removeReaction, [conversationId, messageId]),
+            returnValue: _i4.Future<List<_i2.MessageReaction>>.value(
+              <_i2.MessageReaction>[],
+            ),
+          )
+          as _i4.Future<List<_i2.MessageReaction>>);
 
   @override
   _i4.Future<void> deleteConversation(String? conversationId) =>

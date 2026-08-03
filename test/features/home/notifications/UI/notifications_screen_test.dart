@@ -5,11 +5,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/networks/socket_service.dart';
+import 'package:riff/core/routing/routes.dart';
+import 'package:riff/features/home/core/data/repos/home_repo.dart';
+import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 import 'package:riff/features/home/notifications/UI/notifications_screen.dart';
 import 'package:riff/features/home/notifications/data/models/notification_model.dart';
 import 'package:riff/features/home/notifications/data/repos/notifications_repo.dart';
 import 'package:riff/features/home/notifications/logic/cubit/notifications_cubit.dart';
+import 'package:riff/features/home/profile/UI/profile_screen.dart';
+import 'package:riff/features/home/profile_settings/UI/profile_settings_screen.dart'
+    show ProfileSettingsArgs;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../helpers/pump_app.dart';
@@ -28,7 +35,7 @@ class _FakeSocketService extends SocketService {
   void disconnect() {}
 }
 
-@GenerateMocks([NotificationsRepo])
+@GenerateMocks([NotificationsRepo, HomeRepo])
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -155,6 +162,156 @@ void main() {
       await tester.pump();
 
       expect(unreadRowCount(tester), 0);
+    });
+  });
+
+  group('the complete-profile nudge', () {
+    const profile = UserProfile(
+      id: 'me',
+      fullName: 'Magd Kamal',
+      username: 'magdkamal',
+      email: 'magd@example.com',
+    );
+
+    late MockHomeRepo homeRepo;
+    late HomeCubit homeCubit;
+    /// What the profileSettings route was handed, if it was reached at all.
+    Object? pushedArguments;
+
+    setUp(() {
+      pushedArguments = null;
+      homeRepo = MockHomeRepo();
+      when(homeRepo.getMe())
+          .thenAnswer((_) async => const ApiResult.success(profile));
+      // The constructor kicks off getMe(); pumpApp's pumpAndSettle lands it.
+      homeCubit = HomeCubit(homeRepo);
+    });
+
+    tearDown(() async => homeCubit.close());
+
+    /// Pumps the screen with a single complete_profile notification, and a
+    /// stand-in for the profileSettings route so the real screen (which wants
+    /// its own cubit and the network) never has to build.
+    Future<void> pumpNudge(WidgetTester tester) async {
+      when(repo.getNotifications()).thenAnswer(
+        (_) async => NotificationsResponse(
+          data: [
+            NotificationModel(
+              id: 1,
+              type: 'complete_profile',
+              isRead: false,
+              createdAt: DateTime.now().subtract(const Duration(hours: 15)),
+            ),
+          ],
+          unreadCount: 1,
+        ),
+      );
+      await cubit.silentRefresh();
+
+      await pumpApp(
+        tester,
+        MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: cubit),
+            BlocProvider.value(value: homeCubit),
+          ],
+          child: NotificationsScreen(notificationsDenied: () async => false),
+        ),
+        routes: {
+          Routes.profileSettings: (context) {
+            pushedArguments = ModalRoute.of(context)!.settings.arguments;
+            return Scaffold(
+              body: Column(children: [
+                const Text('profile settings'),
+                // The nudge is deleted after the push *returns*, so the tests
+                // need a way to come back.
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('go back'),
+                ),
+              ]),
+            );
+          },
+        },
+      );
+    }
+
+    testWidgets('"Set up" opens profile settings', (tester) async {
+      await pumpNudge(tester);
+
+      await tester.tap(find.text('Set up'));
+      await tester.pumpAndSettle();
+
+      // It used to push InstrumentsScreen and pop twice on the way back.
+      // Genres and instruments are edited on profile settings for every other
+      // entry point; the nudge lands in the same place now.
+      expect(find.text('profile settings'), findsOneWidget);
+    });
+
+    testWidgets('carries the loaded profile and the shared HomeCubit',
+        (tester) async {
+      await pumpNudge(tester);
+
+      await tester.tap(find.text('Set up'));
+      await tester.pumpAndSettle();
+
+      // ProfileSettingsScreen prefills from the profile, and refreshes the
+      // HomeCubit it came from after saving — a fresh cubit would leave the
+      // home shell showing stale data.
+      final args = pushedArguments as ProfileSettingsArgs;
+      expect(args.profile, same(profile));
+      expect(args.homeCubit, same(homeCubit));
+    });
+
+    testWidgets('asks the form to open on the genres and instruments pickers',
+        (tester) async {
+      await pumpNudge(tester);
+
+      await tester.tap(find.text('Set up'));
+      await tester.pumpAndSettle();
+
+      // The nudge is *about* those two fields. Landing at the top of the form
+      // leaves the user to go hunting for what they just tapped.
+      expect((pushedArguments as ProfileSettingsArgs).scrollToPreferences,
+          isTrue);
+    });
+
+    testWidgets('tapping the row goes to the same place as the button',
+        (tester) async {
+      await pumpNudge(tester);
+
+      // Missing the pill shouldn't be a dead end.
+      await tester.tap(find.text('Complete your profile to get discovered!'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('profile settings'), findsOneWidget);
+    });
+
+    testWidgets('the nudge is deleted once the user comes back',
+        (tester) async {
+      when(repo.deleteNotification(1)).thenAnswer((_) async {});
+      await pumpNudge(tester);
+
+      await tester.tap(find.text('Set up'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('go back'));
+      await tester.pumpAndSettle();
+
+      // Deleted, not marked read: it is a standing reminder, so a read copy
+      // left in the list is just clutter. The scheduler puts it back within
+      // three days if the profile is still incomplete.
+      verify(repo.deleteNotification(1)).called(1);
+      expect(find.text('Complete your profile to get discovered!'), findsNothing);
+    });
+
+    testWidgets('the nudge survives until the user actually opens settings',
+        (tester) async {
+      await pumpNudge(tester);
+
+      // Merely rendering the list must not consume it.
+      verifyNever(repo.deleteNotification(any));
+      expect(
+          find.text('Complete your profile to get discovered!'), findsOneWidget);
     });
   });
 }

@@ -5,6 +5,7 @@ import 'package:riff/core/routing/app_router.dart';
 import 'package:riff/core/routing/navigation_service.dart';
 import 'package:riff/core/routing/routes.dart';
 import 'package:riff/core/themes/app_theme.dart';
+import 'package:riff/core/widgets/offline_banner.dart';
 import 'package:riff/core/widgets/upload_overlay.dart';
 import 'package:riff/generated/l10n.dart';
 
@@ -52,7 +53,11 @@ class RiffMaterialApp extends StatelessWidget {
         ],
         supportedLocales: S.delegate.supportedLocales,
         initialRoute: initialRoute,
-        builder: (_, child) => UploadOverlay(child: child!),
+        // The connection banner sits outside every route so it survives
+        // navigation — being offline is a property of the app, not of one
+        // screen, and each screen having to render its own would guarantee the
+        // ones that forgot look like everything is fine.
+        builder: (_, child) => OfflineBanner(child: UploadOverlay(child: child!)),
         onGenerateRoute: (settings) {
           if (settings.name == Routes.privacyPolicyGate &&
               settings.arguments == null) {

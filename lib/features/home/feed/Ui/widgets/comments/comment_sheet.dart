@@ -29,6 +29,29 @@ import 'package:riff/generated/l10n.dart';
 // CommentsSheet — redesigned with animations and full dark-mode support
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// The saved comment, keeping [fallbackAuthor] when the server didn't send one.
+///
+/// `POST /posts/:id/comments` returned the freshly inserted row *without*
+/// loading its `user` relation, while `GET .../comments` returns it with the
+/// author attached. Swapping the optimistic comment for that response wiped the
+/// avatar — and the name — off the user's own comment the instant it posted;
+/// the picture only came back on a reload, which reads the list endpoint.
+///
+/// The API returns the author now too. This stays as the belt-and-braces half:
+/// it fixes the app before that deploy lands, covers older builds still in the
+/// wild, and stops the response from ever downgrading what is already on screen.
+Comment commentWithAuthorFallback(Comment comment, Author fallbackAuthor) {
+  if (comment.author != null) return comment;
+  return Comment(
+    id: comment.id,
+    content: comment.content,
+    author: fallbackAuthor,
+    createdAt: comment.createdAt,
+    isLiked: comment.isLiked,
+    likesCount: comment.likesCount,
+  );
+}
+
 class CommentsSheet extends StatefulWidget {
   final List<Comment> comments;
   final String postId;
@@ -128,15 +151,16 @@ class _CommentsSheetState extends State<CommentsSheet> {
 
     res.when(
       success: (comment) {
+        final saved = commentWithAuthorFallback(comment, tempAuthor);
         final index = _comments.indexWhere((c) => c.id == tempId);
         if (index != -1) {
           setState(() {
-            _comments[index] = comment;
+            _comments[index] = saved;
             _pendingIds.remove(tempId);
-            _commentLikes[comment.id] = comment.isLiked ?? false;
+            _commentLikes[saved.id] = saved.isLiked ?? false;
           });
         }
-        widget.onCommentCreated(comment);
+        widget.onCommentCreated(saved);
       },
       failure: (_) {
         setState(() {

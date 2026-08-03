@@ -18,6 +18,24 @@ class ChatLoaded extends ChatState {
   /// Type of media currently being uploaded ('image' | 'video' | 'audio') — null = not uploading
   final String? sendingMediaType;
 
+  /// True when [messages] came out of the offline cache rather than the API,
+  /// so the screen can say so instead of presenting a stale chunk of history as
+  /// the live conversation.
+  final bool isFromCache;
+
+  /// The message the composer is currently rewriting, or null when it is
+  /// composing a new one. Kept in state rather than in the input bar so that
+  /// tapping "Edit" in the long-press sheet — which happens well away from the
+  /// composer — is all it takes to put it into edit mode.
+  final ChatMessage? editingMessage;
+
+  /// The message the composer is quoting, or null when it isn't.
+  ///
+  /// Mutually exclusive with [editingMessage] — you are either rewriting a
+  /// message or answering one, never both. The cubit enforces that, so the
+  /// composer never has to reconcile two banners fighting for the same space.
+  final ChatMessage? replyingTo;
+
   ChatLoaded({
     required this.conversation,
     required this.messages,
@@ -26,6 +44,9 @@ class ChatLoaded extends ChatState {
     this.isSending = false,
     this.isBlocked = false,
     this.sendingMediaType,
+    this.isFromCache = false,
+    this.editingMessage,
+    this.replyingTo,
   });
 
   ChatLoaded copyWith({
@@ -35,7 +56,10 @@ class ChatLoaded extends ChatState {
     Map<String, bool>? typingUsers,
     bool? isSending,
     bool? isBlocked,
+    bool? isFromCache,
     Object? sendingMediaType = _sentinel,
+    Object? editingMessage = _sentinel,
+    Object? replyingTo = _sentinel,
   }) => ChatLoaded(
     conversation: conversation ?? this.conversation,
     messages: messages ?? this.messages,
@@ -43,9 +67,16 @@ class ChatLoaded extends ChatState {
     typingUsers: typingUsers ?? this.typingUsers,
     isSending: isSending ?? this.isSending,
     isBlocked: isBlocked ?? this.isBlocked,
+    isFromCache: isFromCache ?? this.isFromCache,
     sendingMediaType: sendingMediaType == _sentinel
         ? this.sendingMediaType
         : sendingMediaType as String?,
+    editingMessage: editingMessage == _sentinel
+        ? this.editingMessage
+        : editingMessage as ChatMessage?,
+    replyingTo: replyingTo == _sentinel
+        ? this.replyingTo
+        : replyingTo as ChatMessage?,
   );
 }
 

@@ -1,4 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -11,9 +13,11 @@ import 'package:riff/features/home/chat/logic/cubit/chat_cubit.dart';
 import 'package:riff/features/home/chat/UI/widgets/message_bubble.dart';
 import 'package:riff/features/home/chat/UI/widgets/chat_input_bar.dart';
 import 'package:riff/features/home/chat/logic/cubit/chats_list_cubit.dart';
+import 'package:riff/features/home/chat/logic/voice_note_playback.dart';
 import 'package:riff/features/home/user_profile/ui/user_profile_screen.dart';
 import 'package:riff/features/home/chat/UI/group_details_screen.dart';
 import 'package:riff/core/widgets/app_error_widget.dart';
+import 'package:riff/core/widgets/offline_banner.dart';
 import 'package:riff/generated/l10n.dart';
 
 class ChatDetailScreen extends StatefulWidget {
@@ -27,6 +31,15 @@ class ChatDetailScreen extends StatefulWidget {
 class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final _scrollCtrl = ScrollController();
   String _myId = '';
+
+  /// Rough height of one bubble, used to aim the jump-to-quoted-message
+  /// scroll. Bubbles vary, so this lands the message on screen rather than at
+  /// an exact offset — good enough for "show me what this answers".
+  static const _estimatedBubbleExtent = 72.0;
+
+  /// The message briefly tinted after jumping to it from a reply's quote.
+  String? _highlightedMessageId;
+  Timer? _highlightTimer;
 
   @override
   void initState() {
@@ -68,7 +81,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   @override
   void dispose() {
+    _highlightTimer?.cancel();
     _scrollCtrl.dispose();
+    // Leaving the chat silences whatever voice note was playing. The bubbles go
+    // away with the list, but their audio isn't tied to being on screen —
+    // without this, a note kept talking over whatever the user moved on to.
+    unawaited(VoiceNotePlayback.instance.stopAll());
     super.dispose();
   }
 
@@ -178,44 +196,76 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           }
           if (state is ChatLoaded) {
             final isRequest = state.conversation.isRequest;
-            final pendingCount = state.isSending ? 1 : 0;
             // Extra slot at the end (top in reverse) for the request info tile
             final requestInfoCount = isRequest ? 1 : 0;
             return Column(children: [
+              // Say so when this history came off disk rather than the server.
+              if (state.isFromCache) const OfflineCachedNotice(),
               Expanded(
                 child: ListView.builder(
                   controller: _scrollCtrl,
                   reverse: true, // index 0 at bottom → newest visible without scrolling
                   padding:
                       EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-                  itemCount: state.messages.length + pendingCount + requestInfoCount,
+                  itemCount: state.messages.length + requestInfoCount,
                   itemBuilder: (_, i) {
-                    // Pending media bubble at index 0 (bottom)
-                    if (state.isSending && i == 0) {
-                      return Padding(
-                        padding: EdgeInsets.only(bottom: 6.h),
-                        child: _PendingMediaBubble(
-                            type: state.sendingMediaType ?? 'file'),
-                      );
-                    }
                     // Request info tile at the top (last index in reverse list)
-                    if (isRequest && i == state.messages.length + pendingCount) {
+                    if (isRequest && i == state.messages.length) {
                       return _RequestInfoTile(conv: state.conversation);
                     }
-                    final msgIdx = state.isSending ? i - 1 : i;
-                    final msg = state.messages[msgIdx];
-                    final isMe = msg.sender?.id == _myId;
+                    final msg = state.messages[i];
+                    // An optimistic bubble normally carries the signed-in user
+                    // as its sender, so the usual check works. The fallback is
+                    // for the case where the stored user id was unavailable
+                    // when the bubble was built: only our own sends have a
+                    // client id, and only an unattributed one has no sender.
+                    final isMe = msg.sender?.id == _myId ||
+                        (msg.clientId != null && msg.sender == null);
                     // Show checkmarks on all own messages (WhatsApp-style)
-                    return Padding(
-                      padding: EdgeInsets.only(bottom: 6.h),
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      margin: EdgeInsets.only(bottom: 6.h),
+                      decoration: BoxDecoration(
+                        // Tints the message a reply's quote just jumped to, so
+                        // it's findable among bubbles that otherwise look alike.
+                        color: _highlightedMessageId == msg.id
+                            ? ColorManager.accent.withValues(alpha: 0.15)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
                       child: MessageBubble(
                         message: msg,
                         isMe: isMe,
                         showSender: conv.isGroup,
                         showStatus: isMe,
-                        onLongPress: isMe
-                            ? () => _showDeleteOption(ctx, msg.id)
+                        myId: _myId,
+                        onReactionTap: msg.isDeleted
+                            ? null
+                            : (emoji) => ctx
+                                .read<ChatCubit>()
+                                .toggleReaction(msg.id, emoji),
+                        onRetry: msg.hasFailed
+                            ? () => ctx
+                                .read<ChatCubit>()
+                                .retryMessage(msg.clientId!)
                             : null,
+                        // Nothing to offer while a send is still in flight, or
+                        // once the message is gone: reacting to — or deleting
+                        // "for everyone" — a message the server has never
+                        // heard of means nothing.
+                        onQuoteTap: _jumpToMessage,
+                        // A message still in flight has no server id to quote,
+                        // and a deleted one has nothing left to answer.
+                        onSwipeReply: msg.isPending ||
+                                msg.hasFailed ||
+                                msg.isDeleted
+                            ? null
+                            : () => ctx.read<ChatCubit>().startReplying(msg),
+                        onLongPress: msg.isPending || msg.isDeleted
+                            ? null
+                            : () => msg.hasFailed
+                                ? _showFailedOptions(ctx, msg.clientId!)
+                                : _showMessageOptions(ctx, msg, isMe: isMe),
                       ),
                     );
                   },
@@ -294,28 +344,203 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     );
   }
 
-  void _showDeleteOption(BuildContext ctx, String messageId) {
+  /// Options for a message that never reached the server: send it again, or
+  /// throw it away. Leaving the user with only "delete" would mean retyping.
+  void _showFailedOptions(BuildContext ctx, String clientId) {
     final s = S.of(ctx);
     showModalBottomSheet(
       context: ctx,
       builder: (_) => SafeArea(
         child: Wrap(children: [
           ListTile(
+            dense: true,
+            title: Text(s.messageFailedSheetTitle,
+                style: TextStyles.font12regular
+                    .copyWith(color: ColorManager.normalGrey)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.refresh_rounded),
+            title: Text(s.messageRetrySend),
+            onTap: () {
+              Navigator.pop(ctx);
+              ctx.read<ChatCubit>().retryMessage(clientId);
+            },
+          ),
+          ListTile(
             leading:
                 const Icon(Icons.delete_outline_rounded, color: ColorManager.red),
-            title: Text(s.deleteMessageOption,
+            title: Text(s.messageDiscard,
                 style: const TextStyle(color: ColorManager.red)),
             onTap: () {
               Navigator.pop(ctx);
-              ctx.read<ChatCubit>().deleteMessage(messageId);
+              ctx.read<ChatCubit>().discardMessage(clientId);
             },
           ),
+        ]),
+      ),
+    );
+  }
+
+  /// Scrolls to the message a reply quotes.
+  ///
+  /// Only reaches messages already loaded — the quoted message may be far
+  /// enough back that it hasn't been paged in, and there is no endpoint for
+  /// "fetch around this id". In that case the tap does nothing rather than
+  /// jumping somewhere arbitrary; scrolling up to load more history brings it
+  /// into range.
+  void _jumpToMessage(String messageId) {
+    final state = context.read<ChatCubit>().state;
+    if (state is! ChatLoaded) return;
+    final index = state.messages.indexWhere((m) => m.id == messageId);
+    if (index == -1 || !_scrollCtrl.hasClients) return;
+
+    // The list is reverse:true, so index 0 sits at the bottom and the offset
+    // grows going back in time. Bubbles vary in height, so this is an estimate
+    // that lands the message on screen rather than an exact position.
+    final target = (index * _estimatedBubbleExtent)
+        .clamp(0.0, _scrollCtrl.position.maxScrollExtent);
+    _scrollCtrl.animateTo(
+      target,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+    setState(() => _highlightedMessageId = messageId);
+    // The highlight is a pointer, not a selection — it fades on its own so the
+    // user doesn't have to dismiss it.
+    _highlightTimer?.cancel();
+    _highlightTimer = Timer(const Duration(milliseconds: 1600), () {
+      if (mounted) setState(() => _highlightedMessageId = null);
+    });
+  }
+
+  /// The emoji the signed-in user has on [msg], or null if they haven't
+  /// reacted — a user holds at most one reaction per message.
+  String? _myReactionEmoji(ChatMessage msg) {
+    if (_myId.isEmpty) return null;
+    for (final r in msg.reactions) {
+      if (r.userId == _myId) return r.emoji;
+    }
+    return null;
+  }
+
+  /// The long-press sheet: react to any message, plus edit and delete on your
+  /// own.
+  ///
+  /// Reactions come first and are available on everyone's messages — they're
+  /// the thing you reach for most and the only thing you can do to someone
+  /// else's message.
+  void _showMessageOptions(
+    BuildContext ctx,
+    ChatMessage msg, {
+    required bool isMe,
+  }) {
+    final s = S.of(ctx);
+    final cubit = ctx.read<ChatCubit>();
+    final myEmoji = _myReactionEmoji(msg);
+
+    showModalBottomSheet(
+      context: ctx,
+      builder: (_) => SafeArea(
+        child: Wrap(children: [
+          ListTile(
+            dense: true,
+            title: Text(s.reactToMessageTitle,
+                style: TextStyles.font12regular
+                    .copyWith(color: ColorManager.normalGrey)),
+          ),
+          _ReactionPickerRow(
+            selected: myEmoji,
+            onPick: (emoji) {
+              Navigator.pop(ctx);
+              cubit.toggleReaction(msg.id, emoji);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.reply_rounded),
+            title: Text(s.replyMessageOption),
+            onTap: () {
+              Navigator.pop(ctx);
+              cubit.startReplying(msg);
+            },
+          ),
+          if (myEmoji != null)
+            ListTile(
+              leading: const Icon(Icons.remove_circle_outline_rounded),
+              title: Text(s.removeReactionOption),
+              onTap: () {
+                Navigator.pop(ctx);
+                // Toggling the emoji they already picked is how the server
+                // clears it, so there's no separate "remove" call to make.
+                cubit.toggleReaction(msg.id, myEmoji);
+              },
+            ),
+          if (isMe && msg.canBeEdited)
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: Text(s.editMessageOption),
+              onTap: () {
+                Navigator.pop(ctx);
+                cubit.startEditing(msg);
+              },
+            ),
+          if (isMe)
+            ListTile(
+              leading: const Icon(Icons.delete_outline_rounded,
+                  color: ColorManager.red),
+              title: Text(s.deleteMessageOption,
+                  style: const TextStyle(color: ColorManager.red)),
+              onTap: () {
+                Navigator.pop(ctx);
+                cubit.deleteMessage(msg.id);
+              },
+            ),
           ListTile(
             leading: const Icon(Icons.close_rounded),
             title: Text(s.cancelBtn),
             onTap: () => Navigator.pop(ctx),
           ),
         ]),
+      ),
+    );
+  }
+}
+
+// ─── Quick reaction picker ────────────────────────────────────────────────────
+
+/// The row of emoji at the top of the long-press sheet.
+///
+/// A fixed short set rather than a full picker: these cover almost every
+/// reaction anyone sends, and one tap beats a search field.
+class _ReactionPickerRow extends StatelessWidget {
+  static const emojis = ['❤️', '😂', '👍', '😮', '😢', '🙏'];
+
+  final String? selected;
+  final void Function(String emoji) onPick;
+
+  const _ReactionPickerRow({required this.onPick, this.selected});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          for (final emoji in emojis)
+            GestureDetector(
+              onTap: () => onPick(emoji),
+              child: Container(
+                padding: EdgeInsets.all(8.r),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: emoji == selected
+                      ? ColorManager.accent.withValues(alpha: 0.25)
+                      : Colors.transparent,
+                ),
+                child: Text(emoji, style: TextStyle(fontSize: 22.sp)),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -394,60 +619,6 @@ class _HeaderAvatar extends StatelessWidget {
           ),
         ),
     ]);
-  }
-}
-
-// ─── Pending media bubble ─────────────────────────────────────────────────────
-
-class _PendingMediaBubble extends StatelessWidget {
-  final String type;
-  const _PendingMediaBubble({required this.type});
-
-  IconData get _icon {
-    switch (type) {
-      case 'image': return Icons.image_rounded;
-      case 'video': return Icons.videocam_rounded;
-      case 'audio': return Icons.mic_rounded;
-      default: return Icons.attach_file_rounded;
-    }
-  }
-
-  String _localizedLabel(BuildContext context) {
-    final s = S.of(context);
-    switch (type) {
-      case 'image': return s.sendingPhoto;
-      case 'video': return s.sendingVideo;
-      case 'audio': return s.sendingVoice;
-      default: return s.sendingFile;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-        decoration: BoxDecoration(
-          color: ColorManager.accent.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(18.r),
-        ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(_icon, size: 18, color: Colors.white),
-          SizedBox(width: 8.w),
-          Text(_localizedLabel(context),
-              style: TextStyles.font12regular.copyWith(color: Colors.white)),
-          SizedBox(width: 10.w),
-          SizedBox(
-            width: 14.w,
-            height: 14.h,
-            child: const CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation(Colors.white70)),
-          ),
-        ]),
-      ),
-    );
   }
 }
 

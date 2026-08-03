@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
+import 'package:riff/core/cache/offline_cache.dart';
 import 'package:riff/core/networks/api_services.dart';
+import 'package:riff/core/networks/connectivity_service.dart';
 import 'package:riff/core/networks/dio_factory.dart';
 import 'package:riff/core/services/push_notification_service.dart';
 import 'package:riff/core/services/session_manager.dart';
@@ -61,6 +63,13 @@ Future<void> setUpGetIt() async {
   getIt.registerLazySingleton<Dio>(() => dio);
   getIt.registerLazySingleton<ApiService>(() => ApiService(dio));
 
+  // Offline support. Both are also reachable as singletons (the Dio
+  // interceptor and SessionManager can't take DI dependencies without a cycle),
+  // so these registrations exist for call sites that prefer getIt.
+  getIt.registerLazySingleton<ConnectivityService>(
+      () => ConnectivityService.instance);
+  getIt.registerLazySingleton<OfflineCache>(() => OfflineCache.instance);
+
   // login
   getIt.registerLazySingleton<LoginRepo>(() => LoginRepo(getIt()));
   getIt.registerFactory<LoginCubit>(() => LoginCubit(getIt()));
@@ -82,7 +91,7 @@ Future<void> setUpGetIt() async {
   getIt.registerFactory<FeedCubit>(() => FeedCubit(getIt()));
 
   // likes (repo only — LikeCubit removed; PostCubit consumes LikeRepo directly)
-  getIt.registerLazySingleton<LikeRepo>(() => LikeRepo(getIt()));
+  getIt.registerLazySingleton<LikeRepo>(() => LikeRepo(getIt(), dio));
 
   // comments
   getIt.registerLazySingleton<CommentRepo>(() => CommentRepo(getIt()));
@@ -185,6 +194,9 @@ void _registerSessionEndHooks() {
   final session = SessionManager.instance;
   if (session.sessionEndHooks.isNotEmpty) return;
   session.sessionEndHooks.addAll([
+    // Everything cached for offline use is per-user content; a signed-out
+    // device must not keep the previous account's feed, chats or profile.
+    () => OfflineCache.instance.clear(),
     () => getIt<NotificationsCubit>().reset(),
     () => getIt<ChatsListCubit>().reset(),
     () => getIt<ChatSocketService>().disconnect(),

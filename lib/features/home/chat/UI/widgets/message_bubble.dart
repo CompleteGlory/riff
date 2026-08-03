@@ -1,9 +1,13 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
+import 'package:riff/features/home/feed/Ui/widgets/post/fullscsreen_image.dart';
+import 'package:riff/features/home/chat/logic/voice_note_playback.dart';
+import 'package:riff/generated/l10n.dart';
 import 'package:riff/features/social_share/UI/widgets/link_preview_card.dart';
 import 'package:riff/features/social_share/data/models/link_preview.dart';
 import '../../../chat/data/models/chat_models.dart';
@@ -15,6 +19,29 @@ class MessageBubble extends StatelessWidget {
   final bool showStatus; // show WA-style checkmarks on the last sent message
   final VoidCallback? onLongPress;
 
+  /// Called when the user taps a message whose send failed.
+  final VoidCallback? onRetry;
+
+  /// The signed-in user's id, so a reaction chip can show whether it is one of
+  /// theirs. Null only before it has been loaded.
+  final String? myId;
+
+  /// Called when the user taps a reaction chip — toggles that emoji.
+  final void Function(String emoji)? onReactionTap;
+
+  /// Called when the user taps the quote block above a reply, to jump to the
+  /// message being answered.
+  final void Function(String messageId)? onQuoteTap;
+
+  /// Called when the user swipes the bubble sideways to reply to it.
+  final VoidCallback? onSwipeReply;
+
+  /// Identifies the tap target that opens the fullscreen image viewer.
+  ///
+  /// Exposed for tests: `Image.file` doesn't resolve under the test binding, so
+  /// a pending image bubble lays out zero-height and can't be tapped for real.
+  static const imageTapKey = Key('chatImageBubble');
+
   const MessageBubble({
     super.key,
     required this.message,
@@ -22,6 +49,11 @@ class MessageBubble extends StatelessWidget {
     this.showSender = false,
     this.showStatus = false,
     this.onLongPress,
+    this.onRetry,
+    this.myId,
+    this.onReactionTap,
+    this.onQuoteTap,
+    this.onSwipeReply,
   });
 
   @override
@@ -32,9 +64,26 @@ class MessageBubble extends StatelessWidget {
       return _DeletedBubble(isMe: isMe, isDark: isDark);
     }
 
-    return GestureDetector(
+    // A message that hasn't reached the server yet is drawn faded, so "sent"
+    // and "sending" are never the same picture. Anything else — clearing the
+    // composer on an emit that may have gone nowhere — reads as delivered.
+    final bubble = Opacity(
+      opacity: message.isPending ? 0.55 : 1,
+      child: _body(context, isDark),
+    );
+
+    final gestures = GestureDetector(
       onLongPress: onLongPress,
-      child: Align(
+      onTap: message.hasFailed ? onRetry : null,
+      child: bubble,
+    );
+
+    if (onSwipeReply == null) return gestures;
+    return _SwipeToReply(onReply: onSwipeReply!, child: gestures);
+  }
+
+  Widget _body(BuildContext context, bool isDark) {
+    return Align(
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -60,14 +109,56 @@ class MessageBubble extends StatelessWidget {
                             .copyWith(color: ColorManager.accent),
                       ),
                     ),
+                  if (message.replyTo != null)
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 3.h),
+                      child: _QuoteBlock(
+                        quoted: message.replyTo!,
+                        isDark: isDark,
+                        myId: myId,
+                        onTap: onQuoteTap == null
+                            ? null
+                            : () => onQuoteTap!(message.replyTo!.id),
+                      ),
+                    ),
                   _BubbleContent(
-                      message: message, isMe: isMe, isDark: isDark),
+                    message: message,
+                    isMe: isMe,
+                    isDark: isDark,
+                    // A failed message's tap belongs to the retry handler on
+                    // the whole bubble — opening the viewer instead would
+                    // swallow it and leave no way to resend.
+                    onImageTap:
+                        message.hasFailed ? null : () => _openImage(context),
+                  ),
+                  if (message.reactions.isNotEmpty) ...[
+                    SizedBox(height: 4.h),
+                    _ReactionChips(
+                      summaries:
+                          ReactionSummary.from(message.reactions, myId),
+                      isDark: isDark,
+                      onTap: onReactionTap,
+                    ),
+                  ],
                   SizedBox(height: 2.h),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 4.w),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        if (message.isEdited) ...[
+                          Text(
+                            S.of(context).messageEditedLabel,
+                            style: TextStyles.font12regular.copyWith(
+                              color: isDark
+                                  ? ColorManager.normalGrey
+                                  : ColorManager.darkGrey,
+                              fontSize: 10,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                          SizedBox(width: 4.w),
+                        ],
                         Text(
                           _fmt(message.createdAt),
                           style: TextStyles.font12regular.copyWith(
@@ -77,9 +168,12 @@ class MessageBubble extends StatelessWidget {
                             fontSize: 10,
                           ),
                         ),
-                        if (isMe && showStatus) ...[
+                        if (isMe) ...[
                           SizedBox(width: 3.w),
-                          _StatusIcon(status: message.status),
+                          _DeliveryIndicator(
+                            message: message,
+                            showStatus: showStatus,
+                          ),
                         ],
                       ],
                     ),
@@ -89,12 +183,293 @@ class MessageBubble extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
+  }
+
+  /// Opens the same fullscreen viewer post images use — pinch to zoom, tap to
+  /// close. An image still uploading is read off disk, so it doesn't have to
+  /// finish before it can be looked at.
+  void _openImage(BuildContext context) {
+    final url = message.mediaUrl;
+    final local = message.localMediaPath;
+
+    if (url != null && url.isNotEmpty) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => FullScreenImage.single(imageUrl: url)),
+      );
+    } else if (local != null && local.isNotEmpty) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => FullScreenImage.localFile(path: local)),
+      );
+    }
   }
 
   String _fmt(DateTime dt) =>
       '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+}
+
+// ─── Reply quote ──────────────────────────────────────────────────────────────
+
+/// The quoted message shown above a reply — an accent bar, who is being
+/// quoted, and one line of what they said. Tapping it jumps to the original.
+class _QuoteBlock extends StatelessWidget {
+  final RepliedMessage quoted;
+  final bool isDark;
+
+  /// The signed-in user's id, so the quote can say "You" rather than repeating
+  /// the user's own name back at them.
+  final String? myId;
+  final VoidCallback? onTap;
+
+  /// Identifies the quote block's tap target for tests.
+  static const tapKey = Key('chatQuoteBlock');
+
+  const _QuoteBlock({
+    required this.quoted,
+    required this.isDark,
+    this.myId,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final name = (myId != null && myId!.isNotEmpty && quoted.senderId == myId)
+        ? S.of(context).replyToYou
+        : (quoted.senderName ?? '');
+    // A quote of a message that was deleted for everyone has no text to show —
+    // the server withholds it — so it reads as the deleted placeholder rather
+    // than as an empty box.
+    final line =
+        quoted.isDeleted ? S.of(context).messageDeletedLabel : quoted.preview;
+
+    return GestureDetector(
+      key: tapKey,
+      onTap: onTap,
+      child: Container(
+        constraints: BoxConstraints(maxWidth: 0.72.sw),
+        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.07)
+              : Colors.black.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border(
+            left: BorderSide(color: ColorManager.accent, width: 3.w),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (name.isNotEmpty)
+              Text(
+                name,
+                style: TextStyles.font12semiBold
+                    .copyWith(color: ColorManager.accent, fontSize: 11),
+              ),
+            Text(
+              line,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyles.font12regular.copyWith(
+                fontSize: 11,
+                fontStyle: quoted.isDeleted ? FontStyle.italic : null,
+                color:
+                    isDark ? ColorManager.normalGrey : ColorManager.darkGrey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Swipe to reply ───────────────────────────────────────────────────────────
+
+/// Drags the bubble a short way sideways and fires [onReply] past a threshold,
+/// the way every other chat app starts a reply.
+///
+/// Horizontal-drag only, and capped at [_maxDrag], so it can't be mistaken for
+/// a scroll and can't pull the bubble off its side of the screen.
+class _SwipeToReply extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onReply;
+
+  const _SwipeToReply({required this.child, required this.onReply});
+
+  @override
+  State<_SwipeToReply> createState() => _SwipeToReplyState();
+}
+
+class _SwipeToReplyState extends State<_SwipeToReply> {
+  static const _maxDrag = 64.0;
+  static const _triggerAt = 44.0;
+
+  double _offset = 0;
+  bool _fired = false;
+
+  void _onUpdate(DragUpdateDetails d) {
+    setState(() {
+      _offset = (_offset + d.delta.dx).clamp(0.0, _maxDrag);
+    });
+    // Fire on crossing the threshold rather than on release, so the reply
+    // banner is already up as the finger lifts — releasing early then feels
+    // like a cancel, which is what it is.
+    if (!_fired && _offset >= _triggerAt) {
+      _fired = true;
+      widget.onReply();
+    }
+  }
+
+  void _onEnd(DragEndDetails _) {
+    setState(() {
+      _offset = 0;
+      _fired = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onHorizontalDragUpdate: _onUpdate,
+      onHorizontalDragEnd: _onEnd,
+      onHorizontalDragCancel: () => setState(() {
+        _offset = 0;
+        _fired = false;
+      }),
+      child: Stack(
+        alignment: Alignment.centerLeft,
+        children: [
+          if (_offset > 8)
+            Opacity(
+              opacity: (_offset / _triggerAt).clamp(0.0, 1.0),
+              child: Icon(Icons.reply_rounded,
+                  size: 18.r, color: ColorManager.normalGrey),
+            ),
+          AnimatedContainer(
+            duration: Duration(milliseconds: _offset == 0 ? 150 : 0),
+            transform: Matrix4.translationValues(_offset, 0, 0),
+            child: widget.child,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Reactions ────────────────────────────────────────────────────────────────
+
+/// The row of reaction chips under a bubble — one per distinct emoji, with a
+/// count once more than one person has picked it.
+///
+/// The chip for an emoji the signed-in user picked is outlined, so they can
+/// tell at a glance which one is theirs; tapping it takes their reaction back.
+class _ReactionChips extends StatelessWidget {
+  final List<ReactionSummary> summaries;
+  final bool isDark;
+  final void Function(String emoji)? onTap;
+
+  const _ReactionChips({
+    required this.summaries,
+    required this.isDark,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 4.w,
+      runSpacing: 4.h,
+      children: [
+        for (final s in summaries)
+          GestureDetector(
+            onTap: onTap == null ? null : () => onTap!(s.emoji),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0F0F0),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(
+                  color: s.reactedByMe
+                      ? ColorManager.accent
+                      : Colors.transparent,
+                  width: 1,
+                ),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text(s.emoji, style: TextStyle(fontSize: 12.sp)),
+                if (s.count > 1) ...[
+                  SizedBox(width: 3.w),
+                  Text(
+                    '${s.count}',
+                    style: TextStyles.font12regular.copyWith(
+                      fontSize: 10,
+                      color: isDark
+                          ? ColorManager.normalGrey
+                          : ColorManager.darkGrey,
+                    ),
+                  ),
+                ],
+              ]),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// ─── Delivery indicator ───────────────────────────────────────────────────────
+
+/// The trailing marker on the sender's own messages.
+///
+/// Three distinct situations used to collapse into one grey check: still
+/// uploading, failed outright, and genuinely sent. They now read differently —
+/// a spinner, a tappable red warning, and the usual checkmarks.
+class _DeliveryIndicator extends StatelessWidget {
+  final ChatMessage message;
+  final bool showStatus;
+
+  const _DeliveryIndicator({required this.message, required this.showStatus});
+
+  @override
+  Widget build(BuildContext context) {
+    if (message.isPending) {
+      return Row(mainAxisSize: MainAxisSize.min, children: [
+        SizedBox(
+          width: 9.r,
+          height: 9.r,
+          child: const CircularProgressIndicator(
+            strokeWidth: 1.4,
+            valueColor: AlwaysStoppedAnimation(ColorManager.normalGrey),
+          ),
+        ),
+        SizedBox(width: 4.w),
+        Text(
+          S.of(context).messageSending,
+          style: TextStyles.font12regular
+              .copyWith(color: ColorManager.normalGrey, fontSize: 10),
+        ),
+      ]);
+    }
+
+    if (message.hasFailed) {
+      return Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.error_outline_rounded, size: 12.r, color: ColorManager.red),
+        SizedBox(width: 4.w),
+        Text(
+          '${S.of(context).messageFailed} · ${S.of(context).messageRetrySend}',
+          style: TextStyles.font12regular
+              .copyWith(color: ColorManager.red, fontSize: 10),
+        ),
+      ]);
+    }
+
+    if (!showStatus) return const SizedBox.shrink();
+    return _StatusIcon(status: message.status);
+  }
 }
 
 // ─── WhatsApp-style checkmarks ────────────────────────────────────────────────
@@ -123,8 +498,15 @@ class _BubbleContent extends StatelessWidget {
   final bool isMe;
   final bool isDark;
 
-  const _BubbleContent(
-      {required this.message, required this.isMe, required this.isDark});
+  /// Opens the fullscreen viewer. Null when the tap belongs to something else.
+  final VoidCallback? onImageTap;
+
+  const _BubbleContent({
+    required this.message,
+    required this.isMe,
+    required this.isDark,
+    this.onImageTap,
+  });
 
   Color get _bg => isMe
       ? ColorManager.accent
@@ -140,12 +522,20 @@ class _BubbleContent extends StatelessWidget {
       case MessageType.link:
         return _TextBubble(text: message.content ?? '', bg: _bg, fg: _fg);
       case MessageType.image:
-        return _ImageBubble(url: message.mediaUrl ?? '', bg: _bg);
+        return _ImageBubble(
+          url: message.mediaUrl ?? '',
+          // While the upload is in flight there is no remote URL yet — show the
+          // file the user picked so the bubble isn't an empty grey box.
+          localPath: message.localMediaPath,
+          bg: _bg,
+          onTap: onImageTap,
+        );
       case MessageType.video:
         return _VideoBubble(url: message.mediaUrl ?? '', bg: _bg);
       case MessageType.audio:
         return _AudioBubble(
           url: message.mediaUrl ?? '',
+          localPath: message.localMediaPath,
           duration: message.duration ?? 0,
           bg: _bg,
           fg: _fg,
@@ -192,11 +582,43 @@ class _TextBubble extends StatelessWidget {
 
 class _ImageBubble extends StatelessWidget {
   final String url;
+  final String? localPath;
   final Color bg;
-  const _ImageBubble({required this.url, required this.bg});
+  final VoidCallback? onTap;
+  const _ImageBubble({
+    required this.url,
+    required this.bg,
+    this.localPath,
+    this.onTap,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => GestureDetector(
+        key: MessageBubble.imageTapKey,
+        onTap: onTap,
+        child: _thumbnail(),
+      );
+
+  Widget _thumbnail() {
+    final local = localPath;
+    if (url.isEmpty && local != null && local.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(16.r),
+        child: Image.file(
+          File(local),
+          width: 0.65.sw,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Container(
+            width: 0.65.sw,
+            height: 180.h,
+            color: bg,
+            child: const Icon(Icons.image_outlined,
+                color: ColorManager.normalGrey),
+          ),
+        ),
+      );
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(16.r),
       child: Image.network(
@@ -271,6 +693,7 @@ class _VideoBubble extends StatelessWidget {
 
 class _AudioBubble extends StatefulWidget {
   final String url;
+  final String? localPath;
   final int duration;
   final Color bg;
   final Color fg;
@@ -280,7 +703,13 @@ class _AudioBubble extends StatefulWidget {
     required this.duration,
     required this.bg,
     required this.fg,
+    this.localPath,
   });
+
+  /// Whether there is anything playable — a remote URL, or the local recording
+  /// while it is still uploading.
+  bool get hasSource =>
+      url.isNotEmpty || (localPath != null && localPath!.isNotEmpty);
 
   @override
   State<_AudioBubble> createState() => _AudioBubbleState();
@@ -302,7 +731,14 @@ class _AudioBubbleState extends State<_AudioBubble> {
     _total = Duration(seconds: widget.duration);
 
     _stateSub = _player.onPlayerStateChanged.listen((s) {
-      if (mounted) setState(() => _pState = s);
+      if (!mounted) return;
+      setState(() => _pState = s);
+      // A note that ran to the end isn't holding playback any more; leaving the
+      // claim in place would make the next note stop a player that had already
+      // finished.
+      if (s == PlayerState.completed || s == PlayerState.stopped) {
+        VoiceNotePlayback.instance.release(this);
+      }
     });
     _posSub = _player.onPositionChanged.listen((p) {
       if (mounted) setState(() => _pos = p);
@@ -317,6 +753,10 @@ class _AudioBubbleState extends State<_AudioBubble> {
     _stateSub?.cancel();
     _posSub?.cancel();
     _durSub?.cancel();
+    // Give up the claim before the player goes away, or a bubble scrolled off
+    // screen mid-playback would leave the coordinator holding a stop callback
+    // for a disposed player.
+    VoiceNotePlayback.instance.release(this);
     _player.dispose();
     super.dispose();
   }
@@ -324,14 +764,34 @@ class _AudioBubbleState extends State<_AudioBubble> {
   Future<void> _toggle() async {
     if (_pState == PlayerState.playing) {
       await _player.pause();
-    } else {
-      if (_pState == PlayerState.completed) {
-        await _player.seek(Duration.zero);
-      }
-      if (widget.url.isNotEmpty) {
-        await _player.play(UrlSource(widget.url));
-      }
+      VoiceNotePlayback.instance.release(this);
+      return;
     }
+
+    if (_pState == PlayerState.completed) {
+      await _player.seek(Duration.zero);
+    }
+
+    // Claim playback first and let the coordinator stop whoever had it — two
+    // voice notes talking over each other is the thing this prevents. Awaited,
+    // so the previous one is silent before this one starts.
+    await VoiceNotePlayback.instance.claim(this, _pauseForAnotherNote);
+    if (!mounted) return;
+
+    if (widget.url.isNotEmpty) {
+      await _player.play(UrlSource(widget.url));
+    } else if (widget.localPath != null && widget.localPath!.isNotEmpty) {
+      await _player.play(DeviceFileSource(widget.localPath!));
+    }
+  }
+
+  /// Silences this note because another one is starting.
+  ///
+  /// Pauses rather than stops, so coming back to it resumes where the listener
+  /// left off instead of restarting a two-minute message from the top.
+  Future<void> _pauseForAnotherNote() async {
+    if (!mounted) return;
+    await _player.pause();
   }
 
   String _fmt(Duration d) {
@@ -389,7 +849,7 @@ class _AudioBubbleState extends State<_AudioBubble> {
                 ),
                 child: Slider(
                   value: progress.toDouble(),
-                  onChanged: widget.url.isEmpty
+                  onChanged: !widget.hasSource
                       ? null
                       : (v) {
                           final ms = (v * totalMs).round();
@@ -477,7 +937,7 @@ class _DeletedBubble extends StatelessWidget {
               size: 14,
               color: isDark ? ColorManager.normalGrey : ColorManager.darkGrey),
           SizedBox(width: 6.w),
-          Text('Message deleted',
+          Text(S.of(context).messageDeletedLabel,
               style: TextStyles.font14regular.copyWith(
                   fontStyle: FontStyle.italic,
                   color: isDark

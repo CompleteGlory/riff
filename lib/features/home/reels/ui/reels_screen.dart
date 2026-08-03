@@ -6,6 +6,7 @@ import 'package:riff/core/di/dependency_injection.dart';
 import 'package:riff/core/networks/api_constants.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/features/home/reels/logic/cubit/reels_cubit.dart';
+import 'package:riff/features/home/reels/logic/reels_merge.dart';
 import 'package:riff/features/home/reels/logic/cubit/reels_state.dart';
 import 'package:riff/features/home/reels/ui/widgets/reel_item.dart';
 import 'package:riff/generated/l10n.dart';
@@ -65,21 +66,26 @@ class _ReelsBodyState extends State<_ReelsBody> {
   }
 
   // Called whenever the BLoC delivers a new (or unchanged) reels list.
+  //
+  // This used to accept a delivery only when the list *length* changed, which
+  // quietly threw away every correction to a reel already on screen. Once reels
+  // were cached for offline use that stopped being theoretical: the cached list
+  // painted first, the live one arrived with the same ten items, the lengths
+  // matched, and the fresh counts were discarded — so a reel kept showing the
+  // old like count while its own post screen showed the right one.
   void _onReelsUpdated(List<Post> newReels) {
-    final initialPost = widget.initialPost;
-    List<Post> merged;
+    final merge = mergeReels(
+      incoming: newReels,
+      current: _reels,
+      initialPost: widget.initialPost,
+    );
+    if (!merge.changed) return;
 
-    if (initialPost != null) {
-      // Keep initialPost at index 0; append all other reels after it (deduped).
-      final rest = newReels.where((r) => r.id != initialPost.id).toList();
-      merged = [initialPost, ...rest];
-    } else {
-      merged = newReels;
-    }
-
-    if (merged.length == _reels.length) return; // nothing new
-    _reels = merged;
-    _syncCache();
+    setState(() => _reels = merge.reels);
+    // Video controllers are cached by index; only rebuild them when the
+    // sequence actually moved, so a like count ticking up doesn't interrupt
+    // whatever is playing.
+    if (merge.orderChanged) _syncCache();
   }
 
   // Keep controllers alive for [currentPage-2 … currentPage+2].
