@@ -1,5 +1,1 @@
-<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-  <path fill-rule="evenodd" clip-rule="evenodd"
-    d="M6 2H18Q22 2 22 6V18Q22 22 18 22H6Q2 22 2 18V6Q2 2 6 2Z M9.5 8.5L16.5 12 9.5 15.5Z"
-    fill="currentColor"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M6 2H18Q22 2 22 6V18Q22 22 18 22H6Q2 22 2 18V6Q2 2 6 2Z M9.5 8.5L16.5 12 9.5 15.5Z" clip-rule="evenodd"/></svg>
