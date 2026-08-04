@@ -44,12 +44,12 @@ flutter precache --ios
 cd "$CI_PRIMARY_REPOSITORY_PATH"
 flutter pub get
 
-# CFBundleVersion must be unique and increasing for every TestFlight upload, but
-# pubspec's `version: 1.0.12` carries no +buildNumber, so Flutter would stamp
-# every build "1.0.12" and App Store Connect would reject the second one. Xcode
-# Cloud's CI_BUILD_NUMBER increments per build, so use it as the build number
-# and keep 1.0.12 as the user-visible version. Falls back to 1 when the script
-# is run outside Xcode Cloud.
+# CFBundleVersion must be unique and increasing for every TestFlight upload.
+# pubspec does carry a +buildNumber (it is Android's versionCode), but it only
+# changes when the version does, so two TestFlight uploads of the same version
+# would collide. Xcode Cloud's CI_BUILD_NUMBER increments per build, so use it
+# as the build number and keep pubspec's version as the user-visible one.
+# Falls back to 1 when the script is run outside Xcode Cloud.
 BUILD_NUMBER="${CI_BUILD_NUMBER:-1}"
 
 # Writes ios/Flutter/Generated.xcconfig pointing at the production entrypoint
