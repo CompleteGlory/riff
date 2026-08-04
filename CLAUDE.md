@@ -13,6 +13,45 @@ Both folders are mounted and accessible. **Always read the relevant files before
 
 ---
 
+## ⚠️ Building the App — ALWAYS pass the Spotify client id
+
+**Every `flutter run` / `flutter build` of this app must carry
+`--dart-define=SPOTIFY_CLIENT_ID=5bf7c19bb7b84c8cb8af0128fa7c59eb`.**
+Leave it out and "Connect Spotify" silently does nothing in the shipped app.
+
+```bash
+flutter build appbundle --release --flavor production -t lib/main_production.dart --dart-define=SPOTIFY_CLIENT_ID=5bf7c19bb7b84c8cb8af0128fa7c59eb
+```
+
+```bash
+flutter build ipa --release --flavor production -t lib/main_production.dart --dart-define=SPOTIFY_CLIENT_ID=5bf7c19bb7b84c8cb8af0128fa7c59eb
+```
+
+```bash
+flutter run --flavor development -t lib/main_development.dart --dart-define=SPOTIFY_CLIENT_ID=5bf7c19bb7b84c8cb8af0128fa7c59eb
+```
+
+**Why it fails silently.** `SpotifyAuthService._clientId` is
+`String.fromEnvironment('SPOTIFY_CLIENT_ID')` — resolved at *compile* time, and
+defaulting to the empty string when the define is absent. The guard against
+that is an `assert`, and asserts are stripped from release builds, so a release
+binary sends an empty `client_id` to Spotify, the authorize call throws,
+`connect()` catches it and returns `false`. The user just sees nothing happen.
+No crash, no log, nothing in the Play/App Store pipeline flags it. This shipped
+broken in 1.0.14 on both platforms for exactly this reason.
+
+This value is a **public** OAuth client identifier (the app uses PKCE, which is
+designed for clients that cannot keep a secret) and is extractable from any
+shipped binary, so keeping it here is fine. The Spotify **client secret** is a
+different value — it belongs only in the API's environment variables and must
+never be added to this file or to any Flutter build flag.
+
+The release pipelines already pass it and need no extra flags:
+`ios/ci_scripts/ci_post_clone.sh` (Xcode Cloud) and `android/fastlane/Fastfile`
+(Firebase App Distribution). If you add a new build path, pass it there too.
+
+---
+
 ## Before Starting Any Feature
 
 1. **Ask for the files** — read the existing screens, cubits, repos, and API controllers that the feature will touch before writing a single line.
@@ -312,9 +351,16 @@ On the Flutter side, always upload via `FormData` with `MultipartFile.fromFile(.
 
 ## Spotify Integration
 
+- **Flutter client id: `5bf7c19bb7b84c8cb8af0128fa7c59eb`, injected via
+  `--dart-define=SPOTIFY_CLIENT_ID=...` on every build — see the build section
+  at the top of this file. Omitting it is why Connect Spotify breaks.**
 - OAuth tokens stored on `users` table: `spotify_access_token`, `spotify_refresh_token`, `spotify_token_expires_at`
 - `SpotifyService` handles connect/disconnect/refresh/now-playing
-- `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET` env vars required
+- `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET` env vars required (API side)
+- Redirect URI is `com.riff.app://spotify-callback` — it must stay in sync with
+  three places: `SpotifyAuthService._redirectUri`, the `CFBundleURLSchemes`
+  entry in `ios/Runner/Info.plist`, and `manifestPlaceholders["appAuthRedirectScheme"]`
+  in `android/app/build.gradle.kts`
 
 ---
 

@@ -58,6 +58,21 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
+
+        // `flutter.versionCode` comes from the `+NNNNN` build number in
+        // pubspec.yaml, and silently falls back to 1 when that suffix is
+        // absent. That is not a build error — it produces a perfectly valid
+        // bundle that Play accepts on upload and then refuses to roll out
+        // ("this release doesn't allow any existing users to upgrade"),
+        // because versionCode 1 is a downgrade for everyone who already has
+        // the app. It cost a release once already: the suffix was dropped
+        // going from 1.0.11+12 to 1.0.12 and nothing complained until the
+        // Play Console did. Fail loudly here instead.
+        require(flutter.versionCode > 1) {
+            "versionCode is ${flutter.versionCode} — pubspec.yaml is missing its " +
+                "'+buildNumber' suffix (expected e.g. 'version: 1.0.14+10014'). " +
+                "Play will accept this bundle and then refuse to roll it out."
+        }
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         // Required by flutter_appauth — must match the redirect URI scheme

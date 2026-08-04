@@ -16,7 +16,20 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.14
+# The `+NNNNN` suffix is the build number: Android's versionCode, and the
+# default iOS CFBundleVersion. It is NOT optional. Dropping it (as happened
+# between 1.0.11+12 and 1.0.12) makes Flutter fall back to versionCode 1, and
+# Play then refuses to roll the release out at all — "doesn't allow any
+# existing users to upgrade" — because every existing tester is on a higher
+# code. android/app/build.gradle.kts fails the build if it goes missing again.
+#
+# Convention: MAJOR*10000 + MINOR*100 + PATCH, so the code rises with the
+# version name on its own. Bump it by 1 for a re-upload of the same version
+# (Play rejects a versionCode it has already seen, even for a fixed rebuild).
+#
+# iOS is unaffected: ios/ci_scripts/ci_post_clone.sh passes an explicit
+# --build-number from Xcode Cloud's CI_BUILD_NUMBER, which overrides this.
+version: 1.0.14+10014
 
 environment:
   sdk: ^3.12.0

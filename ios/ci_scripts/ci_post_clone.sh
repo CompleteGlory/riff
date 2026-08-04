@@ -44,12 +44,12 @@ flutter precache --ios
 cd "$CI_PRIMARY_REPOSITORY_PATH"
 flutter pub get
 
-# CFBundleVersion must be unique and increasing for every TestFlight upload, but
-# pubspec's `version: 1.0.12` carries no +buildNumber, so Flutter would stamp
-# every build "1.0.12" and App Store Connect would reject the second one. Xcode
-# Cloud's CI_BUILD_NUMBER increments per build, so use it as the build number
-# and keep 1.0.12 as the user-visible version. Falls back to 1 when the script
-# is run outside Xcode Cloud.
+# CFBundleVersion must be unique and increasing for every TestFlight upload.
+# pubspec does carry a +buildNumber (it is Android's versionCode), but it only
+# changes when the version does, so two TestFlight uploads of the same version
+# would collide. Xcode Cloud's CI_BUILD_NUMBER increments per build, so use it
+# as the build number and keep pubspec's version as the user-visible one.
+# Falls back to 1 when the script is run outside Xcode Cloud.
 BUILD_NUMBER="${CI_BUILD_NUMBER:-1}"
 
 # Writes ios/Flutter/Generated.xcconfig pointing at the production entrypoint
@@ -58,9 +58,17 @@ BUILD_NUMBER="${CI_BUILD_NUMBER:-1}"
 # --no-codesign: during ci_post_clone no signing certificates are installed
 # yet (Xcode Cloud injects signing at archive time), so skip Flutter's
 # code-signing checks.
+# --dart-define=SPOTIFY_CLIENT_ID is NOT optional: SpotifyAuthService reads the
+# client id with String.fromEnvironment at compile time and falls back to an
+# empty string, and the assert that would catch that is stripped from release
+# builds. Without it "Connect Spotify" fails silently in TestFlight. The define
+# survives --config-only because Flutter encodes it into Generated.xcconfig as
+# DART_DEFINES, which xcodebuild then compiles with. It is a public PKCE client
+# id, not a secret — see CLAUDE.md.
 flutter build ios --config-only --release --no-codesign \
   --flavor production -t lib/main_production.dart \
-  --build-number="$BUILD_NUMBER"
+  --build-number="$BUILD_NUMBER" \
+  --dart-define=SPOTIFY_CLIENT_ID="${SPOTIFY_CLIENT_ID:-5bf7c19bb7b84c8cb8af0128fa7c59eb}"
 
 cd ios
 pod install
