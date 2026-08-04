@@ -41,16 +41,26 @@ post_install do |installer|
     flutter_additional_ios_build_settings(target)
 
     # permission_handler: only compile the permissions the app actually uses
-    # (contacts, microphone, notifications). Every permission left enabled makes
-    # Apple's App Store analyzer demand a purpose string for an API the app never
-    # calls, causing ITMS-90683 rejections.
-    target.build_configurations.each do |config|
-      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
-        '$(inherited)',
+    # (microphone, notifications — see `Permission.` call sites in lib/). Every
+    # permission left enabled makes Apple's App Store analyzer demand a purpose
+    # string for an API the app never calls, causing ITMS-90683 rejections.
+    #
+    # PERMISSION_CONTACTS was left at 1 after the contacts-sync feature was
+    # deleted (commit a776f48), so ContactPermissionStrategy.m kept compiling in
+    # its CNContactStore calls and 1.0.14 build 9 was rejected for a missing
+    # NSContactsUsageDescription. Nothing in Dart calls Permission.contacts —
+    # the fix is to compile it out, not to add a purpose string for data the app
+    # doesn't touch.
+    #
+    # These are appended rather than assigned with `||=`: CocoaPods already
+    # populates GCC_PREPROCESSOR_DEFINITIONS on some Pod configurations
+    # (POD_CONFIGURATION_DEBUG=1 and friends), and `||=` would silently skip
+    # every macro below on those targets.
+    permission_macros = [
         'PERMISSION_EVENTS=0',
         'PERMISSION_EVENTS_FULL_ACCESS=0',
         'PERMISSION_REMINDERS=0',
-        'PERMISSION_CONTACTS=1',
+        'PERMISSION_CONTACTS=0',
         'PERMISSION_CAMERA=0',
         'PERMISSION_MICROPHONE=1',
         'PERMISSION_SPEECH_RECOGNIZER=0',
@@ -63,7 +73,12 @@ post_install do |installer|
         'PERMISSION_APP_TRACKING_TRANSPARENCY=0',
         'PERMISSION_CRITICAL_ALERTS=0',
         'PERMISSION_ASSISTANT=0',
-      ]
+    ]
+
+    target.build_configurations.each do |config|
+      existing = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] || ['$(inherited)']
+      existing = [existing] if existing.is_a?(String)
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = existing + permission_macros
     end
   end
 end

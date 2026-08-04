@@ -546,7 +546,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "ppSection1Title":
             MessageLookupByLibrary.simpleMessage("1. Introduction"),
         "ppSection2Body": MessageLookupByLibrary.simpleMessage(
-            "Account information — When you sign up, we collect your full name, username, email address, and password (stored as a one-way hash).\n\nProfile information — Profile picture, bio, and music preferences including instruments you play and genres you enjoy.\n\nContent you create — Posts, reels, comments, reactions, and any media you upload (photos, videos, audio recordings).\n\nMessages — Direct messages and group chat content are stored on our servers to deliver them to recipients and support message history.\n\nContacts (optional) — If you grant permission, we access your device contacts solely to help you find friends already on Riff. Contact data is never stored on our servers without your explicit action.\n\nDevice & usage data — Device model, OS version, app version, IP address, and in-app activity (screens visited, features used) for diagnostics and improvement."),
+            "Account information — When you sign up, we collect your full name, username, email address, and password (stored as a one-way hash).\n\nProfile information — Profile picture, bio, and music preferences including instruments you play and genres you enjoy.\n\nContent you create — Posts, reels, comments, reactions, and any media you upload (photos, videos, audio recordings).\n\nMessages — Direct messages and group chat content are stored on our servers to deliver them to recipients and support message history.\n\nDevice & usage data — Device model, OS version, app version, IP address, and in-app activity (screens visited, features used) for diagnostics and improvement."),
         "ppSection2Title":
             MessageLookupByLibrary.simpleMessage("2. Information We Collect"),
         "ppSection3Body": MessageLookupByLibrary.simpleMessage(
@@ -570,7 +570,7 @@ class MessageLookup extends MessageLookupByLibrary {
         "ppSection7Title":
             MessageLookupByLibrary.simpleMessage("7. Children\'s Privacy"),
         "ppSection8Body": MessageLookupByLibrary.simpleMessage(
-            "Access & correction — You can view and update your profile information at any time through Settings.\n\nAccount deletion — You can delete your account from Settings → Account. This permanently removes your profile, posts, and personal data within 30 days.\n\nNotifications — Manage push notification preferences in Settings → Notifications or through your device\'s system settings.\n\nContacts access — You can revoke contacts permission at any time in your device\'s app permissions settings."),
+            "Access & correction — You can view and update your profile information at any time through Settings.\n\nAccount deletion — You can delete your account from Settings → Account. This permanently removes your profile, posts, and personal data within 30 days.\n\nNotifications — Manage push notification preferences in Settings → Notifications or through your device\'s system settings."),
         "ppSection8Title":
             MessageLookupByLibrary.simpleMessage("8. Your Rights & Choices"),
         "ppSection9Body": MessageLookupByLibrary.simpleMessage(
