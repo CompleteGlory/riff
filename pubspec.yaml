@@ -29,7 +29,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 #
 # iOS is unaffected: ios/ci_scripts/ci_post_clone.sh passes an explicit
 # --build-number from Xcode Cloud's CI_BUILD_NUMBER, which overrides this.
-version: 1.0.14+10014
+version: 1.0.15+10015
 
 environment:
   sdk: ^3.12.0

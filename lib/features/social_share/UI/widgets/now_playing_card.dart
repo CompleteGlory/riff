@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
+import 'package:riff/generated/l10n.dart';
 import 'package:riff/features/social_share/data/models/spotify_now_playing.dart';
 import 'package:riff/features/social_share/data/repos/spotify_now_playing_repo.dart';
 import 'package:riff/features/social_share/services/platform_share_service.dart';
@@ -74,12 +75,52 @@ class _NowPlayingCardState extends State<NowPlayingCard>
 
   Future<void> _connect() async {
     setState(() { _loading = true; _connecting = true; });
-    final ok = await SpotifyAuthService.instance.connect();
-    if (ok) {
+    final result = await SpotifyAuthService.instance.connect();
+    if (result.isConnected) {
       _connected = true;
       _track = await _repo.fetch();
     }
-    if (mounted) setState(() { _loading = false; _connecting = false; });
+    if (!mounted) return;
+    setState(() { _loading = false; _connecting = false; });
+    _reportConnectResult(result);
+  }
+
+  /// Says something when a connect attempt doesn't land. Every failure used to
+  /// drop the user back on the "Connect Spotify" card with no message at all,
+  /// which is why the feature was reported as "doesn't work" with nothing to go
+  /// on — a cancelled browser and a Spotify-side rejection looked identical.
+  void _reportConnectResult(SpotifyConnectResult result) {
+    final l10n = S.of(context);
+    final String message;
+    switch (result.status) {
+      case SpotifyConnectStatus.connected:
+      case SpotifyConnectStatus.cancelled:
+        return; // Nothing to say: it worked, or the user backed out on purpose.
+      case SpotifyConnectStatus.connectedLocalOnly:
+        message = l10n.spotifyConnectedNotShared;
+      case SpotifyConnectStatus.notConfigured:
+        message = l10n.spotifyConnectUnavailable;
+      case SpotifyConnectStatus.failed:
+        // Spotify's own wording when there is any — an app still in
+        // Development Mode on the Spotify dashboard rejects accounts that
+        // aren't on its allowlist, and only says so here.
+        message = result.detail == null
+            ? l10n.spotifyConnectFailed
+            : '${l10n.spotifyConnectFailed}: ${result.detail}';
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        action: result.status == SpotifyConnectStatus.failed
+            ? SnackBarAction(
+                label: l10n.spotifyConnectRetry,
+                onPressed: _connect,
+              )
+            : null,
+      ),
+    );
   }
 
   Future<void> _disconnect() async {

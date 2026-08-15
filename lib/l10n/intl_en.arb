@@ -525,5 +525,37 @@
   "originalMessageUnavailable": "Original message unavailable",
   "postLikesTitle": "Likes",
   "noLikesYet": "No likes yet",
-  "noLikesYetSubtitle": "When people like this post, they'll show up here."
+  "noLikesYetSubtitle": "When people like this post, they'll show up here.",
+
+  "spotifyConnectFailed": "Couldn't connect to Spotify",
+  "spotifyConnectUnavailable": "Spotify isn't available in this version of Riff.",
+  "spotifyConnectedNotShared": "Connected to Spotify, but we couldn't tell Riff — others won't see your track yet.",
+  "spotifyConnectRetry": "Try again",
+
+  "deleteAccountTitle": "Delete account",
+  "deleteAccountMenuItem": "Delete account",
+  "deleteAccountHeadline": "Permanently delete your Riff account",
+  "deleteAccountWarning": "This can't be undone. Your account and everything in it is deleted straight away.",
+  "deleteAccountRemovedIntro": "This removes:",
+  "deleteAccountRemovedProfile": "Your profile — name, username, email, bio, photo, instruments and genres",
+  "deleteAccountRemovedContent": "Your posts, reels, comments and likes",
+  "deleteAccountRemovedMessages": "Your messages and conversations",
+  "deleteAccountRemovedSocial": "Your followers, the people you follow, and your blocked list",
+  "deleteAccountPasswordLabel": "Enter your password to confirm",
+  "deleteAccountUsernameLabel": "Type your username ({username}) to confirm",
+  "@deleteAccountUsernameLabel": {
+    "placeholders": {
+      "username": {}
+    }
+  },
+  "deleteAccountPasswordRequired": "Enter your password",
+  "deleteAccountUsernameMismatch": "That doesn't match your username",
+  "deleteAccountButton": "Delete my account",
+  "deleteAccountConfirmTitle": "Delete your account?",
+  "deleteAccountConfirmBody": "Your account and all of your content will be permanently deleted. This can't be undone.",
+  "deleteAccountConfirmAction": "Delete",
+  "deleteAccountCancel": "Cancel",
+  "deleteAccountWrongPassword": "Incorrect password",
+  "deleteAccountFailed": "Couldn't delete your account. Please try again.",
+  "deleteAccountSuccess": "Your account has been deleted."
 }

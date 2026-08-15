@@ -144,4 +144,12 @@ abstract class ApiService {
   Future<HttpResponse<dynamic>> changePassword(
     @Body() Map<String, dynamic> body,
   );
+
+  /// Permanently deletes the signed-in account. The body carries the
+  /// confirmation the server re-checks — a password, or the user's own
+  /// username for accounts that signed up with Google and have none.
+  @DELETE(ApiConstants.deleteAccount)
+  Future<HttpResponse<dynamic>> deleteAccount(
+    @Body() Map<String, dynamic> body,
+  );
 }
