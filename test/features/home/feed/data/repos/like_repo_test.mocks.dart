@@ -515,6 +515,21 @@ class MockApiService extends _i1.Mock implements _i6.ApiService {
             ),
           )
           as _i7.Future<_i2.HttpResponse<dynamic>>);
+
+  @override
+  _i7.Future<_i2.HttpResponse<dynamic>> deleteAccount(
+    Map<String, dynamic>? body,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#deleteAccount, [body]),
+            returnValue: _i7.Future<_i2.HttpResponse<dynamic>>.value(
+              _FakeHttpResponse_0<dynamic>(
+                this,
+                Invocation.method(#deleteAccount, [body]),
+              ),
+            ),
+          )
+          as _i7.Future<_i2.HttpResponse<dynamic>>);
 }
 
 /// A class which mocks [Dio].

@@ -78,8 +78,20 @@ ApiErrorModel _handleError(dynamic data, Response? response) {
       );
     }
 
-    // Try to parse as ApiErrorModel
-    return ApiErrorModel.fromJson(errorData);
+    // Try to parse as ApiErrorModel.
+    //
+    // The API usually echoes `statusCode` in the body, but nothing guarantees
+    // it — and a caller that branches on the status (the delete-account screen
+    // tells "wrong password" from "something went wrong" by the 401) would
+    // silently lose it for any handler that returns a bare `{"message": …}`.
+    // Fall back to the status the response actually arrived with.
+    final parsed = ApiErrorModel.fromJson(errorData);
+    if (parsed.statusCode != null) return parsed;
+    return ApiErrorModel(
+      statusCode: response.statusCode,
+      message: parsed.message,
+      errors: parsed.errors,
+    );
   } catch (e) {
     // Fallback if parsing fails
     return ApiErrorModel(

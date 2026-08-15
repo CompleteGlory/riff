@@ -13,6 +13,45 @@ Both folders are mounted and accessible. **Always read the relevant files before
 
 ---
 
+## ⚠️ Building the App — ALWAYS pass the Spotify client id
+
+**Every `flutter run` / `flutter build` of this app must carry
+`--dart-define=SPOTIFY_CLIENT_ID=5bf7c19bb7b84c8cb8af0128fa7c59eb`.**
+Leave it out and "Connect Spotify" silently does nothing in the shipped app.
+
+```bash
+flutter build appbundle --release --flavor production -t lib/main_production.dart --dart-define=SPOTIFY_CLIENT_ID=5bf7c19bb7b84c8cb8af0128fa7c59eb
+```
+
+```bash
+flutter build ipa --release --flavor production -t lib/main_production.dart --dart-define=SPOTIFY_CLIENT_ID=5bf7c19bb7b84c8cb8af0128fa7c59eb
+```
+
+```bash
+flutter run --flavor development -t lib/main_development.dart --dart-define=SPOTIFY_CLIENT_ID=5bf7c19bb7b84c8cb8af0128fa7c59eb
+```
+
+**Why it fails silently.** `SpotifyAuthService._clientId` is
+`String.fromEnvironment('SPOTIFY_CLIENT_ID')` — resolved at *compile* time, and
+defaulting to the empty string when the define is absent. The guard against
+that is an `assert`, and asserts are stripped from release builds, so a release
+binary sends an empty `client_id` to Spotify, the authorize call throws,
+`connect()` catches it and returns `false`. The user just sees nothing happen.
+No crash, no log, nothing in the Play/App Store pipeline flags it. This shipped
+broken in 1.0.14 on both platforms for exactly this reason.
+
+This value is a **public** OAuth client identifier (the app uses PKCE, which is
+designed for clients that cannot keep a secret) and is extractable from any
+shipped binary, so keeping it here is fine. The Spotify **client secret** is a
+different value — it belongs only in the API's environment variables and must
+never be added to this file or to any Flutter build flag.
+
+The release pipelines already pass it and need no extra flags:
+`ios/ci_scripts/ci_post_clone.sh` (Xcode Cloud) and `android/fastlane/Fastfile`
+(Firebase App Distribution). If you add a new build path, pass it there too.
+
+---
+
 ## Before Starting Any Feature
 
 1. **Ask for the files** — read the existing screens, cubits, repos, and API controllers that the feature will touch before writing a single line.
@@ -312,9 +351,16 @@ On the Flutter side, always upload via `FormData` with `MultipartFile.fromFile(.
 
 ## Spotify Integration
 
+- **Flutter client id: `5bf7c19bb7b84c8cb8af0128fa7c59eb`, injected via
+  `--dart-define=SPOTIFY_CLIENT_ID=...` on every build — see the build section
+  at the top of this file. Omitting it is why Connect Spotify breaks.**
 - OAuth tokens stored on `users` table: `spotify_access_token`, `spotify_refresh_token`, `spotify_token_expires_at`
 - `SpotifyService` handles connect/disconnect/refresh/now-playing
-- `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET` env vars required
+- `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET` env vars required (API side)
+- Redirect URI is `com.riff.app://spotify-callback` — it must stay in sync with
+  three places: `SpotifyAuthService._redirectUri`, the `CFBundleURLSchemes`
+  entry in `ios/Runner/Info.plist`, and `manifestPlaceholders["appAuthRedirectScheme"]`
+  in `android/app/build.gradle.kts`
 
 ---
 
@@ -457,6 +503,10 @@ test file has a co-located `.md` explaining coverage, mocks and gotchas:
 | Chats list dedupe wiring | `test/features/home/chat/logic/cubit/chats_list_cubit_test.dart` | [chats_list_cubit_test.md](test/features/home/chat/logic/cubit/chats_list_cubit_test.md) |
 | Mark-all-read renders instantly | `test/features/home/notifications/UI/notifications_screen_test.dart` | [notifications_screen_test.md](test/features/home/notifications/UI/notifications_screen_test.md) |
 | Read-receipt derivation (API) | `src/modules/chat/message-status.spec.ts` (NestJS repo) | [message-status.spec.md](/Users/magd/apis/riff/src/modules/chat/message-status.spec.md) |
+| Delete-account request body | `test/features/home/account_settings/data/repos/delete_account_repo_test.dart` | [delete_account_repo_test.md](test/features/home/account_settings/data/repos/delete_account_repo_test.md) |
+| Delete-account states | `test/features/home/account_settings/logic/delete_account_cubit_test.dart` | [delete_account_cubit_test.md](test/features/home/account_settings/logic/delete_account_cubit_test.md) |
+| Delete-account screen + confirmation | `test/features/home/account_settings/UI/delete_account_screen_test.dart` | [delete_account_screen_test.md](test/features/home/account_settings/UI/delete_account_screen_test.md) |
+| Account deletion cascade (API) | `src/modules/users/use-cases/delete-account.spec.ts` (NestJS repo) | [delete-account.spec.md](/Users/magd/apis/riff/src/modules/users/use-cases/delete-account.spec.md) |
 
 Patterns worth reusing from these:
 
@@ -537,6 +587,11 @@ full widget test.
 | A deleted post stayed in the feed | `PostEvents`, feed/reels/discover/profile cubits, `DeletePost` (API) | Deleting a post removed it from the profile it was deleted from and nowhere else — every other list kept its own copy until the next refetch, and the offline cache kept it indefinitely. `PostEvents.deletions` is now a process-wide broadcast: `DeletePostCubit` announces the id on success and `FeedCubit` / `ReelsCubit` / `SearchCubit` / `ProfileCubit` / `UserProfileCubit` each drop it locally and prune their cache bucket. Shares of the post are *kept* — `posts.original_post_id` is `ON DELETE SET NULL`, so the API flags every share `original_post_deleted` before deleting the original and the client renders `UnavailablePostCard` instead of an empty share |
 | Several voice notes played at once | `VoiceNotePlayback`, `_AudioBubble` | Each bubble owns its own `AudioPlayer` and nothing arbitrated between them, so starting a second note left the first playing underneath it. A process-wide coordinator now holds the claim — scoped to the screen wouldn't do, since a note still playing after the user navigates away is exactly the case that needs stopping. `release` is guarded on ownership: a note that finished, or a bubble disposed by scrolling, can report in *after* someone else has taken over |
 | Deleting a message left the chat list sorted by it | `chat.controller.ts` (`deleteMessage`), `ChatsListCubit`, `conversation_ordering.dart` | `conversations.last_message_at` kept pointing at the deleted message, so the conversation stayed where it was and its row still previewed text nobody could see, until the next full refresh. Deletion now walks `last_message_at` back to the newest surviving message (or null), broadcasts it with the new preview on `message_deleted`, and the client re-sorts. This is the one chat event that moves a conversation *down* the list, so unlike `onNewMessage` it can't be a "move to position 0" — hence the separate `sortConversationsByRecency` |
+| No way to delete your account in the app | `DeleteAccount` (API), `DeleteAccountScreen` / `DeleteAccountRepo` / `DeleteAccountCubit` (Flutter) | App Store guideline 5.1.1(v) requires in-app account deletion for any app with account creation, and the only path was a web page telling users to email support — which does not satisfy it and was called out in the 1.0.14 review. `DELETE /api/users/me` re-authenticates (password, or the user's own username for Google accounts that have none), flags shares of the user's posts `original_post_deleted` while the FK still points somewhere, drops their direct conversations, then hard-deletes the user row and lets `ON DELETE CASCADE` clear posts, comments, likes, follows, messages, reactions, blocks, notifications and post views. Cloudinary cleanup is best-effort and deliberately cannot fail the deletion |
+| Connect Spotify worked, but nobody else ever saw your track | `SpotifyAuthService._syncTokensToBackend` | It read the stored Riff JWT straight out of SharedPreferences and posted it with bare `http`, bypassing the Dio interceptor that refreshes on 401 — and access tokens live 15 minutes. Connecting Spotify a quarter of an hour into a session 401'd into a `catch` that only `debugPrint`ed, so the user was connected locally, their own card worked, and the backend never got the tokens. Now asks `SessionManager.validAccessToken()` for one that is valid *now*, and reports whether the sync landed |
+| Now-playing went dark an hour after connecting | `GetSpotifyNowPlaying` (API) | Spotify access tokens live one hour and the use case returned null the moment one aged out — "PKCE, can't refresh server-side", which isn't true: a PKCE refresh needs only the public client id. The refresh token was being stored and never spent. It now refreshes, persists the rotated pair, and clears dead credentials so the app offers "Connect Spotify" again instead of a card that never loads |
+| Every Spotify failure looked identical: nothing happened | `SpotifyAuthService.connect`, `NowPlayingCard` | `connect()` returned a bare `bool` and the card silently went back to the connect prompt, so a cancelled browser, a missing client id and a Spotify-side rejection were indistinguishable — which is why the feature was reported as "doesn't work" with nothing to go on. It now returns a status plus Spotify's own `error_description`, the empty-client-id case is a real check rather than a release-stripped `assert`, and the card shows what happened |
+| An HTTP error status was lost whenever the body omitted it | `ApiErrorHandler._handleError` | `ApiErrorModel.fromJson` reads `statusCode` from the response *body*. The API usually echoes it, but any handler returning a bare `{"message": …}` produced a model with a null status, so a caller branching on the status (delete-account telling "wrong password" from "something went wrong") silently lost it. Falls back to the status the response actually arrived with |
 | Read receipts stuck on one check — recipient had read the messages | `chat.controller.ts` (`serializeMsg`), `message-status.ts` | Read state only ever existed as a transient `message_status` socket event, upgraded in memory by whoever had that exact chat open at the time. Nothing persisted it and `serializeMsg` had **no `status` field**, so `MessageStatusX.fromString(null)` fell through to `sent` and every message reset to one check as soon as the sender reopened the chat. Status is now derived server-side from `conversation_participants.last_read_at`, returned on every message, and `GET .../messages` also emits a read receipt so a client whose socket hasn't come up still clears the sender's ticks. Voice notes go through the media-upload endpoint, which now carries the same status as a socket-sent text message |
 
 ---

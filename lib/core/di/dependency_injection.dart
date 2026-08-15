@@ -52,7 +52,9 @@ import 'package:riff/features/home/block/logic/cubit/block_cubit.dart';
 import 'package:riff/features/social_share/data/repos/link_preview_repo.dart';
 import 'package:riff/features/social_share/data/repos/spotify_now_playing_repo.dart';
 import 'package:riff/features/home/profile_settings/logic/profile_settings_cubit.dart';
+import 'package:riff/features/home/account_settings/data/repos/delete_account_repo.dart';
 import 'package:riff/features/home/account_settings/logic/change_password_cubit.dart';
+import 'package:riff/features/home/account_settings/logic/delete_account_cubit.dart';
 
 final getIt = GetIt.instance;
 
@@ -181,6 +183,12 @@ Future<void> setUpGetIt() async {
   // account settings — change password
   getIt.registerFactory<ChangePasswordCubit>(
       () => ChangePasswordCubit(getIt()));
+
+  // account settings — delete account
+  getIt.registerLazySingleton<DeleteAccountRepo>(
+      () => DeleteAccountRepo(getIt()));
+  getIt.registerFactory<DeleteAccountCubit>(
+      () => DeleteAccountCubit(getIt()));
 
   _registerSessionEndHooks();
 }

@@ -6,6 +6,7 @@ import 'package:riff/core/di/dependency_injection.dart';
 import 'package:riff/core/routing/routes.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
+import 'package:riff/features/home/core/logic/cubit/home_cubit.dart';
 import 'package:riff/features/home/follow/logic/cubit/follow_cubit.dart';
 import 'package:riff/generated/l10n.dart';
 
@@ -198,9 +199,78 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
             ),
           ),
 
+          SizedBox(height: 24.h),
+
+          // ── Danger zone ───────────────────────────────────────────────────
+          // App Store guideline 5.1.1(v): an app that lets people create an
+          // account must let them delete it from inside the app.
+          _SectionHeader(s.deleteAccountTitle),
+          SizedBox(height: 8.h),
+          Container(
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(14.r),
+              boxShadow: shadow,
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14.r),
+              onTap: _openDeleteAccount,
+              child: Padding(
+                padding:
+                    EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                child: Row(children: [
+                  Container(
+                    width: 36.r,
+                    height: 36.r,
+                    decoration: BoxDecoration(
+                      color: ColorManager.red.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(9.r),
+                    ),
+                    child: const Icon(Icons.delete_outline_rounded,
+                        color: ColorManager.red, size: 20),
+                  ),
+                  SizedBox(width: 14.w),
+                  Expanded(
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(s.deleteAccountMenuItem,
+                              style: TextStyles.font14semiBold
+                                  .copyWith(color: ColorManager.red)),
+                          SizedBox(height: 2.h),
+                          Text(s.deleteAccountWarning,
+                              style: TextStyles.font12Medium
+                                  .copyWith(color: ColorManager.normalGrey)),
+                        ]),
+                  ),
+                  Icon(Icons.arrow_forward_ios_rounded,
+                      size: 14,
+                      color: isDark
+                          ? const Color(0xFF555555)
+                          : const Color(0xFFBBBBBB)),
+                ]),
+              ),
+            ),
+          ),
+
           SizedBox(height: 32.h),
         ],
       ),
+    );
+  }
+
+  /// The delete screen needs the username to confirm against and the provider
+  /// to know whether this account has a password at all, both of which the
+  /// signed-in profile already carries.
+  void _openDeleteAccount() {
+    final profile = getIt<HomeCubit>().profile;
+    Navigator.pushNamed(
+      context,
+      Routes.deleteAccount,
+      arguments: {
+        'username': profile?.username ?? '',
+        'provider': profile?.provider,
+      },
     );
   }
 }

@@ -37,4 +37,5 @@ class Routes {
   // Account settings
   static const String accountSettings = '/accountSettings';
   static const String changePassword = '/changePassword';
+  static const String deleteAccount = '/deleteAccount';
 }
