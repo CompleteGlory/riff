@@ -463,5 +463,37 @@
   "originalMessageUnavailable": "الرسالة الأصلية غير متاحة",
   "postLikesTitle": "الإعجابات",
   "noLikesYet": "لا توجد إعجابات بعد",
-  "noLikesYetSubtitle": "عندما يعجب الآخرون بهذا المنشور، سيظهرون هنا."
+  "noLikesYetSubtitle": "عندما يعجب الآخرون بهذا المنشور، سيظهرون هنا.",
+
+  "spotifyConnectFailed": "تعذّر الاتصال بـ Spotify",
+  "spotifyConnectUnavailable": "خدمة Spotify غير متاحة في هذا الإصدار من Riff.",
+  "spotifyConnectedNotShared": "تم الاتصال بـ Spotify، لكن تعذّر إبلاغ Riff — لن يرى الآخرون ما تستمع إليه بعد.",
+  "spotifyConnectRetry": "إعادة المحاولة",
+
+  "deleteAccountTitle": "حذف الحساب",
+  "deleteAccountMenuItem": "حذف الحساب",
+  "deleteAccountHeadline": "حذف حسابك في Riff نهائيًا",
+  "deleteAccountWarning": "لا يمكن التراجع عن هذا الإجراء. سيتم حذف حسابك وكل ما فيه فورًا.",
+  "deleteAccountRemovedIntro": "سيتم حذف:",
+  "deleteAccountRemovedProfile": "ملفك الشخصي — الاسم واسم المستخدم والبريد الإلكتروني والنبذة والصورة والآلات والأنواع الموسيقية",
+  "deleteAccountRemovedContent": "منشوراتك ومقاطعك وتعليقاتك وإعجاباتك",
+  "deleteAccountRemovedMessages": "رسائلك ومحادثاتك",
+  "deleteAccountRemovedSocial": "متابعوك ومن تتابعهم وقائمة المحظورين لديك",
+  "deleteAccountPasswordLabel": "أدخل كلمة المرور للتأكيد",
+  "deleteAccountUsernameLabel": "اكتب اسم المستخدم الخاص بك ({username}) للتأكيد",
+  "@deleteAccountUsernameLabel": {
+    "placeholders": {
+      "username": {}
+    }
+  },
+  "deleteAccountPasswordRequired": "أدخل كلمة المرور",
+  "deleteAccountUsernameMismatch": "لا يطابق اسم المستخدم الخاص بك",
+  "deleteAccountButton": "احذف حسابي",
+  "deleteAccountConfirmTitle": "حذف حسابك؟",
+  "deleteAccountConfirmBody": "سيتم حذف حسابك وجميع محتواك نهائيًا. لا يمكن التراجع عن هذا الإجراء.",
+  "deleteAccountConfirmAction": "حذف",
+  "deleteAccountCancel": "إلغاء",
+  "deleteAccountWrongPassword": "كلمة المرور غير صحيحة",
+  "deleteAccountFailed": "تعذّر حذف حسابك. يُرجى المحاولة مرة أخرى.",
+  "deleteAccountSuccess": "تم حذف حسابك."
 }

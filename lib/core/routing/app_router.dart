@@ -35,7 +35,9 @@ import 'package:riff/features/legal/privacy_policy_screen.dart';
 import 'package:riff/features/home/about/about_us_screen.dart';
 import 'package:riff/features/home/account_settings/UI/account_settings_screen.dart';
 import 'package:riff/features/home/account_settings/UI/change_password_screen.dart';
+import 'package:riff/features/home/account_settings/UI/delete_account_screen.dart';
 import 'package:riff/features/home/account_settings/logic/change_password_cubit.dart';
+import 'package:riff/features/home/account_settings/logic/delete_account_cubit.dart';
 
 class AppRouter {
   Route<dynamic> generateRoute(RouteSettings settings) {
@@ -241,6 +243,20 @@ class AppRouter {
           builder: (_) => BlocProvider(
             create: (_) => getIt<ChangePasswordCubit>(),
             child: const ChangePasswordScreen(),
+          ),
+        );
+
+      case Routes.deleteAccount:
+        // The screen needs to know whether this account has a password to
+        // re-enter or is an OAuth account that confirms by typing its username.
+        final args = settings.arguments as Map<String, dynamic>? ?? const {};
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => getIt<DeleteAccountCubit>(),
+            child: DeleteAccountScreen(
+              username: args['username'] as String? ?? '',
+              provider: args['provider'] as String?,
+            ),
           ),
         );
 

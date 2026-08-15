@@ -50,6 +50,7 @@ class ApiConstants {
   static const String updateProfile          = "/api/users/me/profile";
   static const String checkUsername          = "/api/users/me/check-username";
   static const String changePassword         = "/api/users/me/change-password";
+  static const String deleteAccount          = "/api/users/me";
 
   // Followers / Following lists
   static String userFollowers(String id) => "/api/users/$id/followers";
