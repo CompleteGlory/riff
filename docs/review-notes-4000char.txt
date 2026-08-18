@@ -1,10 +1,10 @@
 RIFF — APP REVIEW INFORMATION
 
 1. WHAT THE APP IS
-Riff is a free social network for musicians and music fans. Musicians otherwise have to share what they play on general-purpose social apps that know nothing about instruments or genres. Riff is built around exactly that: every profile carries the instruments the person plays and the genres they are into, and can show the track they are currently playing on Spotify. It offers a feed, short-form video ("reels"), and direct and group messaging, with discovery by instrument and genre. Audience: musicians, music students and music fans. The app is free, with no in-app purchases, subscriptions, paid content or purchase flow.
+Riff is a free social network for musicians and music fans. Musicians otherwise have to share what they play on general-purpose social apps that know nothing about instruments or genres. Riff is built around exactly that: every profile carries the instruments the person plays and the genres they are into, and can show what they are playing on Spotify. It offers a feed, short-form video ("reels"), and direct and group messaging, with discovery by instrument and genre. Audience: musicians, music students and music fans. The app is free, with no in-app purchases, subscriptions, paid content or purchase flow.
 
 2. REACHING THE MAIN FEATURES
-Sign in with the demo account above, or "Sign up" (email + password) or "Continue with Google". A privacy policy screen must be accepted on first launch; new accounts then pick a profile picture, instruments and genres.
+Sign in with the demo account in the Sign-In Information fields, or "Sign up" (email + password) or "Continue with Google". A privacy policy screen must be accepted on first launch; new accounts then pick a profile picture, instruments and genres.
 Home screen: Feed, Create a post ("+"), Reels, Search/discover, Chat (message icon, top bar), Notifications, Profile. The side drawer (top-left) holds Settings, Account settings, Privacy settings, Blocked users and Log out.
 ACCOUNT DELETION: drawer > Account settings > Delete account. The screen lists what is removed and requires the account password (or, for Google accounts, the user's own username) plus a final confirmation. Deletion is immediate and permanent.
 
@@ -26,8 +26,8 @@ Camera (taking a photo/video for a post, chat or profile picture), Photo library
 None — the app behaves identically in every region and storefront. No geo-gated content, no region-specific pricing (free everywhere), no feature enabled or disabled by country. The only localisation is language: English and Arabic (right-to-left), following the device language and switchable in Settings.
 
 7. REGULATED INDUSTRY / PROTECTED MATERIAL
-Riff does not operate in a regulated industry. The only third-party material shown is Spotify track metadata (title, artist, cover art) for the user's own currently playing track, via the official Spotify Web API after that user consents on Spotify's OAuth screen, under the Spotify Developer Terms of Service. No other licensed material is included.
+Riff is not in a regulated industry. The only third-party material shown is Spotify track metadata (title, artist, cover art) for the user's own currently playing track, via the official Spotify Web API after that user consents on Spotify's OAuth screen, under the Spotify Developer Terms of Service. No other licensed material is included.
 
 8. DEVICES AND OS VERSIONS TESTED
-DEVICES_PLACEHOLDER
+Tested on physical devices: iPhone 12, iOS 26.6; iPhone 13, iOS 26.6.
 Minimum supported version: iOS 15.0.
