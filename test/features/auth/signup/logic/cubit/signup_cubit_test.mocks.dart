@@ -97,4 +97,28 @@ class MockLoginRepo extends _i1.Mock implements _i6.LoginRepo {
             ),
           )
           as _i4.Future<_i2.ApiResult<_i7.LoginResponse>>);
+
+  @override
+  _i4.Future<_i2.ApiResult<_i7.LoginResponse>> loginWithApple(
+    String? identityToken, {
+    String? fullName,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #loginWithApple,
+              [identityToken],
+              {#fullName: fullName},
+            ),
+            returnValue: _i4.Future<_i2.ApiResult<_i7.LoginResponse>>.value(
+              _FakeApiResult_0<_i7.LoginResponse>(
+                this,
+                Invocation.method(
+                  #loginWithApple,
+                  [identityToken],
+                  {#fullName: fullName},
+                ),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.ApiResult<_i7.LoginResponse>>);
 }

@@ -15,6 +15,8 @@ import 'package:riff/features/auth/forgot_password/data/models/reset_password_re
     as _i12;
 import 'package:riff/features/auth/forgot_password/data/models/verify_otp_request_body.dart'
     as _i11;
+import 'package:riff/features/auth/login/data/models/apple_auth_request_body.dart'
+    as _i14;
 import 'package:riff/features/auth/login/data/models/google_auth_request_body.dart'
     as _i13;
 import 'package:riff/features/auth/login/data/models/login_request_body.dart'
@@ -22,10 +24,10 @@ import 'package:riff/features/auth/login/data/models/login_request_body.dart'
 import 'package:riff/features/auth/signup/data/models/signup_request_body.dart'
     as _i9;
 import 'package:riff/features/home/add_post/data/models/create_post_request_model.dart'
-    as _i14;
-import 'package:riff/features/home/feed/data/models/comment.dart' as _i15;
+    as _i15;
+import 'package:riff/features/home/feed/data/models/comment.dart' as _i16;
 import 'package:riff/features/home/feed/data/models/create_comment_request_model.dart'
-    as _i16;
+    as _i17;
 import 'package:riff/features/home/feed/data/models/post.dart' as _i4;
 import 'package:riff/features/home/feed/data/models/posts_response.dart' as _i3;
 
@@ -197,6 +199,21 @@ class MockApiService extends _i1.Mock implements _i6.ApiService {
           as _i7.Future<_i2.HttpResponse<dynamic>>);
 
   @override
+  _i7.Future<_i2.HttpResponse<dynamic>> appleLogin(
+    _i14.AppleAuthRequestBody? body,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#appleLogin, [body]),
+            returnValue: _i7.Future<_i2.HttpResponse<dynamic>>.value(
+              _FakeHttpResponse_0<dynamic>(
+                this,
+                Invocation.method(#appleLogin, [body]),
+              ),
+            ),
+          )
+          as _i7.Future<_i2.HttpResponse<dynamic>>);
+
+  @override
   _i7.Future<_i2.HttpResponse<dynamic>> getUser() =>
       (super.noSuchMethod(
             Invocation.method(#getUser, []),
@@ -237,7 +254,7 @@ class MockApiService extends _i1.Mock implements _i6.ApiService {
 
   @override
   _i7.Future<_i4.Post> createPost(
-    _i14.CreatePostRequestModel? createPostRequestModel,
+    _i15.CreatePostRequestModel? createPostRequestModel,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#createPost, [createPostRequestModel]),
@@ -253,7 +270,7 @@ class MockApiService extends _i1.Mock implements _i6.ApiService {
   @override
   _i7.Future<_i2.HttpResponse<dynamic>> updatePost(
     String? postId,
-    _i14.CreatePostRequestModel? updatePostRequestModel,
+    _i15.CreatePostRequestModel? updatePostRequestModel,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#updatePost, [postId, updatePostRequestModel]),
@@ -322,35 +339,35 @@ class MockApiService extends _i1.Mock implements _i6.ApiService {
           as _i7.Future<_i2.HttpResponse<dynamic>>);
 
   @override
-  _i7.Future<_i2.HttpResponse<List<_i15.Comment>>> getPostComments(
+  _i7.Future<_i2.HttpResponse<List<_i16.Comment>>> getPostComments(
     String? postId,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#getPostComments, [postId]),
-            returnValue: _i7.Future<_i2.HttpResponse<List<_i15.Comment>>>.value(
-              _FakeHttpResponse_0<List<_i15.Comment>>(
+            returnValue: _i7.Future<_i2.HttpResponse<List<_i16.Comment>>>.value(
+              _FakeHttpResponse_0<List<_i16.Comment>>(
                 this,
                 Invocation.method(#getPostComments, [postId]),
               ),
             ),
           )
-          as _i7.Future<_i2.HttpResponse<List<_i15.Comment>>>);
+          as _i7.Future<_i2.HttpResponse<List<_i16.Comment>>>);
 
   @override
-  _i7.Future<_i2.HttpResponse<_i15.Comment>> createComment(
+  _i7.Future<_i2.HttpResponse<_i16.Comment>> createComment(
     String? postId,
-    _i16.CreateCommentRequestModel? body,
+    _i17.CreateCommentRequestModel? body,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#createComment, [postId, body]),
-            returnValue: _i7.Future<_i2.HttpResponse<_i15.Comment>>.value(
-              _FakeHttpResponse_0<_i15.Comment>(
+            returnValue: _i7.Future<_i2.HttpResponse<_i16.Comment>>.value(
+              _FakeHttpResponse_0<_i16.Comment>(
                 this,
                 Invocation.method(#createComment, [postId, body]),
               ),
             ),
           )
-          as _i7.Future<_i2.HttpResponse<_i15.Comment>>);
+          as _i7.Future<_i2.HttpResponse<_i16.Comment>>);
 
   @override
   _i7.Future<_i2.HttpResponse<dynamic>> likeComment(String? commentId) =>
@@ -394,7 +411,7 @@ class MockApiService extends _i1.Mock implements _i6.ApiService {
   @override
   _i7.Future<_i2.HttpResponse<dynamic>> updateComment(
     String? commentId,
-    _i16.CreateCommentRequestModel? body,
+    _i17.CreateCommentRequestModel? body,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#updateComment, [commentId, body]),

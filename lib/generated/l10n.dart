@@ -54,6 +54,26 @@ class S {
     return Localizations.of<S>(context, S);
   }
 
+  /// `Continue with Apple`
+  String get continueWithApple {
+    return Intl.message(
+      'Continue with Apple',
+      name: 'continueWithApple',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Couldn't sign in with Apple`
+  String get appleSignInFailed {
+    return Intl.message(
+      'Couldn\'t sign in with Apple',
+      name: 'appleSignInFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Riff`
   String get appTitle {
     return Intl.message('Riff', name: 'appTitle', desc: '', args: []);

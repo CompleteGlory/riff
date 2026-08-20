@@ -122,6 +122,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "appSettingsTitle": MessageLookupByLibrary.simpleMessage("App Settings"),
     "appTitle": MessageLookupByLibrary.simpleMessage("Riff"),
     "appearanceSection": MessageLookupByLibrary.simpleMessage("Appearance"),
+    "appleSignInFailed": MessageLookupByLibrary.simpleMessage(
+      "Couldn\'t sign in with Apple",
+    ),
     "areYouSureDeleteComment": MessageLookupByLibrary.simpleMessage(
       "Are you sure you want to delete this comment?",
     ),
@@ -194,6 +197,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "confirmPassword": MessageLookupByLibrary.simpleMessage("Confirm Password"),
     "continueBtn": MessageLookupByLibrary.simpleMessage("Continue"),
+    "continueWithApple": MessageLookupByLibrary.simpleMessage(
+      "Continue with Apple",
+    ),
     "continueWithGoogle": MessageLookupByLibrary.simpleMessage(
       "Continue with Google",
     ),

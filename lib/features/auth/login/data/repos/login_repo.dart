@@ -5,6 +5,7 @@ import 'package:riff/core/helpers/shared_pref_helper.dart';
 import 'package:riff/core/networks/api_error_handler.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/networks/api_services.dart';
+import 'package:riff/features/auth/login/data/models/apple_auth_request_body.dart';
 import 'package:riff/features/auth/login/data/models/google_auth_request_body.dart';
 import 'package:riff/features/auth/login/data/models/login_request_body.dart';
 import 'package:riff/features/auth/login/data/models/login_response.dart';
@@ -34,6 +35,44 @@ class LoginRepo {
 
       // Extract isNewUser from response body (backend returns { isNewUser: bool })
       bool isNewUser = true; // default: treat as new user
+      final rawData = response.response.data;
+      if (rawData is Map<String, dynamic>) {
+        isNewUser = rawData['isNewUser'] as bool? ?? true;
+      }
+
+      final result = await _handleLoginResponse(response, "");
+      return await result.when(
+        success: (loginResp) => ApiResult.success(
+          LoginResponse(user: loginResp.user, isNewUser: isNewUser),
+        ),
+        failure: ApiResult.failure,
+      );
+    } catch (e) {
+      return ApiResult.failure(ApiErrorHandler.handle(e));
+    }
+  }
+
+  /// Signs in with Apple.
+  ///
+  /// App Store guideline 4.8 requires this alongside Google: a login that
+  /// collects only name and email, lets the user hide their real address, and
+  /// does not track them for advertising.
+  ///
+  /// [fullName] is only ever non-null on the user's very first authorization —
+  /// Apple never repeats it, and never puts it in the identity token — so it
+  /// is forwarded as-is and the server keeps whatever it gets.
+  Future<ApiResult<LoginResponse>> loginWithApple(
+    String identityToken, {
+    String? fullName,
+  }) async {
+    try {
+      final body = AppleAuthRequestBody(
+        identityToken: identityToken,
+        fullName: fullName,
+      );
+      final response = await _apiService.appleLogin(body);
+
+      bool isNewUser = true;
       final rawData = response.response.data;
       if (rawData is Map<String, dynamic>) {
         isNewUser = rawData['isNewUser'] as bool? ?? true;

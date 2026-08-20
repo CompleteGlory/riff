@@ -1,29 +1,30 @@
 RIFF — APP REVIEW INFORMATION
 
 1. WHAT THE APP IS
-Riff is a free social network for musicians and music fans. Musicians otherwise have to share what they play on general-purpose social apps that know nothing about instruments or genres. Riff is built around exactly that: every profile carries the instruments the person plays and the genres they are into, and can show what they are playing on Spotify. It offers a feed, short-form video ("reels"), and direct and group messaging, with discovery by instrument and genre. Audience: musicians, music students and music fans. The app is free, with no in-app purchases, subscriptions, paid content or purchase flow.
+Riff is a free social network for musicians and music fans. Musicians otherwise share what they play on general-purpose apps that know nothing about instruments or genres. Riff is built around exactly that: every profile carries the instruments the person plays and the genres they are into, and can show what they are playing on Spotify. It offers a feed, short-form video ("reels"), and direct and group messaging, with discovery by instrument and genre. Audience: musicians, students and music fans. The app is free, with no in-app purchases, subscriptions, paid content or purchase flow.
 
 2. REACHING THE MAIN FEATURES
-Sign in with the demo account in the Sign-In Information fields, or "Sign up" (email + password) or "Continue with Google". A privacy policy screen must be accepted on first launch; new accounts then pick a profile picture, instruments and genres.
+Sign in with the demo account in the Sign-In Information fields, or "Sign up" (email + password), "Continue with Apple", or "Continue with Google". A privacy policy screen must be accepted on first launch; new accounts then pick a profile picture, instruments and genres.
 Home screen: Feed, Create a post ("+"), Reels, Search/discover, Chat (message icon, top bar), Notifications, Profile. The side drawer (top-left) holds Settings, Account settings, Privacy settings, Blocked users and Log out.
 ACCOUNT DELETION: drawer > Account settings > Delete account. The screen lists what is removed and requires the account password (or, for Google accounts, the user's own username) plus a final confirmation. Deletion is immediate and permanent.
 
 3. USER-GENERATED CONTENT, REPORTING, BLOCKING
-All content is user-generated. The "..." menu on any post, comment or profile offers Report (pick a reason, submit); the "..." menu on a profile offers Block. Reports go to a moderation queue. Blocked accounts are listed under drawer > Blocked users and can be unblocked there. Users can delete their own posts and messages, and can make their account private.
+All content is user-generated. The "..." menu on any post, comment or profile offers Report (pick a reason, submit); a profile's "..." menu offers Block. Reports go to a moderation queue. Blocked accounts are listed under drawer > Blocked users and can be unblocked. Users can delete their own posts and messages, and can make their account private.
 
 4. EXTERNAL SERVICES
-- Riff's own backend API (NestJS + PostgreSQL on Railway): all app data.
+- Riff's own backend API (NestJS + PostgreSQL, Railway): all app data.
+- Sign in with Apple: offered on iOS alongside Google, per guideline 4.8.
 - Google Sign-In (OAuth): optional sign-in method.
 - Cloudinary: storage/CDN for user-uploaded photos, videos, voice notes.
 - Firebase Cloud Messaging: push notifications only. No Analytics, Crashlytics or ad SDK.
-- Spotify Web API: optional and opt-in. Tapping "Connect Spotify" runs Spotify's standard OAuth (PKCE) consent flow requesting two read-only scopes (user-read-currently-playing, user-read-playback-state), solely to display the title, artist and cover art of that user's currently playing track. No Spotify audio is streamed, stored or redistributed. Riff works fully without it; it needs the reviewer's own Spotify account, so it is not in the recording.
+- Spotify Web API: optional and opt-in. Tapping "Connect Spotify" runs Spotify's standard OAuth (PKCE) consent flow requesting two read-only scopes (user-read-currently-playing, user-read-playback-state), solely to display the title, artist and cover art of that user's currently playing track. No Spotify audio is streamed or stored. Riff works fully without it; it needs the reviewer's own Spotify account, so it is not in the recording.
 No payment processors, ad networks, analytics/tracking SDKs, AI services or third-party data providers.
 
 5. PERMISSION PROMPTS
-Camera (taking a photo/video for a post, chat or profile picture), Photo library (attaching an existing one), Microphone (recording a voice note in chat), Push notifications (after sign-in, for likes, comments, follows, messages). The app does NOT request location, contacts, calendar, health data or App Tracking Transparency, does not track users across apps or websites, and collects no data for advertising.
+Camera (photo/video for a post, chat or profile picture), Photo library (attaching an existing one), Microphone (voice note in chat), Push notifications (after sign-in, for likes, comments, follows, messages). The app does NOT request location, contacts, calendar, health data or App Tracking Transparency, does not track users across apps or websites, and collects no data for advertising.
 
 6. REGIONAL DIFFERENCES
-None — the app behaves identically in every region and storefront. No geo-gated content, no region-specific pricing (free everywhere), no feature enabled or disabled by country. The only localisation is language: English and Arabic (right-to-left), following the device language and switchable in Settings.
+None — the app behaves identically in every region and storefront. No geo-gated content, no region-specific pricing (free everywhere), no country-gated features. The only localisation is language: English and Arabic (right-to-left), following the device language and switchable in Settings.
 
 7. REGULATED INDUSTRY / PROTECTED MATERIAL
 Riff is not in a regulated industry. The only third-party material shown is Spotify track metadata (title, artist, cover art) for the user's own currently playing track, via the official Spotify Web API after that user consents on Spotify's OAuth screen, under the Spotify Developer Terms of Service. No other licensed material is included.

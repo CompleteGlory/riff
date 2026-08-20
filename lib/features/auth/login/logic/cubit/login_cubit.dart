@@ -36,6 +36,18 @@ class LoginCubit extends Cubit<LoginState<LoginResponse>> {
     _handleResponse(response);
   }
 
+  /// Signs in with Apple. [fullName] arrives only on the first authorization.
+  Future<void> loginWithApple(String identityToken, {String? fullName}) async {
+    emit(const LoginState.loading());
+
+    final response = await _loginRepo.loginWithApple(
+      identityToken,
+      fullName: fullName,
+    );
+
+    _handleResponse(response);
+  }
+
   void _handleResponse(ApiResult<LoginResponse> response) {
     response.when(
       success: (data) {

@@ -5,15 +5,23 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/features/auth/login/logic/cubit/login_cubit.dart';
+import 'apple_sign_in_helper.dart';
 import 'google_sign_in_helper.dart';
 import 'package:riff/generated/l10n.dart';
 
 class SocialLogin extends StatefulWidget {
-  const SocialLogin({super.key, this.googleAuthService});
+  const SocialLogin({
+    super.key,
+    this.googleAuthService,
+    this.appleAuthService,
+  });
 
   /// Injectable seam for the Google sign-in call — defaults to the real
   /// plugin-backed implementation; tests can supply a fake instead.
   final GoogleAuthService? googleAuthService;
+
+  /// Same seam for Sign in with Apple.
+  final AppleAuthService? appleAuthService;
 
   @override
   State<SocialLogin> createState() => _SocialLoginState();
@@ -22,7 +30,14 @@ class SocialLogin extends StatefulWidget {
 class _SocialLoginState extends State<SocialLogin>
     with SingleTickerProviderStateMixin {
   bool _isLoading = false;
+  bool _appleLoading = false;
+
+  /// Sign in with Apple exists on iOS only here, and the check is async, so
+  /// the button is absent until it answers rather than flashing in and out.
+  bool _appleAvailable = false;
+
   late final GoogleAuthService _authService;
+  late final AppleAuthService _appleService;
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
@@ -30,6 +45,8 @@ class _SocialLoginState extends State<SocialLogin>
   void initState() {
     super.initState();
     _authService = widget.googleAuthService ?? GoogleSignInAuthService();
+    _appleService = widget.appleAuthService ?? SignInWithAppleService();
+    _checkAppleAvailability();
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
@@ -43,6 +60,33 @@ class _SocialLoginState extends State<SocialLogin>
   void dispose() {
     _pulseController.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkAppleAvailability() async {
+    final available = await _appleService.isAvailable();
+    if (mounted) setState(() => _appleAvailable = available);
+  }
+
+  Future<void> _handleAppleSignIn(BuildContext context) async {
+    if (_appleLoading || _isLoading) return;
+    setState(() => _appleLoading = true);
+
+    try {
+      final credential = await _appleService.signIn();
+      // Null covers both a cancelled sheet and a failed one. The helper has
+      // already told cancellation apart from failure in the logs; showing an
+      // error for a deliberate cancel would be noise.
+      if (credential == null) return;
+
+      if (mounted) {
+        context.read<LoginCubit>().loginWithApple(
+              credential.identityToken,
+              fullName: credential.fullName,
+            );
+      }
+    } finally {
+      if (mounted) setState(() => _appleLoading = false);
+    }
   }
 
   Future<void> _handleGoogleSignIn(BuildContext context) async {
@@ -84,7 +128,7 @@ class _SocialLoginState extends State<SocialLogin>
     final border = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFDDDDDD);
     final textColor = isDark ? Colors.white : const Color(0xFF1A1A1A);
 
-    return AnimatedBuilder(
+    final googleButton = AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (_, child) => Transform.scale(
         scale: _isLoading ? _pulseAnimation.value : 1.0,
@@ -169,6 +213,89 @@ class _SocialLoginState extends State<SocialLogin>
                       ),
               ),
             ),
+          ),
+        ),
+      ),
+    );
+
+    // Sign in with Apple sits above Google: App Store guideline 4.8 requires
+    // an equivalent privacy-preserving option, and Apple's Human Interface
+    // Guidelines ask for it to be at least as prominent as the alternatives.
+    if (!_appleAvailable) return googleButton;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _AppleSignInButton(
+          label: s.continueWithApple,
+          isLoading: _appleLoading,
+          isDark: isDark,
+          onTap: _appleLoading ? null : () => _handleAppleSignIn(context),
+        ),
+        const SizedBox(height: 12),
+        googleButton,
+      ],
+    );
+  }
+}
+
+/// The Sign in with Apple button.
+///
+/// Apple's guidelines allow black, white, or white-with-outline; the fill is
+/// flipped by theme so the button keeps its contrast either way.
+class _AppleSignInButton extends StatelessWidget {
+  const _AppleSignInButton({
+    required this.label,
+    required this.isLoading,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isLoading;
+  final bool isDark;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = isDark ? Colors.black : Colors.white;
+    final bg = isDark ? Colors.white : Colors.black;
+
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: Material(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Center(
+            child: isLoading
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.2,
+                      valueColor: AlwaysStoppedAnimation<Color>(fg),
+                    ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.apple, color: fg, size: 22),
+                      const SizedBox(width: 8),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontFamily: 'GeneralSans',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: fg,
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         ),
       ),
