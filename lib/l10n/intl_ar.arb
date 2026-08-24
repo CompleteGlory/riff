@@ -1,4 +1,7 @@
 {
+  "continueWithApple": "المتابعة عبر Apple",
+  "appleSignInFailed": "تعذّر تسجيل الدخول عبر Apple",
+
   "@@locale": "ar",
   "appTitle": "ريف",
   "defineYourself": "عرّف نفسك\nبأسلوبك الفريد.",

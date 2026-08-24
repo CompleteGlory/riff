@@ -1,4 +1,7 @@
 {
+  "continueWithApple": "Continue with Apple",
+  "appleSignInFailed": "Couldn't sign in with Apple",
+
   "@@locale": "en",
   "appTitle": "Riff",
   "defineYourself": "Define Yourself\nin Your Unique Way.",

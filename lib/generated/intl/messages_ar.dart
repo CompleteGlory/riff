@@ -121,6 +121,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "appSettingsTitle": MessageLookupByLibrary.simpleMessage("إعدادات التطبيق"),
     "appTitle": MessageLookupByLibrary.simpleMessage("ريف"),
     "appearanceSection": MessageLookupByLibrary.simpleMessage("المظهر"),
+    "appleSignInFailed": MessageLookupByLibrary.simpleMessage(
+      "تعذّر تسجيل الدخول عبر Apple",
+    ),
     "areYouSureDeleteComment": MessageLookupByLibrary.simpleMessage(
       "هل أنت متأكد أنك تريد حذف هذا التعليق؟",
     ),
@@ -195,6 +198,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "تأكيد كلمة المرور",
     ),
     "continueBtn": MessageLookupByLibrary.simpleMessage("متابعة"),
+    "continueWithApple": MessageLookupByLibrary.simpleMessage(
+      "المتابعة عبر Apple",
+    ),
     "continueWithGoogle": MessageLookupByLibrary.simpleMessage(
       "المتابعة باستخدام Google",
     ),

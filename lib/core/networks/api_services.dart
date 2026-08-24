@@ -4,6 +4,7 @@ import 'package:riff/core/networks/api_constants.dart';
 import 'package:riff/features/auth/forgot_password/data/models/request_otp_request_body.dart';
 import 'package:riff/features/auth/forgot_password/data/models/reset_password_request_body.dart';
 import 'package:riff/features/auth/forgot_password/data/models/verify_otp_request_body.dart';
+import 'package:riff/features/auth/login/data/models/apple_auth_request_body.dart';
 import 'package:riff/features/auth/login/data/models/google_auth_request_body.dart';
 import 'package:riff/features/auth/login/data/models/login_request_body.dart';
 import 'package:riff/features/auth/signup/data/models/signup_request_body.dart';
@@ -46,6 +47,9 @@ abstract class ApiService {
 
   @POST(ApiConstants.googleSignin)
   Future<HttpResponse<dynamic>> googleLogin(@Body() GoogleAuthRequestBody body);
+
+  @POST(ApiConstants.appleSignin)
+  Future<HttpResponse<dynamic>> appleLogin(@Body() AppleAuthRequestBody body);
 
   @GET(ApiConstants.getUser)
   Future<HttpResponse<dynamic>> getUser();

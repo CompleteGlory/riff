@@ -13,6 +13,7 @@ class ApiConstants {
   static const String verifyOtp = "/api/auth/verify-otp";
   static const String resetPassword = "/api/auth/reset-password";
   static const String googleSignin = "/api/auth/google/mobile";
+  static const String appleSignin  = "/api/auth/apple/mobile";
   static const String getUser = "/api/users/me";
   static const String getUserById = "/api/users/{id}";
   static const String posts = "/api/posts";
