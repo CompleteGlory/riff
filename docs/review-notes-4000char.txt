@@ -6,7 +6,7 @@ Riff is a free social network for musicians and music fans. Musicians otherwise 
 2. REACHING THE MAIN FEATURES
 Sign in with the demo account in the Sign-In Information fields, or "Sign up" (email + password), "Continue with Apple", or "Continue with Google". A privacy policy screen must be accepted on first launch; new accounts then pick a profile picture, instruments and genres.
 Home screen: Feed, Create a post ("+"), Reels, Search/discover, Chat (message icon, top bar), Notifications, Profile. The side drawer (top-left) holds Settings, Account settings, Privacy settings, Blocked users and Log out.
-ACCOUNT DELETION: drawer > Account settings > Delete account. The screen lists what is removed and requires the account password (or, for Google accounts, the user's own username) plus a final confirmation. Deletion is immediate and permanent.
+ACCOUNT DELETION: drawer > Account settings > Delete account. The screen lists what is removed and requires the account password (or, for Apple/Google accounts, their own username) plus a final confirmation. Deletion is immediate and permanent.
 
 3. USER-GENERATED CONTENT, REPORTING, BLOCKING
 All content is user-generated. The "..." menu on any post, comment or profile offers Report (pick a reason, submit); a profile's "..." menu offers Block. Reports go to a moderation queue. Blocked accounts are listed under drawer > Blocked users and can be unblocked. Users can delete their own posts and messages, and can make their account private.
