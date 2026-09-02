@@ -48,37 +48,8 @@ abstract class GoogleAuthService {
 }
 
 class GoogleSignInAuthService implements GoogleAuthService {
-  /// The web/server OAuth client id.
-  ///
-  /// Passed explicitly rather than left to the platform to discover. Android
-  /// only issues an ID token when a server client id is available, and until
-  /// now that came from the `default_web_client_id` string resource the
-  /// google-services Gradle plugin generates out of google-services.json — so
-  /// sign-in silently produced no token if that file lost its web client, a
-  /// new flavour shipped without one, or the plugin stopped running. None of
-  /// those announce themselves; they just look like every user failing to log
-  /// in.
-  ///
-  /// A `defaultValue` is deliberate. `String.fromEnvironment` with no default
-  /// resolves to the empty string when the define is absent, and release
-  /// builds strip the assert that would have caught it — which is exactly how
-  /// Connect Spotify shipped broken in 1.0.14. Overriding via
-  /// --dart-define=GOOGLE_SERVER_CLIENT_ID is possible but never required.
-  ///
-  /// This is a public OAuth client identifier: it already ships inside
-  /// google-services.json and the app binary, so there is nothing to leak.
-  static const _serverClientId = String.fromEnvironment(
-    'GOOGLE_SERVER_CLIENT_ID',
-    defaultValue:
-        '369305642937-rh8uuhr2cife2hj4rkgqcms1j29mfru9.apps.googleusercontent.com',
-  );
-
   GoogleSignInAuthService({GoogleSignIn? googleSignIn})
-      : _googleSignIn = googleSignIn ??
-            GoogleSignIn(
-              scopes: const ['email'],
-              serverClientId: _serverClientId,
-            );
+      : _googleSignIn = googleSignIn ?? GoogleSignIn(scopes: ['email']);
 
   final GoogleSignIn _googleSignIn;
 
