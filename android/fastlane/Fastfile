@@ -21,56 +21,46 @@ platform :android do
       testers: "fadyalaa441@gmail.com, fadyalaa2112@gmail.com, zakymagd@gmail.com, magddevf@gmail.com, Danielgeorge369@gmail.com, marten.atef.eng@gmail.com" ,
       upload_timeout: 600,
       release_notes: <<~RELEASE_NOTES
-        Version 1.0.14
+        Version 1.0.16
 
-        Date: 2026-08-3
+        Date: 2026-09-02
 
         Added
 
-        - React to a message. Long-press any message — yours or theirs — and
-          pick an emoji. Tap the same one again to take it back. Whoever sent
-          the message gets a notification, the same as for a new message.
-        - Reply to a message. Swipe it sideways, or long-press and choose
-          Reply. The reply shows what it is answering, and tapping that quote
-          jumps back to the original.
-        - Edit a message you have sent. Long-press one of your own messages and
-          choose Edit. Edited messages are marked as edited, so nobody is left
-          wondering whether they misread it.
-        - Pause a voice note while recording it and carry on where you left
-          off. It stays one message instead of several.
+        - Sign in with Apple. On the login and signup screens, above Continue
+          with Google. It shares only your name and email, and you can hide
+          your real address behind Apple's private relay if you prefer.
+        - Delete your account, from Account settings. The screen lists exactly
+          what goes — your profile, posts, reels, comments, likes, messages,
+          followers and uploaded media — and asks for your password (or your
+          username, if you signed up with Google or Apple) before anything
+          happens. Deletion is immediate and permanent.
 
         Fixed
 
-        - Voice notes no longer play over each other. Starting one stops
-          whichever was already playing, and coming back to a note resumes it
-          rather than starting it again from the beginning. Leaving a chat
-          stops playback instead of letting it follow you.
-        - Deleting a message now updates Chats straight away. The conversation
-          moves to its proper place in the list and the preview underneath it
-          changes to whatever the newest message is now, instead of still
-          showing the message you deleted until the next refresh.
-        - Random sign-outs. Writing a comment — or anything else that sent
-          several requests at once — could quietly end your session, leaving
-          every screen failing until you signed in again.
-        - "Mark all as read" no longer silently does nothing. It used to stop
-          working once you had opened and left the notifications screen, and it
-          now tells you if it fails instead of looking like it worked.
-        - Opening the app from a message notification: you can reply straight
-          away. Before this you had to close and reopen the app first.
-        - Notification taps in general: reliable when the app was fully closed,
-          no longer land on a blank screen when you are signed out (you get
-          taken there after signing in), no longer open the same screen twice,
-          and no longer do nothing at all on a flagged-comment notice.
-        - Times were showing three hours early throughout the app — message
-          timestamps, last seen, and the "x hours ago" labels.
-        - The same person could appear twice in Chats: one conversation with
-          your messages and an empty one next to it. New ones can't be created,
-          and duplicates already on your account are cleaned up.
+        - Connect Spotify actually connects. It did nothing at all in 1.0.14:
+          no error, no spinner, nothing. If it does fail now, the app tells you
+          why instead of quietly returning to the Connect button.
+        - Your now-playing track stays visible to other people. It used to
+          disappear from everyone else's view an hour after you connected and
+          never came back until you reconnected by hand.
+        - Sign-in problems now say what went wrong. "Google sign-in was
+          cancelled or failed" was shown whether you tapped Cancel, the network
+          died, or the app was misconfigured — so there was never anything
+          useful to report. Cancelling is now silent, and a real failure shows
+          the actual reason.
+        - Signing in with Apple no longer fails on a new account. The server
+          rejected first-time Apple sign-ins outright; people who had signed in
+          before were unaffected, which is why it took a while to spot.
+        - Wrong-password messages when deleting an account. A mistyped password
+          reported a general server error instead of saying the password was
+          wrong.
 
-        Changed
+        Security
 
-        - Signup no longer asks for a phone number, and contacts sync has been
-          removed.
+        - Sign-in tokens from Google are checked against this app's own
+          credentials again. The check had been switched off, which meant a
+          Google token issued to an unrelated app would have been accepted.
 
       RELEASE_NOTES
     )
