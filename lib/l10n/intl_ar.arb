@@ -1,4 +1,10 @@
 {
+  "googleSignInNoToken": "سجّلك Google للدخول لكنه لم يُعِد رمز تسجيل الدخول. هذه مشكلة إعداد لدينا وليست بسببك.",
+  "signInFailedWithReason": "فشل تسجيل الدخول: {reason}",
+  "@signInFailedWithReason": {
+    "placeholders": { "reason": {} }
+  },
+
   "continueWithApple": "المتابعة عبر Apple",
   "appleSignInFailed": "تعذّر تسجيل الدخول عبر Apple",
 

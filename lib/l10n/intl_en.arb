@@ -1,4 +1,10 @@
 {
+  "googleSignInNoToken": "Google signed you in but didn't return a sign-in token. This is a configuration problem on our side, not something you did.",
+  "signInFailedWithReason": "Sign-in failed: {reason}",
+  "@signInFailedWithReason": {
+    "placeholders": { "reason": {} }
+  },
+
   "continueWithApple": "Continue with Apple",
   "appleSignInFailed": "Couldn't sign in with Apple",
 

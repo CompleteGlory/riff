@@ -17,24 +17,44 @@ import '../../logic/cubit/login_cubit_test.mocks.dart';
 /// Google seam stubbed out so these tests only exercise the Apple path.
 class _StubGoogleAuthService implements GoogleAuthService {
   @override
-  Future<String?> signInAndGetIdToken() async => null;
+  Future<GoogleSignInResult> signIn() async =>
+      const GoogleSignInResult(GoogleSignInStatus.cancelled);
 }
 
 /// Fake Sign in with Apple seam — the real one drives a platform channel.
 class FakeAppleAuthService implements AppleAuthService {
-  FakeAppleAuthService({this.available = true, this.credential});
+  FakeAppleAuthService({
+    this.available = true,
+    this.credential,
+    this.status,
+    this.detail,
+  });
 
   final bool available;
   final AppleCredential? credential;
+
+  /// Status used when [credential] is null — lets a test pick between a
+  /// cancellation (silent) and a real failure (which must be reported).
+  final AppleSignInStatus? status;
+  final String? detail;
   int signInCount = 0;
 
   @override
   Future<bool> isAvailable() async => available;
 
   @override
-  Future<AppleCredential?> signIn() async {
+  Future<AppleSignInResult> signIn() async {
     signInCount++;
-    return credential;
+    if (credential != null) {
+      return AppleSignInResult(
+        AppleSignInStatus.success,
+        credential: credential,
+      );
+    }
+    return AppleSignInResult(
+      status ?? AppleSignInStatus.cancelled,
+      detail: detail,
+    );
   }
 }
 
