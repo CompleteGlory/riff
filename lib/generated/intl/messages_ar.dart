@@ -48,6 +48,8 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m12(name) =>
       "${name} يريد إرسال رسالة إليك.\nلا يمكنه رؤية أنك اطلعت على هذا الطلب.";
 
+  static String m13(reason) => "فشل تسجيل الدخول: ${reason}";
+
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "aboutUsContactEmail": MessageLookupByLibrary.simpleMessage(
@@ -455,6 +457,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "googleSignInFailed": MessageLookupByLibrary.simpleMessage(
       "تم إلغاء تسجيل الدخول بـ Google أو فشل. يرجى المحاولة مجدداً.",
+    ),
+    "googleSignInNoToken": MessageLookupByLibrary.simpleMessage(
+      "سجّلك Google للدخول لكنه لم يُعِد رمز تسجيل الدخول. هذه مشكلة إعداد لدينا وليست بسببك.",
     ),
     "gotItBtn": MessageLookupByLibrary.simpleMessage("حسناً"),
     "groupAdminBadge": MessageLookupByLibrary.simpleMessage("مشرف"),
@@ -935,6 +940,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "shortSummaryOfBug": MessageLookupByLibrary.simpleMessage(
       "ملخص قصير للخطأ",
     ),
+    "signInFailedWithReason": m13,
     "signingIn": MessageLookupByLibrary.simpleMessage("جارٍ تسجيل الدخول…"),
     "skipBtn": MessageLookupByLibrary.simpleMessage("تخطى"),
     "skipForNow": MessageLookupByLibrary.simpleMessage("تخطى في الوقت الحالي"),

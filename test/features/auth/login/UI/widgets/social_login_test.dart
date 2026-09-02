@@ -16,17 +16,36 @@ import '../../logic/cubit/login_cubit_test.mocks.dart';
 /// Fake Google auth seam — lets the test control what the "native" Google
 /// sign-in flow returns without touching the real plugin/platform channel.
 class FakeGoogleAuthService implements GoogleAuthService {
-  FakeGoogleAuthService({this.tokenToReturn, this.delay = Duration.zero});
+  FakeGoogleAuthService({
+    this.tokenToReturn,
+    this.status,
+    this.detail,
+    this.delay = Duration.zero,
+  });
 
   final String? tokenToReturn;
+
+  /// Overrides the status when there is no token — lets a test pick between
+  /// "cancelled" (silent) and a real failure (which must say something).
+  final GoogleSignInStatus? status;
+  final String? detail;
   final Duration delay;
   int callCount = 0;
 
   @override
-  Future<String?> signInAndGetIdToken() async {
+  Future<GoogleSignInResult> signIn() async {
     callCount++;
     if (delay > Duration.zero) await Future.delayed(delay);
-    return tokenToReturn;
+    if (tokenToReturn != null) {
+      return GoogleSignInResult(
+        GoogleSignInStatus.success,
+        idToken: tokenToReturn,
+      );
+    }
+    return GoogleSignInResult(
+      status ?? GoogleSignInStatus.cancelled,
+      detail: detail,
+    );
   }
 }
 
@@ -86,15 +105,51 @@ void main() {
     verify(mockLoginRepo.loginWithGoogle('fake-id-token')).called(1);
   });
 
-  testWidgets('shows a failure snackbar when Google returns no token',
+  testWidgets('says nothing when the user cancels the account picker',
       (tester) async {
-    final fake = FakeGoogleAuthService(tokenToReturn: null);
+    // Cancelling is a deliberate act, not an error to apologise for.
+    final fake = FakeGoogleAuthService(status: GoogleSignInStatus.cancelled);
     await pumpSocialLogin(tester, fake);
 
     await tester.tap(find.text(S.current.continueWithGoogle));
     await tester.pumpAndSettle();
 
-    expect(find.text(S.current.googleSignInFailed), findsOneWidget);
+    expect(find.byType(SnackBar), findsNothing);
+    verifyNever(mockLoginRepo.loginWithGoogle(any));
+  });
+
+  testWidgets('surfaces the underlying reason when Google throws',
+      (tester) async {
+    // The reason is the whole point: a plugin or platform failure affecting
+    // every user must not read like one person tapping Cancel.
+    final fake = FakeGoogleAuthService(
+      status: GoogleSignInStatus.failed,
+      detail: 'PlatformException(sign_in_failed, ...)',
+    );
+    await pumpSocialLogin(tester, fake);
+
+    await tester.tap(find.text(S.current.continueWithGoogle));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(S.current
+          .signInFailedWithReason('PlatformException(sign_in_failed, ...)')),
+      findsOneWidget,
+    );
+    verifyNever(mockLoginRepo.loginWithGoogle(any));
+  });
+
+  testWidgets('names the configuration fault when no ID token comes back',
+      (tester) async {
+    // Signed in, but no token — on Android that means the server client id is
+    // missing, and it is not the user's fault or a cancellation.
+    final fake = FakeGoogleAuthService(status: GoogleSignInStatus.noIdToken);
+    await pumpSocialLogin(tester, fake);
+
+    await tester.tap(find.text(S.current.continueWithGoogle));
+    await tester.pumpAndSettle();
+
+    expect(find.text(S.current.googleSignInNoToken), findsOneWidget);
     verifyNever(mockLoginRepo.loginWithGoogle(any));
   });
 

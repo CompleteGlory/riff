@@ -72,17 +72,30 @@ class _SocialLoginState extends State<SocialLogin>
     setState(() => _appleLoading = true);
 
     try {
-      final credential = await _appleService.signIn();
-      // Null covers both a cancelled sheet and a failed one. The helper has
-      // already told cancellation apart from failure in the logs; showing an
-      // error for a deliberate cancel would be noise.
-      if (credential == null) return;
-
-      if (mounted) {
-        context.read<LoginCubit>().loginWithApple(
-              credential.identityToken,
-              fullName: credential.fullName,
-            );
+      final result = await _appleService.signIn();
+      if (result.isSuccess) {
+        final credential = result.credential!;
+        if (mounted) {
+          context.read<LoginCubit>().loginWithApple(
+                credential.identityToken,
+                fullName: credential.fullName,
+              );
+        }
+        return;
+      }
+      // Cancelling is deliberate and needs no message; a real failure does.
+      if (mounted && result.status == AppleSignInStatus.failed) {
+        final l10n = S.of(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.detail == null
+                ? l10n.appleSignInFailed
+                : l10n.signInFailedWithReason(result.detail!)),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 8),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _appleLoading = false);
@@ -95,29 +108,49 @@ class _SocialLoginState extends State<SocialLogin>
     _pulseController.repeat(reverse: true);
 
     try {
-      final token = await _authService.signInAndGetIdToken();
-      if (token == null) {
-        debugPrint('Google: Failed to get ID token');
+      final result = await _authService.signIn();
+      if (result.isSuccess) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(S.of(context).googleSignInFailed),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          context.read<LoginCubit>().loginWithGoogle(result.idToken!);
         }
         return;
       }
-      if (mounted) {
-        // ignore: use_build_context_synchronously
-        context.read<LoginCubit>().loginWithGoogle(token);
-      }
+      if (mounted) _reportGoogleFailure(result);
     } finally {
       _pulseController.stop();
       _pulseController.reset();
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  /// Says what actually went wrong.
+  ///
+  /// These three used to collapse into one "cancelled or failed" message, so a
+  /// configuration outage affecting every user looked exactly like a single
+  /// person tapping Cancel — which is precisely how one went unnoticed.
+  void _reportGoogleFailure(GoogleSignInResult result) {
+    final l10n = S.of(context);
+    final String message;
+    switch (result.status) {
+      case GoogleSignInStatus.success:
+      case GoogleSignInStatus.cancelled:
+        return; // Nothing to say.
+      case GoogleSignInStatus.noIdToken:
+        message = l10n.googleSignInNoToken;
+      case GoogleSignInStatus.failed:
+        message = result.detail == null
+            ? l10n.googleSignInFailed
+            : l10n.signInFailedWithReason(result.detail!);
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 8),
+      ),
+    );
   }
 
   @override

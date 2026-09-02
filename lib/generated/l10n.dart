@@ -54,6 +54,26 @@ class S {
     return Localizations.of<S>(context, S);
   }
 
+  /// `Google signed you in but didn't return a sign-in token. This is a configuration problem on our side, not something you did.`
+  String get googleSignInNoToken {
+    return Intl.message(
+      'Google signed you in but didn\'t return a sign-in token. This is a configuration problem on our side, not something you did.',
+      name: 'googleSignInNoToken',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Sign-in failed: {reason}`
+  String signInFailedWithReason(Object reason) {
+    return Intl.message(
+      'Sign-in failed: $reason',
+      name: 'signInFailedWithReason',
+      desc: '',
+      args: [reason],
+    );
+  }
+
   /// `Continue with Apple`
   String get continueWithApple {
     return Intl.message(

@@ -47,6 +47,8 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m12(name) =>
       "${name} wants to send you a message.\nThey can\'t see that you\'ve viewed this request.";
 
+  static String m13(reason) => "Sign-in failed: ${reason}";
+
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "aboutUsContactEmail": MessageLookupByLibrary.simpleMessage(
@@ -476,6 +478,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "googleSignInFailed": MessageLookupByLibrary.simpleMessage(
       "Google sign-in was cancelled or failed. Please try again.",
+    ),
+    "googleSignInNoToken": MessageLookupByLibrary.simpleMessage(
+      "Google signed you in but didn\'t return a sign-in token. This is a configuration problem on our side, not something you did.",
     ),
     "gotItBtn": MessageLookupByLibrary.simpleMessage("Got it"),
     "groupAdminBadge": MessageLookupByLibrary.simpleMessage("Admin"),
@@ -948,6 +953,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "shortSummaryOfBug": MessageLookupByLibrary.simpleMessage(
       "Short summary of the bug",
     ),
+    "signInFailedWithReason": m13,
     "signingIn": MessageLookupByLibrary.simpleMessage("Signing in…"),
     "skipBtn": MessageLookupByLibrary.simpleMessage("Skip"),
     "skipForNow": MessageLookupByLibrary.simpleMessage("Skip for now"),

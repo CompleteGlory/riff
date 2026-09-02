@@ -3,6 +3,22 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
+/// Why a Sign in with Apple attempt ended the way it did.
+enum AppleSignInStatus { success, cancelled, unavailable, failed }
+
+/// The outcome of an attempt.
+class AppleSignInResult {
+  const AppleSignInResult(this.status, {this.credential, this.detail});
+
+  final AppleSignInStatus status;
+  final AppleCredential? credential;
+
+  /// Apple's own error text, when there was one.
+  final String? detail;
+
+  bool get isSuccess => status == AppleSignInStatus.success;
+}
+
 /// What a completed Sign in with Apple attempt yields.
 class AppleCredential {
   const AppleCredential({required this.identityToken, this.fullName});
@@ -22,8 +38,7 @@ abstract class AppleAuthService {
   /// Whether this device can offer Sign in with Apple at all.
   Future<bool> isAvailable();
 
-  /// Returns null when the user cancels or the attempt fails.
-  Future<AppleCredential?> signIn();
+  Future<AppleSignInResult> signIn();
 }
 
 class SignInWithAppleService implements AppleAuthService {
@@ -42,7 +57,7 @@ class SignInWithAppleService implements AppleAuthService {
   }
 
   @override
-  Future<AppleCredential?> signIn() async {
+  Future<AppleSignInResult> signIn() async {
     try {
       final credential = await SignInWithApple.getAppleIDCredential(
         scopes: const [
@@ -54,7 +69,7 @@ class SignInWithAppleService implements AppleAuthService {
       final token = credential.identityToken;
       if (token == null || token.isEmpty) {
         debugPrint('Apple Sign-In: no identity token returned');
-        return null;
+        return const AppleSignInResult(AppleSignInStatus.failed);
       }
 
       // givenName/familyName are populated only on the first authorization.
@@ -64,19 +79,26 @@ class SignInWithAppleService implements AppleAuthService {
           .where((p) => p.isNotEmpty)
           .toList();
 
-      return AppleCredential(
-        identityToken: token,
-        fullName: parts.isEmpty ? null : parts.join(' '),
+      return AppleSignInResult(
+        AppleSignInStatus.success,
+        credential: AppleCredential(
+          identityToken: token,
+          fullName: parts.isEmpty ? null : parts.join(' '),
+        ),
       );
     } on SignInWithAppleAuthorizationException catch (e) {
       // Cancelling is a normal outcome, not an error worth surfacing.
-      if (e.code != AuthorizationErrorCode.canceled) {
-        debugPrint('Apple Sign-In error: ${e.code} ${e.message}');
+      if (e.code == AuthorizationErrorCode.canceled) {
+        return const AppleSignInResult(AppleSignInStatus.cancelled);
       }
-      return null;
+      debugPrint('Apple Sign-In error: ${e.code} ${e.message}');
+      return AppleSignInResult(
+        AppleSignInStatus.failed,
+        detail: e.message.isEmpty ? '${e.code}' : e.message,
+      );
     } catch (e) {
       debugPrint('Apple Sign-In error: $e');
-      return null;
+      return AppleSignInResult(AppleSignInStatus.failed, detail: '$e');
     }
   }
 }
