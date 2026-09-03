@@ -23,7 +23,7 @@ platform :android do
       release_notes: <<~RELEASE_NOTES
         Version 1.0.17
 
-        Date: 2026-09-03
+        Date: 2026-09-04
 
         Added in this build
 
@@ -38,7 +38,10 @@ platform :android do
           code worked when run from a laptop. The release signing key had never
           been registered with our Google project, so Google refused the
           request. Nothing in the app changed — reinstalling is not required,
-          but you may need to reopen it.
+          but you may need to reopen it. Installs from Google Play failed the
+          same way for a second reason: Play re-signs the app with its own
+          keys, and those had to be registered as well. Also fixed without a
+          new build.
 
         Added
 
