@@ -664,17 +664,26 @@ Firebase and never can be, since it changes on every run. The "Restore the
 upload signing key" step is skipped when the keystore secret is absent, so a
 missing secret reproduces the old behaviour rather than breaking the build.
 
-Two release certificates are registered for `com.magd.riff` in Firebase, and
+Four release certificates are registered for `com.magd.riff` in Firebase, and
 Google Sign-In only works on a build signed by one of them:
 
 | Key | SHA-1 | Signs |
 |---|---|---|
 | Upload key (`~/riff-upload-keystore.jks`) | `05:68:9A:D1:F8:C8:FE:C7:52:3C:DA:CF:08:E6:22:7C:70:CA:C4:F3` | Firebase App Distribution builds, local release builds |
-| Google Play app-signing key | `99:1C:6B:91:A0:56:B9:51:4C:BC:EC:BE:C1:DC:D6:C8:F6:DC:D7:B0` | Everything installed from Play — Play re-signs the bundle |
+| Play app-signing key, classical (current) | `99:1C:6B:91:A0:56:B9:51:4C:BC:EC:BE:C1:DC:D6:C8:F6:DC:D7:B0` | Play installs on Android 13–16 |
+| Play app-signing key, post-quantum (current) | `F6:74:B4:EC:A3:5F:D6:68:55:14:BA:14:DE:CC:7B:18:A6:75:C3:AD` | Play installs on Android 17+ (hybrid signature) |
+| Play app-signing key, previous (first used 28 Jul 2026) | `CC:D8:83:42:F5:A9:D3:49:52:2C:E3:4B:69:43:E9:2B:E9:75:CE:DB` | Play installs on Android 7–12, and devices that installed before the key upgrade |
 
-Play's key is shown under Play Console → Test and release → Setup → App
-integrity. Rotating either key means registering the new SHA-1 in Firebase
-first, or every affected install fails sign-in with DEVELOPER_ERROR.
+Play re-signs every bundle, so the upload key never reaches a device through
+Play. The app is enrolled in Play's **quantum-ready (beta)** hybrid signing,
+which is why there are three Play certificates rather than one: Google's
+guidance is to register *all three* with every API provider, and registering
+only the current classical key left 1.0.17 failing Google Sign-In on a phone
+that had installed under the previous key. All three are shown under Play
+Console → Protected with Play → App signing (the previous key's SHA-1 is in
+the ⋮ menu of the "Previous app signing keys" row). Rotating or upgrading any
+key means registering the new SHA-1 in Firebase first, or every affected
+install fails sign-in with DEVELOPER_ERROR.
 
 ---
 
