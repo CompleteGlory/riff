@@ -23,7 +23,7 @@ platform :android do
       release_notes: <<~RELEASE_NOTES
         Version 1.0.17
 
-        Date: 2026-09-03
+        Date: 2026-09-04
 
         Added in this build
 
