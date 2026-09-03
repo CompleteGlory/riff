@@ -9,6 +9,10 @@ on:
 jobs:
   distribute_to_firebase:
     runs-on: ubuntu-latest
+    env:
+      # `secrets` is not available in a step's `if`, so decide here and test the
+      # env var below. Evaluates to the string 'true' / 'false'.
+      HAS_UPLOAD_KEYSTORE: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 != '' }}
     steps:
     - name: Checkout my repo code
       uses: actions/checkout@v4
@@ -65,6 +69,33 @@ jobs:
         key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
         restore-keys: |
           ${{ runner.os }}-gradle-
+
+    - name: Restore the upload signing key
+      # Without android/key.properties (gitignored, so never on a runner) the
+      # release build falls back to signingConfigs "debug" — and a fresh runner
+      # has no debug keystore, so the Android Gradle plugin generates one with a
+      # brand-new random key. Google Sign-In then fails on every distributed
+      # build with DEVELOPER_ERROR (ApiException 10): that key's SHA-1 has never
+      # been registered in Firebase, and cannot be, since it changes every run.
+      # Signing with the real upload key (SHA-1 05:68:9A:D1:...:C4:F3, registered)
+      # is what makes a Firebase App Distribution build behave like a laptop one.
+      # Skipped when the secrets are absent, so a fork or a missing secret still
+      # builds — it just reproduces the old behaviour.
+      if: ${{ env.HAS_UPLOAD_KEYSTORE == 'true' }}
+      env:
+        KEYSTORE_B64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+        STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      run: |
+        printf '%s' "$KEYSTORE_B64" | base64 -d > "$HOME/riff-upload-keystore.jks"
+        {
+          echo "storeFile=$HOME/riff-upload-keystore.jks"
+          echo "storePassword=$STORE_PASSWORD"
+          echo "keyPassword=$KEY_PASSWORD"
+          echo "keyAlias=$KEY_ALIAS"
+        } > android/key.properties
+        keytool -list -keystore "$HOME/riff-upload-keystore.jks" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" 2>/dev/null | grep -i "SHA1" || echo "keystore restored"
 
     - name: Build and Distribute App
       env:
