@@ -664,10 +664,17 @@ Firebase and never can be, since it changes on every run. The "Restore the
 upload signing key" step is skipped when the keystore secret is absent, so a
 missing secret reproduces the old behaviour rather than breaking the build.
 
-The upload key's SHA-1 (`05:68:9A:D1:F8:C8:FE:C7:52:3C:DA:CF:08:E6:22:7C:70:CA:C4:F3`)
-is registered for `com.magd.riff` in Firebase. Rotating the key, or shipping
-through Google Play (App Signing re-signs with Google's own key), means
-registering the new SHA-1 there too.
+Two release certificates are registered for `com.magd.riff` in Firebase, and
+Google Sign-In only works on a build signed by one of them:
+
+| Key | SHA-1 | Signs |
+|---|---|---|
+| Upload key (`~/riff-upload-keystore.jks`) | `05:68:9A:D1:F8:C8:FE:C7:52:3C:DA:CF:08:E6:22:7C:70:CA:C4:F3` | Firebase App Distribution builds, local release builds |
+| Google Play app-signing key | `99:1C:6B:91:A0:56:B9:51:4C:BC:EC:BE:C1:DC:D6:C8:F6:DC:D7:B0` | Everything installed from Play — Play re-signs the bundle |
+
+Play's key is shown under Play Console → Test and release → Setup → App
+integrity. Rotating either key means registering the new SHA-1 in Firebase
+first, or every affected install fails sign-in with DEVELOPER_ERROR.
 
 ---
 
