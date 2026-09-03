@@ -48,7 +48,7 @@ platform :android do
         - Delete your account, from Account settings. The screen lists exactly
           what goes — your profile, posts, reels, comments, likes, messages,
           followers and uploaded media — and asks for your password (or your
-          username, if you signed up with Google or Apple) before anything
+          username, if you signed up with Google or Apple) before anything — including installs from Google Play, which Play re-signs with its own key
           happens. Deletion is immediate and permanent.
 
         Fixed
