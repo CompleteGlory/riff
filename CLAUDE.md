@@ -594,6 +594,7 @@ full widget test.
 | Every Spotify failure looked identical: nothing happened | `SpotifyAuthService.connect`, `NowPlayingCard` | `connect()` returned a bare `bool` and the card silently went back to the connect prompt, so a cancelled browser, a missing client id and a Spotify-side rejection were indistinguishable — which is why the feature was reported as "doesn't work" with nothing to go on. It now returns a status plus Spotify's own `error_description`, the empty-client-id case is a real check rather than a release-stripped `assert`, and the card shows what happened |
 | An HTTP error status was lost whenever the body omitted it | `ApiErrorHandler._handleError` | `ApiErrorModel.fromJson` reads `statusCode` from the response *body*. The API usually echoes it, but any handler returning a bare `{"message": …}` produced a model with a null status, so a caller branching on the status (delete-account telling "wrong password" from "something went wrong") silently lost it. Falls back to the status the response actually arrived with |
 | Google sign-in failed on every distributed Android build | Firebase console (project `riff-23655`), not the code | `PlatformException(sign_in_failed, i2.d: 10: …)` — `ApiException` 10, DEVELOPER_ERROR: Google refusing the OAuth client because the calling app's signing certificate isn't registered. Only two SHA-1s were registered for `com.magd.riff`, and both were **debug** keystores (`~/.android/debug.keystore` and `~/riff-prod-debug.keystore`). `android/key.properties` exists on the build machine but is gitignored, so release builds are signed with `~/riff-upload-keystore.jks` — whose SHA-1 `05:68:9A:D1:F8:C8:FE:C7:52:3C:DA:CF:08:E6:22:7C:70:CA:C4:F3` was never added. Debug builds worked, every Firebase App Distribution build did not, and the code was identical in both. Fixed by adding that fingerprint in Firebase; the check is server-side, so no rebuild was needed. **If the signing key ever changes, or if the app ships through Play (App Signing re-signs with Google's own key), the new SHA-1 must be added the same way** |
+| Android CI build failed: `Language version 1.6 is no longer supported` | `sentry_flutter` 8.14.2 `android/build.gradle` | The plugin's own Gradle module pinned Kotlin `languageVersion = "1.6"`, and this project pins the Kotlin Android plugin at 2.2.20, which refuses anything below 1.8 as a hard error — so `assembleProductionRelease` died compiling *Sentry's* module, not ours. Sentry removed the pin in the 9.x line (sentry-dart #3032); 9.28.0 has none. Reproduce any CI Android failure locally with the exact fastlane command from `android/fastlane/Fastfile` in a worktree *without* `key.properties` — that matches the runner |
 | Read receipts stuck on one check — recipient had read the messages | `chat.controller.ts` (`serializeMsg`), `message-status.ts` | Read state only ever existed as a transient `message_status` socket event, upgraded in memory by whoever had that exact chat open at the time. Nothing persisted it and `serializeMsg` had **no `status` field**, so `MessageStatusX.fromString(null)` fell through to `sent` and every message reset to one check as soon as the sender reopened the chat. Status is now derived server-side from `conversation_participants.last_read_at`, returned on every message, and `GET .../messages` also emits a read receipt so a client whose socket hasn't come up still clears the sender's ticks. Voice notes go through the media-upload endpoint, which now carries the same status as a socket-sent text message |
 
 ---
@@ -636,6 +637,37 @@ SPOTIFY_CLIENT_ID=
 SPOTIFY_CLIENT_SECRET=
 
 ```
+
+---
+
+## CI secrets — GitHub Actions (Android → Firebase App Distribution)
+
+`.github/workflows/android_fastlane_firebase_app_distribution_workflow.yml`
+runs on every push to `master` and needs these repository secrets:
+
+| Secret | What it is |
+|---|---|
+| `FIREBASE_CLI_TOKEN` | Firebase CLI token used by `firebase_app_distribution` |
+| `SPOTIFY_CLIENT_ID` | Public PKCE client id — see the build section at the top |
+| `ANDROID_UPLOAD_KEYSTORE_BASE64` | `base64 -i ~/riff-upload-keystore.jks` — the upload keystore itself |
+| `ANDROID_KEYSTORE_PASSWORD` | `storePassword` from `android/key.properties` |
+| `ANDROID_KEY_PASSWORD` | `keyPassword` from `android/key.properties` |
+| `ANDROID_KEY_ALIAS` | `keyAlias` from `android/key.properties` (`riff-upload`) |
+
+The last four exist because `android/key.properties` is gitignored and so is
+never on a runner. Without them the release build falls back to
+`signingConfigs.getByName("debug")`, and a fresh runner has no debug keystore,
+so the Android Gradle plugin **generates one with a random key**. Every
+Firebase App Distribution build then fails Google Sign-In with
+`DEVELOPER_ERROR` (ApiException 10): that SHA-1 was never registered in
+Firebase and never can be, since it changes on every run. The "Restore the
+upload signing key" step is skipped when the keystore secret is absent, so a
+missing secret reproduces the old behaviour rather than breaking the build.
+
+The upload key's SHA-1 (`05:68:9A:D1:F8:C8:FE:C7:52:3C:DA:CF:08:E6:22:7C:70:CA:C4:F3`)
+is registered for `com.magd.riff` in Firebase. Rotating the key, or shipping
+through Google Play (App Signing re-signs with Google's own key), means
+registering the new SHA-1 there too.
 
 ---
 

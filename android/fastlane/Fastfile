@@ -25,6 +25,12 @@ platform :android do
 
         Date: 2026-09-03
 
+        Added in this build
+
+        - Automatic crash reporting. If the app crashes or something breaks
+          badly, a report reaches us without you having to describe it —
+          though a message about what you were doing still helps.
+
         Fixed in this build
 
         - Continue with Google works again. Every build distributed through
