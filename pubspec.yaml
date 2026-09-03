@@ -87,6 +87,7 @@ dependencies:
   receive_sharing_intent: ^1.8.1
   flutter_appauth: ^8.0.1
   http: ^1.2.2
+  sentry_flutter: ^8.14.2
 
 dev_dependencies:
   flutter_test:

@@ -23,7 +23,16 @@ platform :android do
       release_notes: <<~RELEASE_NOTES
         Version 1.0.16
 
-        Date: 2026-09-02
+        Date: 2026-09-03
+
+        Fixed in this build
+
+        - Continue with Google works again. Every build distributed through
+          Firebase App Distribution failed with a sign-in error, while the same
+          code worked when run from a laptop. The release signing key had never
+          been registered with our Google project, so Google refused the
+          request. Nothing in the app changed — reinstalling is not required,
+          but you may need to reopen it.
 
         Added
 

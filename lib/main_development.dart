@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/core/services/firebase_init.dart';
 import 'package:riff/core/services/push_notification_service.dart';
+import 'package:riff/core/services/sentry_init.dart';
 import 'package:riff/riff_app.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'core/routing/app_router.dart';
 import 'core/di/dependency_injection.dart';
 import 'core/helpers/shared_pref_helper.dart';
@@ -20,6 +22,16 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 void main() async {
+  // Startup runs inside Sentry's error zone, so a failure in Firebase or GetIt
+  // is reported rather than lost to a blank screen.
+  await initSentryAndRun(
+    environment: 'development',
+    tracesSampleRate: 1.0,
+    appRunner: _startApp,
+  );
+}
+
+Future<void> _startApp() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initFirebaseWithRetry();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -36,9 +48,11 @@ void main() async {
     unawaited(PushNotificationService.instance.init());
   }
 
-  runApp(RiffApp(
-    appRouter: AppRouter(),
-    startAtHome: isLoggedIn,
+  runApp(SentryWidget(
+    child: RiffApp(
+      appRouter: AppRouter(),
+      startAtHome: isLoggedIn,
+    ),
   ));
 }
 
