@@ -38,7 +38,10 @@ platform :android do
           code worked when run from a laptop. The release signing key had never
           been registered with our Google project, so Google refused the
           request. Nothing in the app changed — reinstalling is not required,
-          but you may need to reopen it.
+          but you may need to reopen it. Installs from Google Play failed the
+          same way for a second reason: Play re-signs the app with its own
+          keys, and those had to be registered as well. Also fixed without a
+          new build.
 
         Added
 
@@ -48,7 +51,7 @@ platform :android do
         - Delete your account, from Account settings. The screen lists exactly
           what goes — your profile, posts, reels, comments, likes, messages,
           followers and uploaded media — and asks for your password (or your
-          username, if you signed up with Google or Apple) before anything — including installs from Google Play, which Play re-signs with its own key
+          username, if you signed up with Google or Apple) before anything
           happens. Deletion is immediate and permanent.
 
         Fixed
