@@ -13,6 +13,7 @@ import 'package:riff/features/home/add_post/logic/cubit/update_post_cubit.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/shared_post_card.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/generated/l10n.dart';
+import 'package:riff/core/camera/riff_camera_screen.dart';
 import 'package:riff/core/utils/media_limits.dart';
 
 const _maxMedia = 10;
@@ -86,6 +87,25 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
     }
   }
 
+  /// Opens the in-app camera and appends the capture, same as create-post.
+  Future<void> _captureFromCamera() async {
+    Navigator.pop(context);
+    final shot = await RiffCameraScreen.open(
+      context,
+      maxVideoDuration: kMaxPostVideoDuration,
+    );
+    if (shot == null || !mounted) return;
+    if (shot.isVideo && await shot.file.length() > kMaxVideoUploadBytes) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.of(context).videoTooLarge)),
+        );
+      }
+      return;
+    }
+    if (mounted) setState(() => _newFiles.add(shot.file));
+  }
+
   Future<void> _pickVideo(ImageSource source) async {
     Navigator.pop(context);
     if (_totalCount >= _maxMedia) return;
@@ -135,22 +155,21 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
                     borderRadius: BorderRadius.circular(99)),
               ),
               verticalSpace(16),
-              _SheetTile(
-                  icon: Icons.photo_library_outlined,
-                  label: 'Choose Photos',
-                  onTap: () => _pickImages(ImageSource.gallery)),
+              // One camera row rather than two: the in-app camera decides
+              // photo-or-video itself. These labels were also hardcoded
+              // English in an app that localizes everything else.
               _SheetTile(
                   icon: Icons.photo_camera_outlined,
-                  label: 'Take a Photo',
-                  onTap: () => _pickImages(ImageSource.camera)),
+                  label: S.of(context).takePhotoOrVideo,
+                  onTap: _captureFromCamera),
+              _SheetTile(
+                  icon: Icons.photo_library_outlined,
+                  label: S.of(context).choosePhotos,
+                  onTap: () => _pickImages(ImageSource.gallery)),
               _SheetTile(
                   icon: Icons.video_library_outlined,
-                  label: 'Choose Video',
+                  label: S.of(context).chooseVideo,
                   onTap: () => _pickVideo(ImageSource.gallery)),
-              _SheetTile(
-                  icon: Icons.videocam_outlined,
-                  label: 'Record Video',
-                  onTap: () => _pickVideo(ImageSource.camera)),
             ],
           ),
         ),

@@ -1274,20 +1274,20 @@ class S {
     return Intl.message('Take a Photo', name: 'takeAPhoto', desc: '', args: []);
   }
 
-  /// `Choose Video`
+  /// `Choose a video`
   String get chooseVideo {
     return Intl.message(
-      'Choose Video',
+      'Choose a video',
       name: 'chooseVideo',
       desc: '',
       args: [],
     );
   }
 
-  /// `Record Video`
+  /// `Record video`
   String get recordVideo {
     return Intl.message(
-      'Record Video',
+      'Record video',
       name: 'recordVideo',
       desc: '',
       args: [],
@@ -4411,6 +4411,141 @@ class S {
       name: 'resendCodeWait',
       desc: '',
       args: [seconds],
+    );
+  }
+
+  /// `No camera is available on this device.`
+  String get cameraUnavailable {
+    return Intl.message(
+      'No camera is available on this device.',
+      name: 'cameraUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Couldn't capture that. Please try again.`
+  String get cameraCaptureFailed {
+    return Intl.message(
+      'Couldn\'t capture that. Please try again.',
+      name: 'cameraCaptureFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Riff needs camera access to take photos and videos.`
+  String get cameraPermissionNeeded {
+    return Intl.message(
+      'Riff needs camera access to take photos and videos.',
+      name: 'cameraPermissionNeeded',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Open settings`
+  String get openSettings {
+    return Intl.message(
+      'Open settings',
+      name: 'openSettings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Take photo`
+  String get takePhoto {
+    return Intl.message('Take photo', name: 'takePhoto', desc: '', args: []);
+  }
+
+  /// `Take photo or video`
+  String get takePhotoOrVideo {
+    return Intl.message(
+      'Take photo or video',
+      name: 'takePhotoOrVideo',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stop recording`
+  String get stopRecording {
+    return Intl.message(
+      'Stop recording',
+      name: 'stopRecording',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Release to stop`
+  String get releaseToStop {
+    return Intl.message(
+      'Release to stop',
+      name: 'releaseToStop',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Tap for a photo, hold to record`
+  String get cameraHint {
+    return Intl.message(
+      'Tap for a photo, hold to record',
+      name: 'cameraHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Photo`
+  String get photoMode {
+    return Intl.message('Photo', name: 'photoMode', desc: '', args: []);
+  }
+
+  /// `Video`
+  String get videoMode {
+    return Intl.message('Video', name: 'videoMode', desc: '', args: []);
+  }
+
+  /// `Switch camera`
+  String get switchCamera {
+    return Intl.message(
+      'Switch camera',
+      name: 'switchCamera',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Flash off`
+  String get flashOff {
+    return Intl.message('Flash off', name: 'flashOff', desc: '', args: []);
+  }
+
+  /// `Flash on`
+  String get flashOn {
+    return Intl.message('Flash on', name: 'flashOn', desc: '', args: []);
+  }
+
+  /// `Flash automatic`
+  String get flashAuto {
+    return Intl.message(
+      'Flash automatic',
+      name: 'flashAuto',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Recording, {time}`
+  String recordingElapsed(Object time) {
+    return Intl.message(
+      'Recording, $time',
+      name: 'recordingElapsed',
+      desc: '',
+      args: [time],
     );
   }
 }

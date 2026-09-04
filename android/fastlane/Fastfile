@@ -21,30 +21,37 @@ platform :android do
       testers: "fadyalaa441@gmail.com, fadyalaa2112@gmail.com, zakymagd@gmail.com, magddevf@gmail.com, Danielgeorge369@gmail.com, marten.atef.eng@gmail.com" ,
       upload_timeout: 600,
       release_notes: <<~RELEASE_NOTES
-        Version 1.0.19
+        Version 1.0.20
 
         Date: 2026-09-04
 
+        Added in this build
+
+        - A camera inside Riff. Tap the camera row when adding to a post or
+          sending a chat message and you get a live preview, a shutter, front
+          and back cameras, and a flash toggle — no more switching to your
+          phone's camera app and hunting for the shot afterwards.
+        - Recording stops itself at the limit, with a ring that fills as you
+          approach it. A clip that is too long to send can no longer be
+          recorded by accident.
+        - Chat can take photos and video at all now. It could only pick
+          something you had already saved.
+
         Fixed in this build
 
-        - Forgot your password now works. The app asked for your email and
-          said a code was on its way, but no email was ever sent, so there
-          was no way to finish. Codes are now emailed for real.
-        - "Resend code" resends. It used to take you back to the previous
-          screen without sending anything.
-        - The screen said we would send a 4-digit code. It is 6 digits.
+        - Forgot your password now works. The app said a code was on its way
+          but no email was ever sent. Codes are emailed for real.
+        - "Resend code" resends, instead of taking you back a screen.
 
         Previously
 
         - Posting a video works, and a clip too large to upload is refused
           straight away with a reason instead of failing at the end.
         - Videos that would not play on some Android phones now play.
-        - Photos, videos and voice notes are compressed before storage, and
-          deleting something deletes its files too.
+        - Photos, videos and voice notes are compressed before storage.
         - Sign in with Apple, and Delete your account in Account settings.
         - Continue with Google works on every build, including from Google
           Play.
-        - Connect Spotify works, and your now-playing track stays visible.
 
       RELEASE_NOTES
     )

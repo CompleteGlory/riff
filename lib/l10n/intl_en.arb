@@ -146,8 +146,8 @@
   "postBtn": "Post",
   "choosePhotos": "Choose Photos",
   "takeAPhoto": "Take a Photo",
-  "chooseVideo": "Choose Video",
-  "recordVideo": "Record Video",
+  "chooseVideo": "Choose a video",
+  "recordVideo": "Record video",
   "addMore": "Add more",
   "tapToAddPhotosOrVideos": "Tap to add photos or videos",
   "pleaseEnterContentBeforePosting": "Please enter content before posting.",
@@ -575,6 +575,45 @@
   "@resendCodeWait": {
     "placeholders": {
       "seconds": {}
+    }
+  },
+  "cameraUnavailable": "No camera is available on this device.",
+  "@cameraUnavailable": {},
+  "cameraCaptureFailed": "Couldn't capture that. Please try again.",
+  "@cameraCaptureFailed": {},
+  "cameraPermissionNeeded": "Riff needs camera access to take photos and videos.",
+  "@cameraPermissionNeeded": {},
+  "openSettings": "Open settings",
+  "@openSettings": {},
+  "takePhoto": "Take photo",
+  "@takePhoto": {},
+  "takePhotoOrVideo": "Take photo or video",
+  "@takePhotoOrVideo": {},
+  "@recordVideo": {},
+  "stopRecording": "Stop recording",
+  "@stopRecording": {},
+  "releaseToStop": "Release to stop",
+  "@releaseToStop": {},
+  "cameraHint": "Tap for a photo, hold to record",
+  "@cameraHint": {},
+  "photoMode": "Photo",
+  "@photoMode": {},
+  "videoMode": "Video",
+  "@videoMode": {},
+  "switchCamera": "Switch camera",
+  "@switchCamera": {},
+  "flashOff": "Flash off",
+  "@flashOff": {},
+  "flashOn": "Flash on",
+  "@flashOn": {},
+  "flashAuto": "Flash automatic",
+  "@flashAuto": {},
+  "@chooseFromGallery": {},
+  "@chooseVideo": {},
+  "recordingElapsed": "Recording, {time}",
+  "@recordingElapsed": {
+    "placeholders": {
+      "time": {}
     }
   }
 }

@@ -29,7 +29,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 #
 # iOS is unaffected: ios/ci_scripts/ci_post_clone.sh passes an explicit
 # --build-number from Xcode Cloud's CI_BUILD_NUMBER, which overrides this.
-version: 1.0.19+10019
+version: 1.0.20+10020
 
 environment:
   sdk: ^3.12.0
@@ -88,6 +88,7 @@ dependencies:
   flutter_appauth: ^8.0.1
   http: ^1.2.2
   sentry_flutter: ^9.28.0
+  camera: ^0.12.1
 
 dev_dependencies:
   flutter_test:
