@@ -367,34 +367,59 @@ On the Flutter side, always upload via `FormData` with `MultipartFile.fromFile(.
 
 ---
 
-## Outgoing Email — SMTP
+## Outgoing Email — Gmail API (not SMTP)
 
 Password-reset codes are the only email the API sends. `MailService`
-(`src/common/mail/mail.service.ts`) wraps **nodemailer** over plain SMTP, and
-every setting comes from environment variables, so switching provider is a
-Railway change rather than a deploy:
+(`src/common/mail/mail.service.ts`) has **two** transports and picks whichever
+is configured, or whichever `MAIL_TRANSPORT` names.
+
+> **Railway blocks outbound SMTP below its Pro plan, and this project is on
+> Hobby.** Ports 25, 465 and 587 all time out, so *no* SMTP client can deliver
+> from production. This is invisible locally: the credentials authenticate
+> perfectly from a laptop, and `createTransport` does no I/O, so the deploy log
+> still prints "SMTP ready". The failure only appears on the first real send.
+> Same shape as the `SPOTIFY_CLIENT_ID` bug: works on the developer's machine,
+> broken everywhere else.
+
+**gmail** (the working one) — HTTPS on 443, so the block does not apply. Sends
+as the account holder's own Gmail address, needs no domain, and because the
+message is injected into Google's own infrastructure it is SPF/DKIM aligned for
+`gmail.com` — which no third-party relay can claim for a bare `@gmail.com`
+sender. `google-auth-library` was already a dependency.
 
 ```
-SMTP_HOST=        SMTP_PORT=587      SMTP_USER=        SMTP_PASSWORD=
-MAIL_FROM=        MAIL_FROM_NAME=Riff        # both optional
+MAIL_TRANSPORT=gmail   GMAIL_CLIENT_ID=   GMAIL_CLIENT_SECRET=
+GMAIL_REFRESH_TOKEN=   MAIL_FROM=<the authenticated address>   MAIL_FROM_NAME=Riff
 ```
 
-With none of them set the service logs one warning and every send becomes a
-no-op, so tests and local development never send — the same shape as
+`MAIL_FROM` **must** be the authenticated account (or a verified "Send mail as"
+alias) — Gmail silently rewrites any other From. Mint the refresh token on your
+own machine with `npm run mail:authorize` (`src/scripts/authorize-gmail.ts`).
+The Google Cloud OAuth consent screen must be **published**: while it is in
+"Testing", refresh tokens expire after seven days and reset would stop working
+a week later, with nothing changing at the moment it breaks.
+
+**smtp** — kept, not deleted. It becomes correct on a Railway Pro upgrade, and
+it is what a local mail catcher wants.
+
+With neither configured, one warning is logged and every send is a no-op, like
 `FcmService`. `MailModule` is `@Global`.
 
-The message itself is a pure function, `passwordResetEmail`, so wording and
-escaping are testable without a transport. **It must always carry a plain-text
-part as well as HTML**: an HTML-only message is a spam signal, and this account
-has no domain reputation to spend.
+The Gmail API takes one field, `raw`, holding a whole base64url-encoded RFC 2822
+message, so the encoding is application code — `gmail-message.ts`, pure and
+tested, because every mistake in it (bare `\n`, wrong boundary, plain base64)
+surfaces as the same uninformative HTTP 400.
 
-`RequestOtp` is deliberately uninformative — the same response whether or not
-the address is registered, and whether or not delivery succeeded — because any
-difference turns the endpoint into a membership oracle. Codes come from
-`crypto.randomInt`, not `Math.random()`. The three reset endpoints carry
-`@Throttle` (3/min for requesting a code, 10/min for verifying): a six-digit
-code is a million possibilities against a ten-minute expiry, which is
-brute-forceable without one.
+**The send is not awaited.** The response is identical whatever happens to the
+email, so awaiting only couples the user's request to the mail provider — and
+when SMTP hung, the request hung with it until the Flutter client aborted at 30s
+and flipped the whole app into its offline state.
+
+`RequestOtp` is deliberately uninformative — same response whether or not the
+address is registered, and whether or not delivery succeeded — because any
+difference is a membership oracle. Codes come from `crypto.randomInt`. The three
+reset endpoints carry `@Throttle` (3/min to request, 10/min to verify): a
+six-digit code against a ten-minute expiry is brute-forceable without one.
 
 ---
 
@@ -675,7 +700,8 @@ full widget test.
 | An HTTP error status was lost whenever the body omitted it | `ApiErrorHandler._handleError` | `ApiErrorModel.fromJson` reads `statusCode` from the response *body*. The API usually echoes it, but any handler returning a bare `{"message": …}` produced a model with a null status, so a caller branching on the status (delete-account telling "wrong password" from "something went wrong") silently lost it. Falls back to the status the response actually arrived with |
 | Google sign-in failed on every distributed Android build | Firebase console (project `riff-23655`), not the code | `PlatformException(sign_in_failed, i2.d: 10: …)` — `ApiException` 10, DEVELOPER_ERROR: Google refusing the OAuth client because the calling app's signing certificate isn't registered. Only two SHA-1s were registered for `com.magd.riff`, and both were **debug** keystores (`~/.android/debug.keystore` and `~/riff-prod-debug.keystore`). `android/key.properties` exists on the build machine but is gitignored, so release builds are signed with `~/riff-upload-keystore.jks` — whose SHA-1 `05:68:9A:D1:F8:C8:FE:C7:52:3C:DA:CF:08:E6:22:7C:70:CA:C4:F3` was never added. Debug builds worked, every Firebase App Distribution build did not, and the code was identical in both. Fixed by adding that fingerprint in Firebase; the check is server-side, so no rebuild was needed. **If the signing key ever changes, or if the app ships through Play (App Signing re-signs with Google's own key), the new SHA-1 must be added the same way** |
 | Android CI build failed: `Language version 1.6 is no longer supported` | `sentry_flutter` 8.14.2 `android/build.gradle` | The plugin's own Gradle module pinned Kotlin `languageVersion = "1.6"`, and this project pins the Kotlin Android plugin at 2.2.20, which refuses anything below 1.8 as a hard error — so `assembleProductionRelease` died compiling *Sentry's* module, not ours. Sentry removed the pin in the 9.x line (sentry-dart #3032); 9.28.0 has none. Reproduce any CI Android failure locally with the exact fastlane command from `android/fastlane/Fastfile` in a worktree *without* `key.properties` — that matches the runner |
-| Password reset never sent anything | `RequestOtp`, `MailService` | The use case ended with the literal comment `// TODO: Send OTP to email` and returned "OTP sent successfully" regardless, so a code was generated and stored where no user could reach it and the whole flow reported success while being unusable. Three defects came with it: an unknown address answered **500**, because `NotFoundException` was thrown inside a `try` whose `catch` rethrew `InternalServerErrorException`; the endpoint distinguished known from unknown addresses, which is an email-enumeration oracle; and the code came from `Math.random()`, a predictable per-process generator, formatted as `100000 + random * 900000` so no code could begin with a zero — a tenth of the keyspace given away. Now: nodemailer over SMTP, one uniform response, `crypto.randomInt` across the full range with zero-padding, and `@Throttle` on the three reset endpoints |
+| Password reset never sent anything | `RequestOtp`, `MailService` | The use case ended with the literal comment `// TODO: Send OTP to email` and returned "OTP sent successfully" regardless, so a code was generated and stored where no user could reach it and the whole flow reported success while being unusable. Three defects came with it: an unknown address answered **500**, because `NotFoundException` was thrown inside a `try` whose `catch` rethrew `InternalServerErrorException`; the endpoint distinguished known from unknown addresses, which is an email-enumeration oracle; and the code came from `Math.random()`, a predictable per-process generator, formatted as `100000 + random * 900000` so no code could begin with a zero — a tenth of the keyspace given away. Now: one uniform response, `crypto.randomInt` across the full range with zero-padding, and `@Throttle` on the three reset endpoints. The transport itself then hit a second wall — see the row below |
+| SMTP could never deliver from production | `MailService` | Railway blocks outbound SMTP below its Pro plan and this project is on Hobby, so `smtp.gmail.com:587` times out. Nothing about the credentials was wrong; they authenticate from a laptop, which is why local testing proved nothing. `createTransport` performs no I/O, so the boot log printed "SMTP ready" either way, and with nodemailer's default two-minute connect timeout and the send awaited inline, a reset request hung until the Flutter client gave up at 30s and declared the app offline. Replaced with the Gmail API over HTTPS, which needs no domain and is SPF/DKIM aligned for the sender; SMTP stays behind `MAIL_TRANSPORT` for a Pro upgrade or a local mail catcher |
 | "Resend code" did not resend | `email_not_recieved_text.dart` | It navigated back to the email screen, so the one control a user reaches for when the mail has not arrived did nothing but lose their place. It also rendered `resendCode` as both the label and the button. It now calls the cubit and holds a 30-second cooldown, because the API allows three requests a minute and each sends real email. The forgot-password subtitle also promised a "4 digits code" for a six-digit code |
 | `image_picker`'s `maxDuration` silently ignored for gallery picks | `media_limits.dart`, the three `pickVideo` call sites | Capping a video by duration only works for the **camera**. On Android `launchPickVideoFromGalleryIntent` builds a bare pick intent and never sets `EXTRA_DURATION_LIMIT`; on iOS `videoMaximumDuration` is set on `UIImagePickerController`, the camera path, while the gallery goes through `PHPicker`, which ignores it and returns the untouched original (`preferredAssetRepresentationMode = Current`). So the cap constrained the one case that was never the problem and did nothing for the reported one — a tester choosing a clip already on their phone. The binding guard is `kMaxVideoUploadBytes`, checked with `XFile.length()` after the pick and matched to the API's `MAX_POST_FILE_BYTES`, so the app refuses exactly what the server would, immediately and with a reason |
 | A video upload reached 100% and then failed | `DioFactory`, `create_post_repo.dart`, `media_limits.dart`, `post-media-upload-limits.ts` | Two independent ceilings, both invisible. Dio's `receiveTimeout` does not measure the transfer — it wraps the wait for the **response headers**, which starts once the body is written and ends when the server answers, and the server only answers after pushing the file to Cloudinary. So 30 s was a budget for *server* work, and the request was aborted while that work was still running: bytes all sent, bar full, upload failed. Underneath it the picker allowed **five minutes** of video, and a phone shoots 1080p at ~7.7 Mbps (measured from a crash report's real format string) — roughly a 290 MB upload, past Cloudinary's 100 MB single-upload limit and past anything a mobile connection finishes. Now: uploads carry `DioFactory.uploadOptions` (5-minute receive timeout), video is capped at one minute, and the API rejects a file over 80 MB instead of buffering it whole in a Railway container's memory |
