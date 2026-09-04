@@ -11,6 +11,7 @@ Author _$AuthorFromJson(Map<String, dynamic> json) => Author(
   fullName: json['full_name'] as String,
   username: json['username'] as String,
   profileImageUrl: json['profile_image_url'] as String?,
+  followStatus: json['follow_status'] as String?,
 );
 
 Map<String, dynamic> _$AuthorToJson(Author instance) => <String, dynamic>{
@@ -18,4 +19,5 @@ Map<String, dynamic> _$AuthorToJson(Author instance) => <String, dynamic>{
   'full_name': instance.fullName,
   'username': instance.username,
   'profile_image_url': instance.profileImageUrl,
+  'follow_status': instance.followStatus,
 };

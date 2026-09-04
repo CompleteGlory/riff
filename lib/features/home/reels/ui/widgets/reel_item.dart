@@ -60,8 +60,11 @@ class _ReelItemState extends State<ReelItem> {
   late int _commentCount;
   late int _shareCount;
 
-  // Follow state
-  bool _isFollowing = false;
+  // Follow state. Seeded from the reel itself in initState — assuming
+  // "not following" showed a Follow button on every reel by someone the
+  // viewer already follows, which was the whole bug.
+  late bool _isFollowing;
+  late bool _isPendingRequest;
   bool _followLoading = false;
   String? _myUserId;
 
@@ -84,6 +87,9 @@ class _ReelItemState extends State<ReelItem> {
     _likeCount = int.tryParse(widget.post.likesCount ?? '0') ?? 0;
     _commentCount = int.tryParse(widget.post.commentsCount ?? '0') ?? 0;
     _shareCount = widget.post.sharesCount ?? 0;
+    final author = widget.post.author;
+    _isFollowing = author?.isFollowedByViewer ?? false;
+    _isPendingRequest = author?.hasPendingFollowRequest ?? false;
     _loadMyId();
     ViewTracker.instance.track(widget.post.id);
     // Attach listener immediately if controller is already ready on first build.
@@ -245,15 +251,33 @@ class _ReelItemState extends State<ReelItem> {
 
   Future<void> _follow() async {
     final authorId = widget.post.author?.id;
-    if (authorId == null || _followLoading) return;
-    setState(() { _followLoading = true; _isFollowing = true; });
-    try {
-      await getIt<FollowCubit>().follow(authorId);
-    } catch (_) {
-      if (mounted) setState(() => _isFollowing = false);
-    } finally {
-      if (mounted) setState(() => _followLoading = false);
-    }
+    // Already following, or a request is already in flight to a private
+    // account: nothing to do. Without this, the "Requested" button would send
+    // a second request when tapped.
+    if (authorId == null || _followLoading || _isFollowing) return;
+
+    setState(() {
+      _followLoading = true;
+      _isFollowing = true;
+    });
+
+    final cubit = getIt<FollowCubit>();
+    await cubit.follow(authorId);
+    if (!mounted) return;
+
+    // `FollowCubit.follow` swallows its own errors and re-emits the previous
+    // state, so awaiting it never throws — a `catch` here would never run and
+    // a failed follow would leave the button hidden as though it had worked.
+    // The emitted status is the only report of what actually happened, and it
+    // also distinguishes a public account ("following") from a request to a
+    // private one ("pending").
+    final state = cubit.state;
+    final status = state is FollowSuccess ? state.status : 'not_following';
+    setState(() {
+      _followLoading = false;
+      _isFollowing = status == 'following' || status == 'pending';
+      _isPendingRequest = status == 'pending';
+    });
   }
 
   // ── Comments ────────────────────────────────────────────────────────────
@@ -924,7 +948,9 @@ class _ReelItemState extends State<ReelItem> {
                                     color: Colors.white, strokeWidth: 1.5),
                               )
                             : Text(
-                                S.of(context).followBtn,
+                                _isPendingRequest
+                                    ? S.of(context).requestedBtn
+                                    : S.of(context).followBtn,
                                 style: TextStyles.font12semiBold
                                     .copyWith(color: Colors.white),
                               ),

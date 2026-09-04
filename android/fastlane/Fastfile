@@ -40,6 +40,10 @@ platform :android do
 
         Fixed in this build
 
+        - Reels no longer ask you to follow someone you already follow. The
+          button appeared on every reel because the app was never told who
+          you follow; now it is. A request still awaiting approval shows
+          "Requested" instead.
         - Forgot your password now works. The app said a code was on its way
           but no email was ever sent. Codes are emailed for real.
         - "Resend code" resends, instead of taking you back a screen.
