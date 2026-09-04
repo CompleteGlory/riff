@@ -2,12 +2,12 @@
   "googleSignInNoToken": "سجّلك Google للدخول لكنه لم يُعِد رمز تسجيل الدخول. هذه مشكلة إعداد لدينا وليست بسببك.",
   "signInFailedWithReason": "فشل تسجيل الدخول: {reason}",
   "@signInFailedWithReason": {
-    "placeholders": { "reason": {} }
+    "placeholders": {
+      "reason": {}
+    }
   },
-
   "continueWithApple": "المتابعة عبر Apple",
   "appleSignInFailed": "تعذّر تسجيل الدخول عبر Apple",
-
   "@@locale": "ar",
   "appTitle": "ريف",
   "defineYourself": "عرّف نفسك\nبأسلوبك الفريد.",
@@ -473,12 +473,10 @@
   "postLikesTitle": "الإعجابات",
   "noLikesYet": "لا توجد إعجابات بعد",
   "noLikesYetSubtitle": "عندما يعجب الآخرون بهذا المنشور، سيظهرون هنا.",
-
   "spotifyConnectFailed": "تعذّر الاتصال بـ Spotify",
   "spotifyConnectUnavailable": "خدمة Spotify غير متاحة في هذا الإصدار من Riff.",
   "spotifyConnectedNotShared": "تم الاتصال بـ Spotify، لكن تعذّر إبلاغ Riff — لن يرى الآخرون ما تستمع إليه بعد.",
   "spotifyConnectRetry": "إعادة المحاولة",
-
   "deleteAccountTitle": "حذف الحساب",
   "deleteAccountMenuItem": "حذف الحساب",
   "deleteAccountHeadline": "حذف حسابك في Riff نهائيًا",
@@ -504,5 +502,7 @@
   "deleteAccountCancel": "إلغاء",
   "deleteAccountWrongPassword": "كلمة المرور غير صحيحة",
   "deleteAccountFailed": "تعذّر حذف حسابك. يُرجى المحاولة مرة أخرى.",
-  "deleteAccountSuccess": "تم حذف حسابك."
+  "deleteAccountSuccess": "تم حذف حسابك.",
+  "videoTooLarge": "هذا الفيديو كبير جدًا للرفع. من فضلك اختر مقطعًا أقصر.",
+  "@videoTooLarge": {}
 }

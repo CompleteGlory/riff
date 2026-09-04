@@ -32,7 +32,9 @@ platform :android do
           up waiting after 30 seconds while the server was still storing the
           video, and a phone records far more data per minute than that had
           any chance of finishing. Videos are now capped at one minute and
-          the app waits properly.
+          the app waits properly. A clip picked from your gallery that is
+          still too big is refused straight away, with a reason, instead of
+          uploading for minutes and then failing.
         - Videos that would not play on some Android phones now play. Clips
           recorded in HEVC crashed the player on certain devices. Everything
           is now delivered in a format every phone can decode, including

@@ -2,12 +2,12 @@
   "googleSignInNoToken": "Google signed you in but didn't return a sign-in token. This is a configuration problem on our side, not something you did.",
   "signInFailedWithReason": "Sign-in failed: {reason}",
   "@signInFailedWithReason": {
-    "placeholders": { "reason": {} }
+    "placeholders": {
+      "reason": {}
+    }
   },
-
   "continueWithApple": "Continue with Apple",
   "appleSignInFailed": "Couldn't sign in with Apple",
-
   "@@locale": "en",
   "appTitle": "Riff",
   "defineYourself": "Define Yourself\nin Your Unique Way.",
@@ -535,12 +535,10 @@
   "postLikesTitle": "Likes",
   "noLikesYet": "No likes yet",
   "noLikesYetSubtitle": "When people like this post, they'll show up here.",
-
   "spotifyConnectFailed": "Couldn't connect to Spotify",
   "spotifyConnectUnavailable": "Spotify isn't available in this version of Riff.",
   "spotifyConnectedNotShared": "Connected to Spotify, but we couldn't tell Riff — others won't see your track yet.",
   "spotifyConnectRetry": "Try again",
-
   "deleteAccountTitle": "Delete account",
   "deleteAccountMenuItem": "Delete account",
   "deleteAccountHeadline": "Permanently delete your Riff account",
@@ -566,5 +564,7 @@
   "deleteAccountCancel": "Cancel",
   "deleteAccountWrongPassword": "Incorrect password",
   "deleteAccountFailed": "Couldn't delete your account. Please try again.",
-  "deleteAccountSuccess": "Your account has been deleted."
+  "deleteAccountSuccess": "Your account has been deleted.",
+  "videoTooLarge": "That video is too large to upload. Please choose a shorter clip.",
+  "@videoTooLarge": {}
 }
