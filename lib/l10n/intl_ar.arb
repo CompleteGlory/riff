@@ -43,7 +43,7 @@
   "alreadyHaveAnAccount": "لديك حساب بالفعل؟",
   "loginLink": "تسجيل الدخول",
   "forgotPasswordTitle": "نسيت كلمة المرور",
-  "forgotPasswordSubtitle": "أدخل بريدك الإلكتروني لإجراء التحقق. سنرسل رمزاً مكوناً من 4 أرقام إلى بريدك.",
+  "forgotPasswordSubtitle": "أدخل بريدك الإلكتروني لعملية التحقق. سنرسل رمزًا من 6 أرقام إلى بريدك.",
   "sendCodeBtn": "إرسال الرمز",
   "enterCodeSubtitle": "أدخل الرمز المكون من 6 أرقام الذي استلمته على بريدك الإلكتروني.",
   "continueBtn": "متابعة",
@@ -504,5 +504,15 @@
   "deleteAccountFailed": "تعذّر حذف حسابك. يُرجى المحاولة مرة أخرى.",
   "deleteAccountSuccess": "تم حذف حسابك.",
   "videoTooLarge": "هذا الفيديو كبير جدًا للرفع. من فضلك اختر مقطعًا أقصر.",
-  "@videoTooLarge": {}
+  "@videoTooLarge": {},
+  "emailNotReceived": "لم يصلك البريد؟",
+  "@emailNotReceived": {},
+  "resendCodeSent": "أرسلنا لك رمزًا جديدًا.",
+  "@resendCodeSent": {},
+  "resendCodeWait": "يمكنك طلب رمز جديد خلال {seconds} ثانية",
+  "@resendCodeWait": {
+    "placeholders": {
+      "seconds": {}
+    }
+  }
 }

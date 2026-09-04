@@ -21,46 +21,30 @@ platform :android do
       testers: "fadyalaa441@gmail.com, fadyalaa2112@gmail.com, zakymagd@gmail.com, magddevf@gmail.com, Danielgeorge369@gmail.com, marten.atef.eng@gmail.com" ,
       upload_timeout: 600,
       release_notes: <<~RELEASE_NOTES
-        Version 1.0.18
+        Version 1.0.19
 
         Date: 2026-09-04
 
         Fixed in this build
 
-        - Posting a video works. A clip would upload all the way to 100% and
-          then fail with no explanation. Two things were wrong: the app gave
-          up waiting after 30 seconds while the server was still storing the
-          video, and a phone records far more data per minute than that had
-          any chance of finishing. Videos are now capped at one minute and
-          the app waits properly. A clip picked from your gallery that is
-          still too big is refused straight away, with a reason, instead of
-          uploading for minutes and then failing.
-        - Videos that would not play on some Android phones now play. Clips
-          recorded in HEVC crashed the player on certain devices. Everything
-          is now delivered in a format every phone can decode, including
-          videos posted before this build.
-
-        Changed in this build
-
-        - Photos, videos and voice notes are compressed before they are
-          stored. Nothing looks different: photos keep their detail, and
-          voice notes are recorded in the quality speech actually needs
-          rather than four times that. This is what keeps the app inside its
-          media budget as more people join.
-        - Deleting something now deletes its files too. A removed post,
-          photo, message or conversation used to leave its media behind
-          forever. Media shared in more than one place is kept until the last
-          copy is gone.
+        - Forgot your password now works. The app asked for your email and
+          said a code was on its way, but no email was ever sent, so there
+          was no way to finish. Codes are now emailed for real.
+        - "Resend code" resends. It used to take you back to the previous
+          screen without sending anything.
+        - The screen said we would send a 4-digit code. It is 6 digits.
 
         Previously
 
-        - Sign in with Apple, on the login and signup screens.
-        - Delete your account, from Account settings.
-        - Continue with Google works on every distributed build, including
-          installs from Google Play.
-        - Connect Spotify actually connects, and your now-playing track stays
-          visible to other people.
-        - Automatic crash reporting.
+        - Posting a video works, and a clip too large to upload is refused
+          straight away with a reason instead of failing at the end.
+        - Videos that would not play on some Android phones now play.
+        - Photos, videos and voice notes are compressed before storage, and
+          deleting something deletes its files too.
+        - Sign in with Apple, and Delete your account in Account settings.
+        - Continue with Google works on every build, including from Google
+          Play.
+        - Connect Spotify works, and your now-playing track stays visible.
 
       RELEASE_NOTES
     )
