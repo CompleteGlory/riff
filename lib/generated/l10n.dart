@@ -379,10 +379,10 @@ class S {
     );
   }
 
-  /// `Enter your email for the verification process. We will send 4 digits code to your email.`
+  /// `Enter your email for the verification process. We will send a 6-digit code to your email.`
   String get forgotPasswordSubtitle {
     return Intl.message(
-      'Enter your email for the verification process. We will send 4 digits code to your email.',
+      'Enter your email for the verification process. We will send a 6-digit code to your email.',
       name: 'forgotPasswordSubtitle',
       desc: '',
       args: [],
@@ -4381,6 +4381,36 @@ class S {
       name: 'videoTooLarge',
       desc: '',
       args: [],
+    );
+  }
+
+  /// `Didn't get the email?`
+  String get emailNotReceived {
+    return Intl.message(
+      'Didn\'t get the email?',
+      name: 'emailNotReceived',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `We've sent another code.`
+  String get resendCodeSent {
+    return Intl.message(
+      'We\'ve sent another code.',
+      name: 'resendCodeSent',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `You can ask for another code in {seconds}s`
+  String resendCodeWait(Object seconds) {
+    return Intl.message(
+      'You can ask for another code in ${seconds}s',
+      name: 'resendCodeWait',
+      desc: '',
+      args: [seconds],
     );
   }
 }

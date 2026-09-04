@@ -43,7 +43,7 @@
   "alreadyHaveAnAccount": "Already have an account?",
   "loginLink": "login",
   "forgotPasswordTitle": "Forgot Password",
-  "forgotPasswordSubtitle": "Enter your email for the verification process. We will send 4 digits code to your email.",
+  "forgotPasswordSubtitle": "Enter your email for the verification process. We will send a 6-digit code to your email.",
   "sendCodeBtn": "Send Code",
   "enterCodeSubtitle": "Enter 6 digit code that you've received on your email address.",
   "continueBtn": "Continue",
@@ -566,5 +566,15 @@
   "deleteAccountFailed": "Couldn't delete your account. Please try again.",
   "deleteAccountSuccess": "Your account has been deleted.",
   "videoTooLarge": "That video is too large to upload. Please choose a shorter clip.",
-  "@videoTooLarge": {}
+  "@videoTooLarge": {},
+  "emailNotReceived": "Didn't get the email?",
+  "@emailNotReceived": {},
+  "resendCodeSent": "We've sent another code.",
+  "@resendCodeSent": {},
+  "resendCodeWait": "You can ask for another code in {seconds}s",
+  "@resendCodeWait": {
+    "placeholders": {
+      "seconds": {}
+    }
+  }
 }
