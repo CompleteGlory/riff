@@ -1,10 +1,10 @@
 // ignore_for_file: unused_element, deprecated_member_use
 
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:riff/core/helpers/spacing.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
@@ -51,7 +51,6 @@ class CreatePostScreen extends StatefulWidget {
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
   final TextEditingController _contentController = TextEditingController();
-  final ImagePicker _picker = ImagePicker();
   final List<File> _selectedFiles = [];
 
   /// For Spotify shares: the song/artist extracted from the shared text.
@@ -101,81 +100,44 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     return ['mp4', 'mov', 'webm', 'avi', 'mkv'].contains(ext);
   }
 
-  Future<void> _pickImages(ImageSource source) async {
-    Navigator.pop(context);
-    if (source == ImageSource.gallery) {
-      final remaining = _maxImages - _selectedFiles.length;
-      final picked = await _picker.pickMultiImage(
-        maxWidth: kMaxImageDimension, imageQuality: kImageQuality, limit: remaining,
-      );
-      if (picked.isNotEmpty) {
-        setState(() {
-          for (final xf in picked) {
-            if (_selectedFiles.length < _maxImages) _selectedFiles.add(File(xf.path));
-          }
-        });
-      }
-    } else {
-      final picked = await _picker.pickImage(
-        source: ImageSource.camera, maxWidth: kMaxImageDimension,
-        imageQuality: kImageQuality,
-      );
-      if (picked != null) setState(() => _selectedFiles.add(File(picked.path)));
-    }
-  }
-
-  /// True when [picked] is small enough to upload, complaining if it is not.
+  /// Opens the camera, which is also the picker.
   ///
-  /// The server refuses the same size, so catching it here turns a long upload
-  /// that ends in a failure into an immediate, explainable no.
-  Future<bool> _isVideoSmallEnough(XFile picked) async {
-    final bytes = await picked.length();
-    if (bytes <= kMaxVideoUploadBytes) return true;
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).videoTooLarge)),
-      );
-    }
-    return false;
-  }
-
-  /// Opens the in-app camera and appends whatever comes back.
+  /// No chooser first: the camera opens with recent photos along the bottom,
+  /// so capturing and picking cost the same one tap. Multi-select is capped at
+  /// the slots still free, which is what the old `pickMultiImage` limit did.
   ///
   /// Recording stops itself at [kMaxPostVideoDuration], so the long clip that
-  /// used to upload for minutes and then fail can no longer be recorded. A
-  /// still needs no size check: the camera writes a JPEG far below the video
+  /// used to upload for minutes and then fail can no longer be made. A still
+  /// needs no size check: the camera writes a JPEG far below the video
   /// ceiling, and the server re-encodes it anyway.
-  Future<void> _captureFromCamera() async {
-    Navigator.pop(context);
-    final shot = await RiffCameraScreen.open(
+  Future<void> _openCamera() async {
+    final remaining = _maxImages - _selectedFiles.length;
+    if (remaining <= 0) return;
+
+    final shots = await RiffCameraScreen.open(
       context,
       maxVideoDuration: kMaxPostVideoDuration,
+      maxSelection: remaining,
     );
-    if (shot == null || !mounted) return;
-    if (shot.isVideo) {
-      final bytes = await shot.file.length();
-      if (bytes > kMaxVideoUploadBytes) {
+    if (shots == null || shots.isEmpty || !mounted) return;
+
+    final accepted = <File>[];
+    for (final shot in shots) {
+      if (shot.isVideo && await shot.file.length() > kMaxVideoUploadBytes) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(S.of(context).videoTooLarge)),
           );
         }
-        return;
+        continue;
+      }
+      if (_selectedFiles.length + accepted.length < _maxImages) {
+        accepted.add(shot.file);
       }
     }
-    if (mounted) setState(() => _selectedFiles.add(shot.file));
-  }
-
-  Future<void> _pickVideo(ImageSource source) async {
-    Navigator.pop(context);
-    final picked = await _picker.pickVideo(
-      source: source,
-      maxDuration: kMaxPostVideoDuration,
-    );
-    // maxDuration binds camera capture only — a gallery pick arrives at
-    // whatever size it already was — so the size is what has to be checked.
-    if (picked != null && !await _isVideoSmallEnough(picked)) return;
-    if (picked != null) setState(() => _selectedFiles.add(File(picked.path)));
+    if (accepted.isNotEmpty && mounted) {
+      setState(() => _selectedFiles.addAll(accepted));
+    }
   }
 
   void _showMediaSheet() {
@@ -190,33 +152,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       return;
     }
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24.r))),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 20.h),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40.w, height: 4.h,
-                decoration: BoxDecoration(color: ColorManager.lighterGrey, borderRadius: BorderRadius.circular(99)),
-              ),
-              verticalSpace(16),
-              // One camera row, not two. The in-app camera takes stills and
-              // video from the same screen, so splitting it into "take a
-              // photo" and "record video" would make the user decide before
-              // opening what the camera itself now asks after.
-              _SheetTile(icon: Icons.photo_camera_outlined, label: S.of(context).takePhotoOrVideo, onTap: _captureFromCamera),
-              _SheetTile(icon: Icons.photo_library_outlined, label: S.of(context).choosePhotos, onTap: () => _pickImages(ImageSource.gallery)),
-              _SheetTile(icon: Icons.video_library_outlined, label: S.of(context).chooseVideo, onTap: () => _pickVideo(ImageSource.gallery)),
-            ],
-          ),
-        ),
-      ),
-    );
+    unawaited(_openCamera());
   }
 
   void _removeImage(int index) {
@@ -595,31 +531,3 @@ class _SocialShareBanner extends StatelessWidget {
 // Bottom sheet tile
 // ---------------------------------------------------------------------------
 
-class _SheetTile extends StatelessWidget {
-  const _SheetTile({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      onTap: onTap,
-      contentPadding: EdgeInsets.symmetric(horizontal: 4.w),
-      leading: Container(
-        width: 40.r,
-        height: 40.r,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-        child: Icon(icon, color: ColorManager.primaryBlack, size: 20.r),
-      ),
-      title: Text(label, style: TextStyles.font15semiBold),
-    );
-  }
-}

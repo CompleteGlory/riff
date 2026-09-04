@@ -4,8 +4,6 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:riff/core/camera/media_source_sheet.dart';
 import 'package:riff/core/camera/riff_camera_screen.dart';
 import 'package:riff/core/utils/media_limits.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -140,86 +138,23 @@ class _ChatInputBarState extends State<ChatInputBar> {
     await widget.cubit.sendText(text);
   }
 
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    // Capped like every other image path in the app: a phone camera shoots
-    // far wider than any screen this renders on.
-    final file = await picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 1600,
-      imageQuality: 80,
-    );
-    if (file == null) return;
-    final name = file.name;
-    final mime = _mimeFromExt(name.split('.').last);
-    widget.cubit.sendMedia(file.path, name, mime);
-  }
-
-  Future<void> _pickVideo() async {
-    final picker = ImagePicker();
-    final file = await picker.pickVideo(
-      source: ImageSource.gallery,
-      maxDuration: kMaxChatVideoDuration,
-    );
-    if (file == null) return;
-    // maxDuration binds camera capture only; a gallery pick is unbounded.
-    if (await file.length() > kMaxVideoUploadBytes) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.of(context).videoTooLarge)),
-        );
-      }
-      return;
-    }
-    final name = file.name;
-    widget.cubit.sendMedia(file.path, name, 'video/mp4');
-  }
-
-  String _mimeFromExt(String ext) {
-    switch (ext.toLowerCase()) {
-      case 'jpg':
-      case 'jpeg': return 'image/jpeg';
-      case 'png':  return 'image/png';
-      case 'gif':  return 'image/gif';
-      case 'webp': return 'image/webp';
-      default:     return 'image/jpeg';
-    }
-  }
-
-  /// Captures with the in-app camera and sends the result straight away.
-  ///
-  /// Chat previously had no camera at all: sending a photo of what was in
-  /// front of you meant leaving Riff, opening the system camera, coming back
-  /// and hunting for the shot in the gallery. Recording stops itself at the
-  /// chat ceiling, so a clip too long to send cannot be produced here.
-  Future<void> _captureFromCamera() async {
-    final shot = await RiffCameraScreen.open(
+  Future<void> _openCamera() async {
+    final shots = await RiffCameraScreen.open(
       context,
       maxVideoDuration: kMaxChatVideoDuration,
     );
-    if (shot == null || !mounted) return;
+    if (shots == null || shots.isEmpty || !mounted) return;
 
-    if (shot.isVideo && await shot.file.length() > kMaxVideoUploadBytes) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.of(context).videoTooLarge)),
-        );
+    for (final shot in shots) {
+      if (shot.isVideo && await shot.file.length() > kMaxVideoUploadBytes) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(S.of(context).videoTooLarge)),
+          );
+        }
+        continue;
       }
-      return;
-    }
-    widget.cubit.sendMedia(shot.file.path, shot.name, shot.mimeType);
-  }
-
-  Future<void> _showMediaPicker() async {
-    final choice = await MediaSourceSheet.show(context);
-    if (choice == null || !mounted) return;
-    switch (choice) {
-      case MediaSource.camera:
-        await _captureFromCamera();
-      case MediaSource.photoLibrary:
-        await _pickImage();
-      case MediaSource.videoLibrary:
-        await _pickVideo();
+      widget.cubit.sendMedia(shot.file.path, shot.name, shot.mimeType);
     }
   }
 
@@ -394,7 +329,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
               icon: Icon(Icons.add_circle_outline_rounded,
                   color:
                       isDark ? ColorManager.lightGrey : ColorManager.darkGrey),
-              onPressed: _showMediaPicker,
+              onPressed: _openCamera,
               padding: EdgeInsets.zero,
               constraints: BoxConstraints(minWidth: 36.w, minHeight: 36.h),
             ),

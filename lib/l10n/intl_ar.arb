@@ -553,5 +553,25 @@
     "placeholders": {
       "time": {}
     }
+  },
+  "allPhotos": "الكل",
+  "@allPhotos": {},
+  "galleryPermissionNeeded": "اسمح بالوصول إلى الصور للاختيار من معرضك",
+  "@galleryPermissionNeeded": {},
+  "galleryItemUnavailable": "تعذّر فتح هذا العنصر. جرّب غيره.",
+  "@galleryItemUnavailable": {},
+  "galleryPhotoItem": "صورة",
+  "@galleryPhotoItem": {},
+  "galleryVideoItem": "فيديو، {duration}",
+  "@galleryVideoItem": {
+    "placeholders": {
+      "duration": {}
+    }
+  },
+  "addSelected": "إضافة {count}",
+  "@addSelected": {
+    "placeholders": {
+      "count": {}
+    }
   }
 }

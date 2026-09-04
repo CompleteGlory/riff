@@ -1,9 +1,9 @@
 // ignore_for_file: deprecated_member_use
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:riff/core/helpers/spacing.dart';
 import 'package:riff/core/networks/api_constants.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
@@ -29,7 +29,6 @@ class UpdatePostScreen extends StatefulWidget {
 
 class _UpdatePostScreenState extends State<UpdatePostScreen> {
   late TextEditingController _contentController;
-  final ImagePicker _picker = ImagePicker();
 
   /// Existing media URLs the user wants to keep.
   late List<String> _keepUrls;
@@ -63,66 +62,35 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
 
   // ── Media helpers ──────────────────────────────────────────────────────────
 
-  Future<void> _pickImages(ImageSource source) async {
-    Navigator.pop(context);
-    if (source == ImageSource.gallery) {
-      final remaining = _maxMedia - _totalCount;
-      final picked = await _picker.pickMultiImage(
-        maxWidth: kMaxImageDimension, imageQuality: kImageQuality, limit: remaining,
-      );
-      if (picked.isNotEmpty) {
-        setState(() {
-          for (final xf in picked) {
-            if (_totalCount < _maxMedia) _newFiles.add(File(xf.path));
-          }
-        });
-      }
-    } else {
-      final picked = await _picker.pickImage(
-        source: ImageSource.camera, maxWidth: kMaxImageDimension, imageQuality: kImageQuality,
-      );
-      if (picked != null && _totalCount < _maxMedia) {
-        setState(() => _newFiles.add(File(picked.path)));
-      }
-    }
-  }
+  /// Opens the camera, which is also the picker — the same one create-post
+  /// uses. No chooser first: recent photos are already along the bottom of
+  /// the camera, so capturing and picking cost the same single tap.
+  Future<void> _openCamera() async {
+    final remaining = _maxMedia - _totalCount;
+    if (remaining <= 0) return;
 
-  /// Opens the in-app camera and appends the capture, same as create-post.
-  Future<void> _captureFromCamera() async {
-    Navigator.pop(context);
-    final shot = await RiffCameraScreen.open(
+    final shots = await RiffCameraScreen.open(
       context,
       maxVideoDuration: kMaxPostVideoDuration,
+      maxSelection: remaining,
     );
-    if (shot == null || !mounted) return;
-    if (shot.isVideo && await shot.file.length() > kMaxVideoUploadBytes) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.of(context).videoTooLarge)),
-        );
-      }
-      return;
-    }
-    if (mounted) setState(() => _newFiles.add(shot.file));
-  }
+    if (shots == null || shots.isEmpty || !mounted) return;
 
-  Future<void> _pickVideo(ImageSource source) async {
-    Navigator.pop(context);
-    if (_totalCount >= _maxMedia) return;
-    final picked = await _picker.pickVideo(
-      source: source, maxDuration: kMaxPostVideoDuration,
-    );
-    if (picked == null) return;
-    // maxDuration binds camera capture only; a gallery pick is unbounded.
-    if (await picked.length() > kMaxVideoUploadBytes) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.of(context).videoTooLarge)),
-        );
+    final accepted = <File>[];
+    for (final shot in shots) {
+      if (shot.isVideo && await shot.file.length() > kMaxVideoUploadBytes) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(S.of(context).videoTooLarge)),
+          );
+        }
+        continue;
       }
-      return;
+      if (_totalCount + accepted.length < _maxMedia) accepted.add(shot.file);
     }
-    setState(() => _newFiles.add(File(picked.path)));
+    if (accepted.isNotEmpty && mounted) {
+      setState(() => _newFiles.addAll(accepted));
+    }
   }
 
   void _showMediaSheet() {
@@ -134,47 +102,7 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
       ));
       return;
     }
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r))),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 20.h),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40.w, height: 4.h,
-                decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF3A3A3A)
-                        : ColorManager.lighterGrey,
-                    borderRadius: BorderRadius.circular(99)),
-              ),
-              verticalSpace(16),
-              // One camera row rather than two: the in-app camera decides
-              // photo-or-video itself. These labels were also hardcoded
-              // English in an app that localizes everything else.
-              _SheetTile(
-                  icon: Icons.photo_camera_outlined,
-                  label: S.of(context).takePhotoOrVideo,
-                  onTap: _captureFromCamera),
-              _SheetTile(
-                  icon: Icons.photo_library_outlined,
-                  label: S.of(context).choosePhotos,
-                  onTap: () => _pickImages(ImageSource.gallery)),
-              _SheetTile(
-                  icon: Icons.video_library_outlined,
-                  label: S.of(context).chooseVideo,
-                  onTap: () => _pickVideo(ImageSource.gallery)),
-            ],
-          ),
-        ),
-      ),
-    );
+    unawaited(_openCamera());
   }
 
   void _removeExisting(int index) =>
@@ -545,30 +473,3 @@ class _MediaPickerPlaceholder extends StatelessWidget {
 
 // ── Bottom sheet tile ─────────────────────────────────────────────────────────
 
-class _SheetTile extends StatelessWidget {
-  const _SheetTile(
-      {required this.icon, required this.label, required this.onTap});
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fg = Theme.of(context).colorScheme.onSurface;
-    return ListTile(
-      onTap: onTap,
-      contentPadding: EdgeInsets.symmetric(horizontal: 4.w),
-      leading: Container(
-        width: 40.r,
-        height: 40.r,
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-        child: Icon(icon, color: fg, size: 20.r),
-      ),
-      title: Text(label, style: TextStyles.font15semiBold),
-    );
-  }
-}

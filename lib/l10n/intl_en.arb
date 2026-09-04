@@ -615,5 +615,25 @@
     "placeholders": {
       "time": {}
     }
+  },
+  "allPhotos": "All",
+  "@allPhotos": {},
+  "galleryPermissionNeeded": "Allow photo access to pick from your gallery",
+  "@galleryPermissionNeeded": {},
+  "galleryItemUnavailable": "That item couldn't be opened. Try another.",
+  "@galleryItemUnavailable": {},
+  "galleryPhotoItem": "Photo",
+  "@galleryPhotoItem": {},
+  "galleryVideoItem": "Video, {duration}",
+  "@galleryVideoItem": {
+    "placeholders": {
+      "duration": {}
+    }
+  },
+  "addSelected": "Add {count}",
+  "@addSelected": {
+    "placeholders": {
+      "count": {}
+    }
   }
 }

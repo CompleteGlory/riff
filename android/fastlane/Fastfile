@@ -27,13 +27,14 @@ platform :android do
 
         Added in this build
 
-        - A camera inside Riff. Tap the camera row when adding to a post or
-          sending a chat message and you get a live preview, a shutter, front
-          and back cameras, and a flash toggle — no more switching to your
-          phone's camera app and hunting for the shot afterwards.
+        - A camera inside Riff, and it is the picker too. Tap the media
+          button when adding to a post or sending a message and the camera
+          opens straight away, with your most recent photos already along
+          the bottom. Take a new one or tap an old one — no menu first.
+        - "All" opens your whole library without leaving the camera. For a
+          post you can pick several at once.
         - Recording stops itself at the limit, with a ring that fills as you
-          approach it. A clip that is too long to send can no longer be
-          recorded by accident.
+          approach it, so a clip too long to send cannot be recorded.
         - Chat can take photos and video at all now. It could only pick
           something you had already saved.
 
@@ -48,10 +49,7 @@ platform :android do
         - Posting a video works, and a clip too large to upload is refused
           straight away with a reason instead of failing at the end.
         - Videos that would not play on some Android phones now play.
-        - Photos, videos and voice notes are compressed before storage.
         - Sign in with Apple, and Delete your account in Account settings.
-        - Continue with Google works on every build, including from Google
-          Play.
 
       RELEASE_NOTES
     )

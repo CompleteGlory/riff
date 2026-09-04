@@ -9,6 +9,18 @@
          devices without a camera; RiffCameraScreen reports that case rather
          than crashing. -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <!-- Reading the photo library for the gallery strip and grid inside the
+         camera. Android 13 split the old single storage permission into
+         per-type ones and ignores READ_EXTERNAL_STORAGE from API 33 up, so
+         both spellings are needed: the granular pair for new devices, and the
+         legacy one capped with maxSdkVersion for older ones. Without these
+         photo_manager returns an empty library and the strip stays blank with
+         nothing to explain it. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <application
         android:label="@string/app_name"

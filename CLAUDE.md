@@ -487,29 +487,29 @@ Logic and tests: `notify-android-testers.logic.ts` / `.spec.ts` / `.spec.md`.
 
 ---
 
-## Camera — capture inside the app
+## Camera — capture *and* pick, inside the app
 
-`lib/core/camera/` replaces handing the user to the system camera app through
-`image_picker`:
+`lib/core/camera/` is the whole media flow. **There is no chooser before it:
+opening the camera is opening the picker.** Recent photos sit in a strip above
+the shutter and "All" opens the full library, so reaching something already on
+the phone costs one tap rather than a sheet, a decision, and then a system
+picker.
 
 | File | Role |
 |---|---|
-| `riff_camera_screen.dart` | Full-screen preview, stills, video with a self-enforcing duration cap |
+| `riff_camera_screen.dart` | Preview, stills, video with a self-enforcing cap, and the gallery strip |
 | `camera_capture.dart` | `CameraCapture` (file + `isVideo` + MIME) and `CameraMode` |
-| `media_source_sheet.dart` | The shared Camera / Photo / Video chooser |
+| `device_gallery.dart` | Reads the library via `photo_manager`; paging, thumbnails, access state |
+| `gallery_panel.dart` | `GalleryStrip` (recents) and `GalleryGridSheet` (full library) |
 
-Open it and await the result; null means cancelled or permission refused:
+Returns a **list**, or null when cancelled or refused. A capture is one item; a
+gallery pick is up to `maxSelection`, which a post sets to the slots still free
+(ten total) and chat leaves at one:
 
 ```dart
-final shot = await RiffCameraScreen.open(context, maxVideoDuration: kMaxChatVideoDuration);
+final shots = await RiffCameraScreen.open(
+  context, maxVideoDuration: kMaxChatVideoDuration, maxSelection: 1);
 ```
-
-**Why it exists.** `image_picker`'s `maxDuration` binds camera capture only and
-the system camera gave no feedback about the limit while recording, so an
-over-long clip was easy to produce and only failed later. Recording here stops
-itself at the caller's ceiling and shows a ring filling toward it, so the clip
-that the server would refuse can no longer be recorded. Chat had **no camera at
-all** — only a gallery pick, with hardcoded English labels.
 
 Things worth keeping when editing it:
 
@@ -517,19 +517,27 @@ Things worth keeping when editing it:
   resume.** The camera is exclusive; holding it while backgrounded keeps it
   from other apps, and Android may revoke it and leave the controller pointing
   at nothing.
-- **The recording timer is a `ValueNotifier`, read by `ValueListenableBuilder`
-  around the ring and the pill only.** Calling `setState` ten times a second
-  would rebuild the preview under it and drop frames.
-- **Video is reachable by tapping the Photo/Video switch, not only by holding
-  the shutter.** A sustained press is a dragging-style interaction, and it must
-  not be the sole route to a feature.
-- The chrome is dark in both themes because it sits over a preview whose
-  colours are unknowable; contrast comes from the scrims, and selected chips
-  put black on the lime accent (white on lime fails 4.5:1).
-- Android needs `android.permission.CAMERA` in the manifest — the system-camera
-  handoff needed none, so it was absent. `uses-feature` is `required="false"`
-  so the app still installs on a device without one, and the screen reports
-  that case.
+- **The recording timer is a `ValueNotifier` read only by the ring and the
+  pill.** `setState` ten times a second would rebuild the preview under it.
+- **Video is reachable by tapping the Photo/Video switch**, not only by holding
+  the shutter — a sustained press must not be the sole route to a feature.
+- **An asset is not a file yet.** An iCloud photo downloads on demand and can
+  fail, so `DeviceGallery.materialize` returns null and the screen drops it
+  rather than passing on a broken path.
+- **iOS "limited" access is its own state, not a denial.** Folding it into
+  denied would blank the strip for someone who did grant access.
+- The strip keeps a fixed height in every state so the shutter never moves as
+  the library loads — a control that shifts under a thumb is how a tap lands
+  on the wrong thing.
+- Chrome is dark in both themes because it sits over a preview whose colours
+  are unknowable; selected chips put black on the lime accent (white fails).
+
+**Permissions.** Android needs `CAMERA` plus `READ_MEDIA_IMAGES` and
+`READ_MEDIA_VIDEO`; API 33 ignores `READ_EXTERNAL_STORAGE`, which is kept with
+`maxSdkVersion="32"` for older devices. Without the media pair `photo_manager`
+returns an empty library and the strip is blank with nothing to explain it.
+`uses-feature` for the camera is `required="false"` so the app still installs
+on a device without one. iOS already had all three usage descriptions.
 
 ---
 
@@ -643,7 +651,7 @@ test file has a co-located `.md` explaining coverage, mocks and gotchas:
 | Reaction chips + "edited" marker | `test/features/home/chat/UI/widgets/message_reactions_test.dart` | [message_reactions_test.md](test/features/home/chat/UI/widgets/message_reactions_test.md) |
 | Chat list re-sort after a delete | `test/features/home/chat/logic/conversation_ordering_test.dart` | [conversation_ordering_test.md](test/features/home/chat/logic/conversation_ordering_test.md) |
 | Camera capture result + mode | `test/core/camera/camera_capture_test.dart` | [camera_capture_test.md](test/core/camera/camera_capture_test.md) |
-| Media source sheet | `test/core/camera/media_source_sheet_test.dart` | [media_source_sheet_test.md](test/core/camera/media_source_sheet_test.md) |
+| Device gallery access + paging | `test/core/camera/device_gallery_test.dart` | [device_gallery_test.md](test/core/camera/device_gallery_test.md) |
 | Message delete / edit / react (API) | `src/modules/chat/chat.controller.spec.ts` (NestJS repo) | [chat.controller.spec.md](/Users/magd/apis/riff/src/modules/chat/chat.controller.spec.md) |
 | One voice note at a time | `test/features/home/chat/logic/voice_note_playback_test.dart` | [voice_note_playback_test.md](test/features/home/chat/logic/voice_note_playback_test.md) |
 | Reply quote snippet (API) | `src/modules/chat/reply-preview.spec.ts` (NestJS repo) | [reply-preview.spec.md](/Users/magd/apis/riff/src/modules/chat/reply-preview.spec.md) |
@@ -748,7 +756,8 @@ full widget test.
 | An HTTP error status was lost whenever the body omitted it | `ApiErrorHandler._handleError` | `ApiErrorModel.fromJson` reads `statusCode` from the response *body*. The API usually echoes it, but any handler returning a bare `{"message": …}` produced a model with a null status, so a caller branching on the status (delete-account telling "wrong password" from "something went wrong") silently lost it. Falls back to the status the response actually arrived with |
 | Google sign-in failed on every distributed Android build | Firebase console (project `riff-23655`), not the code | `PlatformException(sign_in_failed, i2.d: 10: …)` — `ApiException` 10, DEVELOPER_ERROR: Google refusing the OAuth client because the calling app's signing certificate isn't registered. Only two SHA-1s were registered for `com.magd.riff`, and both were **debug** keystores (`~/.android/debug.keystore` and `~/riff-prod-debug.keystore`). `android/key.properties` exists on the build machine but is gitignored, so release builds are signed with `~/riff-upload-keystore.jks` — whose SHA-1 `05:68:9A:D1:F8:C8:FE:C7:52:3C:DA:CF:08:E6:22:7C:70:CA:C4:F3` was never added. Debug builds worked, every Firebase App Distribution build did not, and the code was identical in both. Fixed by adding that fingerprint in Firebase; the check is server-side, so no rebuild was needed. **If the signing key ever changes, or if the app ships through Play (App Signing re-signs with Google's own key), the new SHA-1 must be added the same way** |
 | Android CI build failed: `Language version 1.6 is no longer supported` | `sentry_flutter` 8.14.2 `android/build.gradle` | The plugin's own Gradle module pinned Kotlin `languageVersion = "1.6"`, and this project pins the Kotlin Android plugin at 2.2.20, which refuses anything below 1.8 as a hard error — so `assembleProductionRelease` died compiling *Sentry's* module, not ours. Sentry removed the pin in the 9.x line (sentry-dart #3032); 9.28.0 has none. Reproduce any CI Android failure locally with the exact fastlane command from `android/fastlane/Fastfile` in a worktree *without* `key.properties` — that matches the runner |
-| Chat could not take a photo, only choose one | `chat_input_bar.dart`, `lib/core/camera/` | The attach sheet offered Photo and Video, both gallery-only, so sending a picture of what was actually in front of you meant leaving Riff, opening the system camera, returning, and finding the shot in the gallery. Its two labels were also hardcoded English in an app that localizes everything else, and `update_post_screen` had four more of the same. Now one shared `MediaSourceSheet` with the in-app camera first |
+| Chat could not take a photo, only choose one | `chat_input_bar.dart`, `lib/core/camera/` | The attach sheet offered Photo and Video, both gallery-only, so sending a picture of what was actually in front of you meant leaving Riff, opening the system camera, returning, and finding the shot in the gallery. Its two labels were also hardcoded English in an app that localizes everything else, and `update_post_screen` had four more of the same |
+| Picking media took a sheet, a decision and then a system picker | `create_post_screen`, `update_post_screen`, `chat_input_bar` | Every surface opened a bottom sheet asking camera-or-gallery *before* anything was shown, so the commonest action — send the photo I just took, or the one at the top of my roll — cost three steps and a context switch out of the app. The sheet is gone: the media button opens the camera, and recent photos are already along the bottom of it. `MediaSourceSheet` was deleted rather than left unused |
 | Password reset never sent anything | `RequestOtp`, `MailService` | The use case ended with the literal comment `// TODO: Send OTP to email` and returned "OTP sent successfully" regardless, so a code was generated and stored where no user could reach it and the whole flow reported success while being unusable. Three defects came with it: an unknown address answered **500**, because `NotFoundException` was thrown inside a `try` whose `catch` rethrew `InternalServerErrorException`; the endpoint distinguished known from unknown addresses, which is an email-enumeration oracle; and the code came from `Math.random()`, a predictable per-process generator, formatted as `100000 + random * 900000` so no code could begin with a zero — a tenth of the keyspace given away. Now: one uniform response, `crypto.randomInt` across the full range with zero-padding, and `@Throttle` on the three reset endpoints. The transport itself then hit a second wall — see the row below |
 | SMTP could never deliver from production | `MailService` | Railway blocks outbound SMTP below its Pro plan and this project is on Hobby, so `smtp.gmail.com:587` times out. Nothing about the credentials was wrong; they authenticate from a laptop, which is why local testing proved nothing. `createTransport` performs no I/O, so the boot log printed "SMTP ready" either way, and with nodemailer's default two-minute connect timeout and the send awaited inline, a reset request hung until the Flutter client gave up at 30s and declared the app offline. Replaced with the Gmail API over HTTPS, which needs no domain and is SPF/DKIM aligned for the sender; SMTP stays behind `MAIL_TRANSPORT` for a Pro upgrade or a local mail catcher |
 | "Resend code" did not resend | `email_not_recieved_text.dart` | It navigated back to the email screen, so the one control a user reaches for when the mail has not arrived did nothing but lose their place. It also rendered `resendCode` as both the label and the button. It now calls the cubit and holds a 30-second cooldown, because the API allows three requests a minute and each sends real email. The forgot-password subtitle also promised a "4 digits code" for a six-digit code |
