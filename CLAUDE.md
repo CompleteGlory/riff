@@ -347,6 +347,28 @@ On the Flutter side, always upload via `FormData` with `MultipartFile.fromFile(.
 - Token saved when user logs in or app resumes via `save-fcm-token` use-case
 - `FIREBASE_SERVICE_ACCOUNT_JSON` env var required (JSON string of Firebase service account)
 
+### Reminding testers to open the app (Android only)
+
+Google Play will not grant production access until 12 testers have been
+opted in to closed testing for 14 continuous days, and reviewers look at
+engagement over that window. `src/scripts/notify-android-testers.ts` (API
+repo) sends an "open Riff today" push to every user whose FCM token belongs
+to an Android device. Run it from the API repo root, through Railway so it
+sees the production database:
+
+```bash
+npm run build && railway run -s riff node dist/scripts/notify-android-testers.js --dry-run
+```
+
+`--dry-run` lists who would get it and sends nothing; `--only=<username>`
+sends to yourself first; no flags sends to everyone. Re-run it each day the
+reminder should go out. The users table has no platform column, so each
+token is classified through Firebase's Instance ID info endpoint, and the
+message carries its notification only in the `android` block so an iPhone
+would render nothing regardless. A tap opens the in-app notifications list
+(`admin_notice` is the app's fallback route), so no client change is needed.
+Logic and tests: `notify-android-testers.logic.ts` / `.spec.ts` / `.spec.md`.
+
 ---
 
 ## Spotify Integration
