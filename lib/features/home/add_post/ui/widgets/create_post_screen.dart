@@ -12,6 +12,7 @@ import 'package:riff/core/widgets/button.dart';
 import 'package:riff/features/home/add_post/data/models/create_post_request_model.dart';
 import 'package:riff/features/home/add_post/logic/cubit/create_post_cubit.dart';
 import 'package:riff/generated/l10n.dart';
+import 'package:riff/core/camera/riff_camera_screen.dart';
 import 'package:riff/core/utils/media_limits.dart';
 
 // Platform colours used in the social-share banner.
@@ -138,6 +139,33 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     return false;
   }
 
+  /// Opens the in-app camera and appends whatever comes back.
+  ///
+  /// Recording stops itself at [kMaxPostVideoDuration], so the long clip that
+  /// used to upload for minutes and then fail can no longer be recorded. A
+  /// still needs no size check: the camera writes a JPEG far below the video
+  /// ceiling, and the server re-encodes it anyway.
+  Future<void> _captureFromCamera() async {
+    Navigator.pop(context);
+    final shot = await RiffCameraScreen.open(
+      context,
+      maxVideoDuration: kMaxPostVideoDuration,
+    );
+    if (shot == null || !mounted) return;
+    if (shot.isVideo) {
+      final bytes = await shot.file.length();
+      if (bytes > kMaxVideoUploadBytes) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(S.of(context).videoTooLarge)),
+          );
+        }
+        return;
+      }
+    }
+    if (mounted) setState(() => _selectedFiles.add(shot.file));
+  }
+
   Future<void> _pickVideo(ImageSource source) async {
     Navigator.pop(context);
     final picked = await _picker.pickVideo(
@@ -177,10 +205,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 decoration: BoxDecoration(color: ColorManager.lighterGrey, borderRadius: BorderRadius.circular(99)),
               ),
               verticalSpace(16),
+              // One camera row, not two. The in-app camera takes stills and
+              // video from the same screen, so splitting it into "take a
+              // photo" and "record video" would make the user decide before
+              // opening what the camera itself now asks after.
+              _SheetTile(icon: Icons.photo_camera_outlined, label: S.of(context).takePhotoOrVideo, onTap: _captureFromCamera),
               _SheetTile(icon: Icons.photo_library_outlined, label: S.of(context).choosePhotos, onTap: () => _pickImages(ImageSource.gallery)),
-              _SheetTile(icon: Icons.photo_camera_outlined, label: S.of(context).takeAPhoto, onTap: () => _pickImages(ImageSource.camera)),
               _SheetTile(icon: Icons.video_library_outlined, label: S.of(context).chooseVideo, onTap: () => _pickVideo(ImageSource.gallery)),
-              _SheetTile(icon: Icons.videocam_outlined, label: S.of(context).recordVideo, onTap: () => _pickVideo(ImageSource.camera)),
             ],
           ),
         ),

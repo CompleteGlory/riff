@@ -1,6 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- The in-app camera captures stills and video directly, rather than
+         handing off to the system camera app (which needed no permission of
+         our own). -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Declared not-required so the app stays installable on the handful of
+         devices without a camera; RiffCameraScreen reports that case rather
+         than crashing. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <application
         android:label="@string/app_name"

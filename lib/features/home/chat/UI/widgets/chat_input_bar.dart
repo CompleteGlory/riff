@@ -5,6 +5,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:riff/core/camera/media_source_sheet.dart';
+import 'package:riff/core/camera/riff_camera_screen.dart';
 import 'package:riff/core/utils/media_limits.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
@@ -184,28 +186,41 @@ class _ChatInputBarState extends State<ChatInputBar> {
     }
   }
 
-  void _showMediaPicker() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => SafeArea(
-        child: Wrap(children: [
-          ListTile(
-            leading: const Icon(Icons.image_outlined),
-            title: const Text('Photo'),
-            onTap: () { Navigator.pop(context); _pickImage(); },
-          ),
-          ListTile(
-            leading: const Icon(Icons.videocam_outlined),
-            title: const Text('Video'),
-            onTap: () { Navigator.pop(context); _pickVideo(); },
-          ),
-        ]),
-      ),
+  /// Captures with the in-app camera and sends the result straight away.
+  ///
+  /// Chat previously had no camera at all: sending a photo of what was in
+  /// front of you meant leaving Riff, opening the system camera, coming back
+  /// and hunting for the shot in the gallery. Recording stops itself at the
+  /// chat ceiling, so a clip too long to send cannot be produced here.
+  Future<void> _captureFromCamera() async {
+    final shot = await RiffCameraScreen.open(
+      context,
+      maxVideoDuration: kMaxChatVideoDuration,
     );
+    if (shot == null || !mounted) return;
+
+    if (shot.isVideo && await shot.file.length() > kMaxVideoUploadBytes) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.of(context).videoTooLarge)),
+        );
+      }
+      return;
+    }
+    widget.cubit.sendMedia(shot.file.path, shot.name, shot.mimeType);
+  }
+
+  Future<void> _showMediaPicker() async {
+    final choice = await MediaSourceSheet.show(context);
+    if (choice == null || !mounted) return;
+    switch (choice) {
+      case MediaSource.camera:
+        await _captureFromCamera();
+      case MediaSource.photoLibrary:
+        await _pickImage();
+      case MediaSource.videoLibrary:
+        await _pickVideo();
+    }
   }
 
   Future<void> _startRecording() async {

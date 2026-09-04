@@ -68,7 +68,7 @@
   "skipForNow": "تخطى في الوقت الحالي",
   "helpFriendsRecogniseYou": "ساعد أصدقاءك على التعرف عليك.\nيمكنك تغيير هذا لاحقاً.",
   "changePhoto": "تغيير الصورة",
-  "chooseFromGallery": "اختر من المعرض",
+  "chooseFromGallery": "اختيار من المعرض",
   "savingBtn": "جارٍ الحفظ…",
   "saveAndContinue": "حفظ ومتابعة",
   "followArtistsToFillFeed": "تابع الفنانين والموسيقيين لملء خلاصتك.",
@@ -513,6 +513,45 @@
   "@resendCodeWait": {
     "placeholders": {
       "seconds": {}
+    }
+  },
+  "cameraUnavailable": "لا توجد كاميرا متاحة على هذا الجهاز.",
+  "@cameraUnavailable": {},
+  "cameraCaptureFailed": "تعذّر التقاط ذلك. حاول مرة أخرى.",
+  "@cameraCaptureFailed": {},
+  "cameraPermissionNeeded": "يحتاج Riff إلى إذن الكاميرا لالتقاط الصور والفيديو.",
+  "@cameraPermissionNeeded": {},
+  "openSettings": "فتح الإعدادات",
+  "@openSettings": {},
+  "takePhoto": "التقاط صورة",
+  "@takePhoto": {},
+  "takePhotoOrVideo": "التقاط صورة أو فيديو",
+  "@takePhotoOrVideo": {},
+  "@recordVideo": {},
+  "stopRecording": "إيقاف التسجيل",
+  "@stopRecording": {},
+  "releaseToStop": "ارفع إصبعك للإيقاف",
+  "@releaseToStop": {},
+  "cameraHint": "اضغط لالتقاط صورة، واستمر بالضغط للتسجيل",
+  "@cameraHint": {},
+  "photoMode": "صورة",
+  "@photoMode": {},
+  "videoMode": "فيديو",
+  "@videoMode": {},
+  "switchCamera": "تبديل الكاميرا",
+  "@switchCamera": {},
+  "flashOff": "الفلاش مغلق",
+  "@flashOff": {},
+  "flashOn": "الفلاش مفتوح",
+  "@flashOn": {},
+  "flashAuto": "الفلاش تلقائي",
+  "@flashAuto": {},
+  "@chooseFromGallery": {},
+  "@chooseVideo": {},
+  "recordingElapsed": "جارٍ التسجيل، {time}",
+  "@recordingElapsed": {
+    "placeholders": {
+      "time": {}
     }
   }
 }
