@@ -7,7 +7,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import 'package:photo_manager/photo_manager.dart';
+
 import 'package:riff/core/camera/camera_capture.dart';
+import 'package:riff/core/camera/device_gallery.dart';
+import 'package:riff/core/camera/gallery_panel.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/generated/l10n.dart';
@@ -20,16 +24,24 @@ import 'package:riff/generated/l10n.dart';
 /// device. Recording here stops itself at [maxVideoDuration], so a clip that
 /// the server would reject can no longer be produced in the first place.
 ///
+/// It is also the picker. There is no chooser before it: recent photos sit in
+/// a strip above the shutter and "All" opens the full library, so reaching
+/// something already on the phone costs one tap rather than a sheet, a
+/// decision and then a system picker.
+///
 /// Push it and await the result:
 /// ```dart
-/// final shot = await RiffCameraScreen.open(context, maxVideoDuration: ...);
+/// final shots = await RiffCameraScreen.open(context, maxVideoDuration: ...);
 /// ```
-/// Returns null when the user backs out or denies permission.
+/// Returns null when the user backs out or denies permission, and otherwise a
+/// non-empty list — one item for a capture, up to [maxSelection] from the
+/// gallery.
 class RiffCameraScreen extends StatefulWidget {
   const RiffCameraScreen({
     super.key,
     required this.maxVideoDuration,
     this.allowVideo = true,
+    this.maxSelection = 1,
   });
 
   /// Recording stops itself here. Callers pass their own ceiling — a chat clip
@@ -41,17 +53,24 @@ class RiffCameraScreen extends StatefulWidget {
   /// photo. The mode switch is then hidden rather than shown-and-rejected.
   final bool allowVideo;
 
-  static Future<CameraCapture?> open(
+  /// How many gallery items may be taken at once. A post accepts up to ten,
+  /// so asking for them one at a time would be worse than the multi-select
+  /// picker this replaced. A capture is always a single item.
+  final int maxSelection;
+
+  static Future<List<CameraCapture>?> open(
     BuildContext context, {
     required Duration maxVideoDuration,
     bool allowVideo = true,
+    int maxSelection = 1,
   }) {
-    return Navigator.of(context).push<CameraCapture>(
+    return Navigator.of(context).push<List<CameraCapture>>(
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => RiffCameraScreen(
           maxVideoDuration: maxVideoDuration,
           allowVideo: allowVideo,
+          maxSelection: maxSelection,
         ),
       ),
     );
@@ -208,7 +227,7 @@ class _RiffCameraScreenState extends State<RiffCameraScreen>
       if (!mounted) return;
       HapticFeedback.mediumImpact();
       Navigator.of(context)
-          .pop(CameraCapture(file: File(shot.path), isVideo: false));
+          .pop([CameraCapture(file: File(shot.path), isVideo: false)]);
     } on CameraException catch (e) {
       if (mounted) {
         setState(() => _isBusy = false);
@@ -254,7 +273,7 @@ class _RiffCameraScreenState extends State<RiffCameraScreen>
       if (!mounted) return;
       HapticFeedback.mediumImpact();
       Navigator.of(context)
-          .pop(CameraCapture(file: File(clip.path), isVideo: true));
+          .pop([CameraCapture(file: File(clip.path), isVideo: true)]);
     } on CameraException catch (e) {
       if (mounted) {
         setState(() => _isBusy = false);
@@ -273,6 +292,40 @@ class _RiffCameraScreenState extends State<RiffCameraScreen>
     } else {
       unawaited(_takePhoto());
     }
+  }
+
+  /// Turns picked assets into files and returns them.
+  ///
+  /// An asset is not necessarily a file yet: an iCloud photo has to be
+  /// downloaded first, and one can fail. Anything that cannot be resolved is
+  /// dropped rather than returned as a broken path, and if nothing survives
+  /// the user is told instead of being returned to an unchanged screen.
+  Future<void> _useAssets(List<AssetEntity> assets) async {
+    if (assets.isEmpty) return;
+    setState(() => _isBusy = true);
+
+    final resolved = <CameraCapture>[];
+    for (final asset in assets) {
+      final capture = await DeviceGallery.materialize(asset);
+      if (capture != null) resolved.add(capture);
+    }
+
+    if (!mounted) return;
+    if (resolved.isEmpty) {
+      setState(() => _isBusy = false);
+      _complain(S.of(context).galleryItemUnavailable);
+      return;
+    }
+    Navigator.of(context).pop(resolved);
+  }
+
+  Future<void> _openFullGallery() async {
+    final picked = await GalleryGridSheet.show(
+      context,
+      allowVideo: widget.allowVideo,
+      maxSelection: widget.maxSelection,
+    );
+    if (picked != null && picked.isNotEmpty) await _useAssets(picked);
   }
 
   void _complain(String message) {
@@ -398,6 +451,16 @@ class _RiffCameraScreenState extends State<RiffCameraScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // The gallery lives here rather than behind a sheet before the
+                // camera: opening the camera is opening the picker.
+                if (!_isRecording) ...[
+                  GalleryStrip(
+                    allowVideo: widget.allowVideo,
+                    onPicked: (asset) => _useAssets([asset]),
+                    onExpand: _openFullGallery,
+                  ),
+                  SizedBox(height: 12.h),
+                ],
                 if (widget.allowVideo && !_isRecording) _buildModeSwitch(),
                 if (widget.allowVideo && !_isRecording) SizedBox(height: 16.h),
                 Row(

@@ -4548,6 +4548,56 @@ class S {
       args: [time],
     );
   }
+
+  /// `All`
+  String get allPhotos {
+    return Intl.message('All', name: 'allPhotos', desc: '', args: []);
+  }
+
+  /// `Allow photo access to pick from your gallery`
+  String get galleryPermissionNeeded {
+    return Intl.message(
+      'Allow photo access to pick from your gallery',
+      name: 'galleryPermissionNeeded',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `That item couldn't be opened. Try another.`
+  String get galleryItemUnavailable {
+    return Intl.message(
+      'That item couldn\'t be opened. Try another.',
+      name: 'galleryItemUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Photo`
+  String get galleryPhotoItem {
+    return Intl.message('Photo', name: 'galleryPhotoItem', desc: '', args: []);
+  }
+
+  /// `Video, {duration}`
+  String galleryVideoItem(Object duration) {
+    return Intl.message(
+      'Video, $duration',
+      name: 'galleryVideoItem',
+      desc: '',
+      args: [duration],
+    );
+  }
+
+  /// `Add {count}`
+  String addSelected(Object count) {
+    return Intl.message(
+      'Add $count',
+      name: 'addSelected',
+      desc: '',
+      args: [count],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

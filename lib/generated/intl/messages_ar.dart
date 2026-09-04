@@ -20,39 +20,43 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'ar';
 
-  static String m0(username) =>
+  static String m0(count) => "إضافة ${count}";
+
+  static String m1(username) =>
       "اكتب اسم المستخدم الخاص بك (${username}) للتأكيد";
 
-  static String m1(message) => "خطأ: ${message}";
+  static String m2(duration) => "فيديو، ${duration}";
 
-  static String m2(max) => "الحد الأقصى ${max} ملفات مسموح بها.";
+  static String m3(message) => "خطأ: ${message}";
 
-  static String m3(filterLabel) => "لا توجد منشورات في \"${filterLabel}\" بعد";
+  static String m4(max) => "الحد الأقصى ${max} ملفات مسموح بها.";
 
-  static String m4(query) => "لا توجد نتائج لـ \"${query}\"";
+  static String m5(filterLabel) => "لا توجد منشورات في \"${filterLabel}\" بعد";
 
-  static String m5(query) => "لا توجد نتائج لـ \"${query}\"";
+  static String m6(query) => "لا توجد نتائج لـ \"${query}\"";
 
-  static String m6(time) => "غير متصل — محفوظ ${time}";
+  static String m7(query) => "لا توجد نتائج لـ \"${query}\"";
 
-  static String m7(date) => "آخر ظهور ${date}";
+  static String m8(time) => "غير متصل — محفوظ ${time}";
 
-  static String m8(n) => "آخر ظهور منذ ${n} دقيقة";
+  static String m9(date) => "آخر ظهور ${date}";
 
-  static String m9(time) => "آخر ظهور اليوم الساعة ${time}";
+  static String m10(n) => "آخر ظهور منذ ${n} دقيقة";
 
-  static String m10(time) => "آخر ظهور أمس الساعة ${time}";
+  static String m11(time) => "آخر ظهور اليوم الساعة ${time}";
 
-  static String m11(time) => "جارٍ التسجيل، ${time}";
+  static String m12(time) => "آخر ظهور أمس الساعة ${time}";
 
-  static String m12(name) => "رد على ${name}";
+  static String m13(time) => "جارٍ التسجيل، ${time}";
 
-  static String m13(name) =>
+  static String m14(name) => "رد على ${name}";
+
+  static String m15(name) =>
       "${name} يريد إرسال رسالة إليك.\nلا يمكنه رؤية أنك اطلعت على هذا الطلب.";
 
-  static String m14(seconds) => "يمكنك طلب رمز جديد خلال ${seconds} ثانية";
+  static String m16(seconds) => "يمكنك طلب رمز جديد خلال ${seconds} ثانية";
 
-  static String m15(reason) => "فشل تسجيل الدخول: ${reason}";
+  static String m17(reason) => "فشل تسجيل الدخول: ${reason}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -114,9 +118,11 @@ class MessageLookup extends MessageLookupByLibrary {
       "أضف الأنواع والآلات لتتم اكتشافك من قِبل موسيقيين آخرين.",
     ),
     "addMore": MessageLookupByLibrary.simpleMessage("إضافة المزيد"),
+    "addSelected": m0,
     "additionalDetails": MessageLookupByLibrary.simpleMessage(
       "تفاصيل إضافية (اختياري)",
     ),
+    "allPhotos": MessageLookupByLibrary.simpleMessage("الكل"),
     "alreadyHaveAnAccount": MessageLookupByLibrary.simpleMessage(
       "لديك حساب بالفعل؟",
     ),
@@ -293,7 +299,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "تم حذف حسابك.",
     ),
     "deleteAccountTitle": MessageLookupByLibrary.simpleMessage("حذف الحساب"),
-    "deleteAccountUsernameLabel": m0,
+    "deleteAccountUsernameLabel": m1,
     "deleteAccountUsernameMismatch": MessageLookupByLibrary.simpleMessage(
       "لا يطابق اسم المستخدم الخاص بك",
     ),
@@ -459,6 +465,14 @@ class MessageLookup extends MessageLookupByLibrary {
       "هل نسيت كلمة المرور؟",
     ),
     "fullName": MessageLookupByLibrary.simpleMessage("الاسم الكامل"),
+    "galleryItemUnavailable": MessageLookupByLibrary.simpleMessage(
+      "تعذّر فتح هذا العنصر. جرّب غيره.",
+    ),
+    "galleryPermissionNeeded": MessageLookupByLibrary.simpleMessage(
+      "اسمح بالوصول إلى الصور للاختيار من معرضك",
+    ),
+    "galleryPhotoItem": MessageLookupByLibrary.simpleMessage("صورة"),
+    "galleryVideoItem": m2,
     "genresFilter": MessageLookupByLibrary.simpleMessage("الأنواع"),
     "genresSection": MessageLookupByLibrary.simpleMessage("الأنواع الموسيقية"),
     "genresSettingsLabel": MessageLookupByLibrary.simpleMessage(
@@ -485,7 +499,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "gotItBtn": MessageLookupByLibrary.simpleMessage("حسناً"),
     "groupAdminBadge": MessageLookupByLibrary.simpleMessage("مشرف"),
-    "groupCreationError": m1,
+    "groupCreationError": m3,
     "groupDescriptionHint": MessageLookupByLibrary.simpleMessage(
       "الوصف (اختياري)",
     ),
@@ -555,7 +569,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "markAllReadFailed": MessageLookupByLibrary.simpleMessage(
       "تعذّر تحديد الإشعارات كمقروءة. حاول مرة أخرى.",
     ),
-    "maximumFilesAllowed": m2,
+    "maximumFilesAllowed": m4,
     "mediaLabel": MessageLookupByLibrary.simpleMessage("الوسائط"),
     "mediumSeverity": MessageLookupByLibrary.simpleMessage("متوسطة"),
     "messageBtn": MessageLookupByLibrary.simpleMessage("رسالة"),
@@ -610,7 +624,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "noNotificationsYet": MessageLookupByLibrary.simpleMessage(
       "لا توجد إشعارات بعد",
     ),
-    "noPostsInCategory": m3,
+    "noPostsInCategory": m5,
     "noPostsLoaded": MessageLookupByLibrary.simpleMessage(
       "لا توجد منشورات محملة",
     ),
@@ -618,8 +632,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "noReelsYet": MessageLookupByLibrary.simpleMessage(
       "لا توجد مقاطع بعد.\nانشر مقطعاً لتبدأ!",
     ),
-    "noResultsForQuery": m4,
-    "noResultsForQueryShort": m5,
+    "noResultsForQuery": m6,
+    "noResultsForQueryShort": m7,
     "noSuggestionsYet": MessageLookupByLibrary.simpleMessage(
       "لا توجد اقتراحات بعد",
     ),
@@ -645,7 +659,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "offlineCachedNotice": MessageLookupByLibrary.simpleMessage(
       "غير متصل — يتم عرض محتوى محفوظ مسبقًا",
     ),
-    "offlineCachedNoticeWithTime": m6,
+    "offlineCachedNoticeWithTime": m8,
     "offlineNothingSaved": MessageLookupByLibrary.simpleMessage(
       "أنت غير متصل ولا يوجد محتوى محفوظ لهذه الشاشة بعد.",
     ),
@@ -807,13 +821,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "ppSection9Title": MessageLookupByLibrary.simpleMessage(
       "٩. ملفات تعريف الارتباط والتخزين المحلي",
     ),
-    "presenceLastSeenDate": m7,
+    "presenceLastSeenDate": m9,
     "presenceLastSeenJustNow": MessageLookupByLibrary.simpleMessage(
       "آخر ظهور قبل لحظات",
     ),
-    "presenceLastSeenMinutes": m8,
-    "presenceLastSeenTodayAt": m9,
-    "presenceLastSeenYesterdayAt": m10,
+    "presenceLastSeenMinutes": m10,
+    "presenceLastSeenTodayAt": m11,
+    "presenceLastSeenYesterdayAt": m12,
     "presenceOnline": MessageLookupByLibrary.simpleMessage("متصل"),
     "privacyAppearance": MessageLookupByLibrary.simpleMessage("المظهر واللغة"),
     "privacyPolicyConsentPrefix": MessageLookupByLibrary.simpleMessage(
@@ -868,7 +882,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "reactToMessageTitle": MessageLookupByLibrary.simpleMessage("تفاعل"),
     "recordVideo": MessageLookupByLibrary.simpleMessage("تسجيل فيديو"),
-    "recordingElapsed": m11,
+    "recordingElapsed": m13,
     "recordingInProgress": MessageLookupByLibrary.simpleMessage(
       "جارٍ التسجيل…",
     ),
@@ -884,7 +898,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "replyMessageOption": MessageLookupByLibrary.simpleMessage("رد"),
     "replyToYou": MessageLookupByLibrary.simpleMessage("أنت"),
-    "replyingToLabel": m12,
+    "replyingToLabel": m14,
     "reportABugDrawer": MessageLookupByLibrary.simpleMessage("الإبلاغ عن خطأ"),
     "reportABugTitle": MessageLookupByLibrary.simpleMessage("الإبلاغ عن خطأ"),
     "reportCommentTitle": MessageLookupByLibrary.simpleMessage(
@@ -900,7 +914,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "requestAFeatureDrawer": MessageLookupByLibrary.simpleMessage("طلب ميزة"),
     "requestBtn": MessageLookupByLibrary.simpleMessage("طلب متابعة"),
-    "requestInfoMessage": m13,
+    "requestInfoMessage": m15,
     "requestedBtn": MessageLookupByLibrary.simpleMessage("تم الطلب"),
     "requestedToFollowYou": MessageLookupByLibrary.simpleMessage(
       "طلب متابعتك.",
@@ -909,7 +923,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "resendCodeSent": MessageLookupByLibrary.simpleMessage(
       "أرسلنا لك رمزًا جديدًا.",
     ),
-    "resendCodeWait": m14,
+    "resendCodeWait": m16,
     "resetPasswordBtn": MessageLookupByLibrary.simpleMessage("إعادة تعيين"),
     "resetPasswordSubtitle": MessageLookupByLibrary.simpleMessage(
       "قم بتعيين كلمة مرور جديدة لحسابك حتى تتمكن من تسجيل الدخول والوصول إلى جميع الميزات.",
@@ -970,7 +984,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "shortSummaryOfBug": MessageLookupByLibrary.simpleMessage(
       "ملخص قصير للخطأ",
     ),
-    "signInFailedWithReason": m15,
+    "signInFailedWithReason": m17,
     "signingIn": MessageLookupByLibrary.simpleMessage("جارٍ تسجيل الدخول…"),
     "skipBtn": MessageLookupByLibrary.simpleMessage("تخطى"),
     "skipForNow": MessageLookupByLibrary.simpleMessage("تخطى في الوقت الحالي"),

@@ -20,38 +20,42 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'en';
 
-  static String m0(username) => "Type your username (${username}) to confirm";
+  static String m0(count) => "Add ${count}";
 
-  static String m1(message) => "Error: ${message}";
+  static String m1(username) => "Type your username (${username}) to confirm";
 
-  static String m2(max) => "Maximum ${max} files allowed.";
+  static String m2(duration) => "Video, ${duration}";
 
-  static String m3(filterLabel) => "No posts in \"${filterLabel}\" yet";
+  static String m3(message) => "Error: ${message}";
 
-  static String m4(query) => "No results for \"${query}\"";
+  static String m4(max) => "Maximum ${max} files allowed.";
 
-  static String m5(query) => "No results for \"${query}\"";
+  static String m5(filterLabel) => "No posts in \"${filterLabel}\" yet";
 
-  static String m6(time) => "Offline — saved ${time}";
+  static String m6(query) => "No results for \"${query}\"";
 
-  static String m7(date) => "Last seen ${date}";
+  static String m7(query) => "No results for \"${query}\"";
 
-  static String m8(n) => "Last seen ${n}m ago";
+  static String m8(time) => "Offline — saved ${time}";
 
-  static String m9(time) => "Last seen today at ${time}";
+  static String m9(date) => "Last seen ${date}";
 
-  static String m10(time) => "Last seen yesterday at ${time}";
+  static String m10(n) => "Last seen ${n}m ago";
 
-  static String m11(time) => "Recording, ${time}";
+  static String m11(time) => "Last seen today at ${time}";
 
-  static String m12(name) => "Replying to ${name}";
+  static String m12(time) => "Last seen yesterday at ${time}";
 
-  static String m13(name) =>
+  static String m13(time) => "Recording, ${time}";
+
+  static String m14(name) => "Replying to ${name}";
+
+  static String m15(name) =>
       "${name} wants to send you a message.\nThey can\'t see that you\'ve viewed this request.";
 
-  static String m14(seconds) => "You can ask for another code in ${seconds}s";
+  static String m16(seconds) => "You can ask for another code in ${seconds}s";
 
-  static String m15(reason) => "Sign-in failed: ${reason}";
+  static String m17(reason) => "Sign-in failed: ${reason}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -115,9 +119,11 @@ class MessageLookup extends MessageLookupByLibrary {
       "Add genres & instruments to get discovered by other musicians.",
     ),
     "addMore": MessageLookupByLibrary.simpleMessage("Add more"),
+    "addSelected": m0,
     "additionalDetails": MessageLookupByLibrary.simpleMessage(
       "Additional details (optional)",
     ),
+    "allPhotos": MessageLookupByLibrary.simpleMessage("All"),
     "alreadyHaveAnAccount": MessageLookupByLibrary.simpleMessage(
       "Already have an account?",
     ),
@@ -302,7 +308,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "deleteAccountTitle": MessageLookupByLibrary.simpleMessage(
       "Delete account",
     ),
-    "deleteAccountUsernameLabel": m0,
+    "deleteAccountUsernameLabel": m1,
     "deleteAccountUsernameMismatch": MessageLookupByLibrary.simpleMessage(
       "That doesn\'t match your username",
     ),
@@ -482,6 +488,14 @@ class MessageLookup extends MessageLookupByLibrary {
       "Forgot your Password?",
     ),
     "fullName": MessageLookupByLibrary.simpleMessage("Full Name"),
+    "galleryItemUnavailable": MessageLookupByLibrary.simpleMessage(
+      "That item couldn\'t be opened. Try another.",
+    ),
+    "galleryPermissionNeeded": MessageLookupByLibrary.simpleMessage(
+      "Allow photo access to pick from your gallery",
+    ),
+    "galleryPhotoItem": MessageLookupByLibrary.simpleMessage("Photo"),
+    "galleryVideoItem": m2,
     "genresFilter": MessageLookupByLibrary.simpleMessage("Genres"),
     "genresSection": MessageLookupByLibrary.simpleMessage("Genres"),
     "genresSettingsLabel": MessageLookupByLibrary.simpleMessage("Music Genres"),
@@ -506,7 +520,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "gotItBtn": MessageLookupByLibrary.simpleMessage("Got it"),
     "groupAdminBadge": MessageLookupByLibrary.simpleMessage("Admin"),
-    "groupCreationError": m1,
+    "groupCreationError": m3,
     "groupDescriptionHint": MessageLookupByLibrary.simpleMessage(
       "Description (optional)",
     ),
@@ -576,7 +590,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "markAllReadFailed": MessageLookupByLibrary.simpleMessage(
       "Couldn\'t mark notifications as read. Try again.",
     ),
-    "maximumFilesAllowed": m2,
+    "maximumFilesAllowed": m4,
     "mediaLabel": MessageLookupByLibrary.simpleMessage("Media"),
     "mediumSeverity": MessageLookupByLibrary.simpleMessage("Medium"),
     "messageBtn": MessageLookupByLibrary.simpleMessage("Message"),
@@ -625,14 +639,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "noNotificationsYet": MessageLookupByLibrary.simpleMessage(
       "No notifications yet",
     ),
-    "noPostsInCategory": m3,
+    "noPostsInCategory": m5,
     "noPostsLoaded": MessageLookupByLibrary.simpleMessage("No posts loaded"),
     "noPostsYet": MessageLookupByLibrary.simpleMessage("No posts yet"),
     "noReelsYet": MessageLookupByLibrary.simpleMessage(
       "No reels yet.\nPost a video to get started!",
     ),
-    "noResultsForQuery": m4,
-    "noResultsForQueryShort": m5,
+    "noResultsForQuery": m6,
+    "noResultsForQueryShort": m7,
     "noSuggestionsYet": MessageLookupByLibrary.simpleMessage(
       "No suggestions yet",
     ),
@@ -660,7 +674,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "offlineCachedNotice": MessageLookupByLibrary.simpleMessage(
       "Offline — showing content saved earlier",
     ),
-    "offlineCachedNoticeWithTime": m6,
+    "offlineCachedNoticeWithTime": m8,
     "offlineNothingSaved": MessageLookupByLibrary.simpleMessage(
       "You\'re offline and nothing was saved for this screen yet.",
     ),
@@ -826,13 +840,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "ppSection9Title": MessageLookupByLibrary.simpleMessage(
       "9. Cookies & Local Storage",
     ),
-    "presenceLastSeenDate": m7,
+    "presenceLastSeenDate": m9,
     "presenceLastSeenJustNow": MessageLookupByLibrary.simpleMessage(
       "Last seen just now",
     ),
-    "presenceLastSeenMinutes": m8,
-    "presenceLastSeenTodayAt": m9,
-    "presenceLastSeenYesterdayAt": m10,
+    "presenceLastSeenMinutes": m10,
+    "presenceLastSeenTodayAt": m11,
+    "presenceLastSeenYesterdayAt": m12,
     "presenceOnline": MessageLookupByLibrary.simpleMessage("Online"),
     "privacyAppearance": MessageLookupByLibrary.simpleMessage(
       "Appearance & language",
@@ -887,7 +901,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "reactToMessageTitle": MessageLookupByLibrary.simpleMessage("React"),
     "recordVideo": MessageLookupByLibrary.simpleMessage("Record video"),
-    "recordingElapsed": m11,
+    "recordingElapsed": m13,
     "recordingInProgress": MessageLookupByLibrary.simpleMessage("Recording…"),
     "recordingPaused": MessageLookupByLibrary.simpleMessage("Paused"),
     "reelsTitle": MessageLookupByLibrary.simpleMessage("Reels"),
@@ -901,7 +915,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "replyMessageOption": MessageLookupByLibrary.simpleMessage("Reply"),
     "replyToYou": MessageLookupByLibrary.simpleMessage("You"),
-    "replyingToLabel": m12,
+    "replyingToLabel": m14,
     "reportABugDrawer": MessageLookupByLibrary.simpleMessage("Report a Bug"),
     "reportABugTitle": MessageLookupByLibrary.simpleMessage("Report a Bug"),
     "reportCommentTitle": MessageLookupByLibrary.simpleMessage(
@@ -917,7 +931,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Request a Feature",
     ),
     "requestBtn": MessageLookupByLibrary.simpleMessage("Request"),
-    "requestInfoMessage": m13,
+    "requestInfoMessage": m15,
     "requestedBtn": MessageLookupByLibrary.simpleMessage("Requested"),
     "requestedToFollowYou": MessageLookupByLibrary.simpleMessage(
       "requested to follow you.",
@@ -926,7 +940,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "resendCodeSent": MessageLookupByLibrary.simpleMessage(
       "We\'ve sent another code.",
     ),
-    "resendCodeWait": m14,
+    "resendCodeWait": m16,
     "resetPasswordBtn": MessageLookupByLibrary.simpleMessage("Reset Password"),
     "resetPasswordSubtitle": MessageLookupByLibrary.simpleMessage(
       "Set the new password for your account so you can login and access all the features.",
@@ -983,7 +997,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "shortSummaryOfBug": MessageLookupByLibrary.simpleMessage(
       "Short summary of the bug",
     ),
-    "signInFailedWithReason": m15,
+    "signInFailedWithReason": m17,
     "signingIn": MessageLookupByLibrary.simpleMessage("Signing in…"),
     "skipBtn": MessageLookupByLibrary.simpleMessage("Skip"),
     "skipForNow": MessageLookupByLibrary.simpleMessage("Skip for now"),
