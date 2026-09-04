@@ -12,6 +12,8 @@ import 'package:riff/features/home/reels/ui/widgets/reel_item.dart';
 import 'package:riff/generated/l10n.dart';
 import 'package:riff/core/widgets/app_error_widget.dart';
 import 'package:riff/core/utils/media_url.dart';
+import 'dart:async';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 class ReelsScreen extends StatelessWidget {
   /// When provided the reel list starts with this post (index 0) and the rest
@@ -134,7 +136,25 @@ class _ReelsBodyState extends State<_ReelsBody> {
     _controllers[index] = c;
     _ready[index] = false;
 
-    await c.initialize();
+    // A clip this device cannot decode must not take the app down with it.
+    // video_player rethrows an ExoPlayer error as a PlatformException *only*
+    // when it arrives before initialize() resolves, and every caller here
+    // invokes _initController fire-and-forget — so an unguarded failure became
+    // an unhandled zone error and a fatal crash report. Tapping a video in the
+    // feed opens this screen, which is exactly the path that crashed.
+    try {
+      await c.initialize();
+    } catch (error, stackTrace) {
+      debugPrint('ReelsScreen: reel $index will not play — $error');
+      unawaited(Sentry.captureException(error, stackTrace: stackTrace));
+      if (_controllers[index] == c) {
+        _controllers.remove(index);
+        _ready.remove(index);
+      }
+      unawaited(c.dispose());
+      if (mounted) setState(() {});
+      return;
+    }
     c.setLooping(true);
 
     // Guard: make sure this is still the current controller for this slot.
