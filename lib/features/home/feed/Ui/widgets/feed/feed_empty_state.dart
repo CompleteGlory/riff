@@ -426,7 +426,9 @@ class _PostPreviewTileState extends State<_PostPreviewTile> {
   }
 
   Future<void> _loadVideoThumb(String url) async {
-    final c = VideoPlayerController.networkUrl(Uri.parse(url));
+    final c = VideoPlayerController.networkUrl(
+      Uri.parse(MediaUrl.videoStream(url) ?? url),
+    );
     try {
       await c.initialize();
       await c.seekTo(Duration.zero);

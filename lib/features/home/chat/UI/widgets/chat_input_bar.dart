@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:riff/core/utils/media_limits.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
@@ -139,7 +140,13 @@ class _ChatInputBarState extends State<ChatInputBar> {
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    // Capped like every other image path in the app: a phone camera shoots
+    // far wider than any screen this renders on.
+    final file = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1600,
+      imageQuality: 80,
+    );
     if (file == null) return;
     final name = file.name;
     final mime = _mimeFromExt(name.split('.').last);
@@ -148,7 +155,10 @@ class _ChatInputBarState extends State<ChatInputBar> {
 
   Future<void> _pickVideo() async {
     final picker = ImagePicker();
-    final file = await picker.pickVideo(source: ImageSource.gallery, maxDuration: const Duration(minutes: 2));
+    final file = await picker.pickVideo(
+      source: ImageSource.gallery,
+      maxDuration: kMaxChatVideoDuration,
+    );
     if (file == null) return;
     final name = file.name;
     widget.cubit.sendMedia(file.path, name, 'video/mp4');
@@ -204,7 +214,17 @@ class _ChatInputBarState extends State<ChatInputBar> {
     _recordingPath = path;
 
     await _audioRecorder.start(
-      const RecordConfig(encoder: AudioEncoder.aacLc),
+      // A voice note is one person talking, so the recorder's defaults —
+      // 128 kbps stereo at 44.1 kHz, which is music mastering — cost about
+      // four times what speech needs and every byte is stored and re-sent
+      // from a Cloudinary free plan. 64 kbps mono at 22.05 kHz is
+      // indistinguishable for voice.
+      const RecordConfig(
+        encoder: AudioEncoder.aacLc,
+        bitRate: 64000,
+        sampleRate: 22050,
+        numChannels: 1,
+      ),
       path: path,
     );
 

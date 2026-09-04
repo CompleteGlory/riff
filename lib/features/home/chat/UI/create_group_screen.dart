@@ -16,6 +16,7 @@ import 'package:riff/features/home/chat/logic/cubit/chats_list_cubit.dart';
 import 'package:riff/features/home/search/data/repos/search_repo.dart';
 import 'package:riff/features/home/search/data/models/search_user.dart';
 import 'package:riff/generated/l10n.dart';
+import 'package:riff/core/utils/media_limits.dart';
 
 class CreateGroupScreen extends StatefulWidget {
   const CreateGroupScreen({super.key});
@@ -48,7 +49,11 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
   Future<void> _pickGroupPhoto() async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: kMaxImageDimension,
+      imageQuality: 80,
+    );
     if (picked == null) return;
 
     setState(() {

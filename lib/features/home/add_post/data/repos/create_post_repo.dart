@@ -38,6 +38,7 @@ class CreatePostRepo {
         final response = await dio.post(
           '${ApiConstants.apiBASEURL}/api/posts',
           data: formData,
+          options: DioFactory.uploadOptions,
           onSendProgress: (sent, total) {
             if (total > 0) onProgress?.call(sent / total);
           },

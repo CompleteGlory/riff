@@ -12,6 +12,7 @@ import 'package:riff/core/widgets/button.dart';
 import 'package:riff/features/home/add_post/data/models/create_post_request_model.dart';
 import 'package:riff/features/home/add_post/logic/cubit/create_post_cubit.dart';
 import 'package:riff/generated/l10n.dart';
+import 'package:riff/core/utils/media_limits.dart';
 
 // Platform colours used in the social-share banner.
 const _igGradient = [Color(0xFFF58529), Color(0xFFDD2A7B), Color(0xFF8134AF)];
@@ -104,7 +105,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     if (source == ImageSource.gallery) {
       final remaining = _maxImages - _selectedFiles.length;
       final picked = await _picker.pickMultiImage(
-        maxWidth: 1280, imageQuality: 85, limit: remaining,
+        maxWidth: kMaxImageDimension, imageQuality: kImageQuality, limit: remaining,
       );
       if (picked.isNotEmpty) {
         setState(() {
@@ -115,7 +116,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       }
     } else {
       final picked = await _picker.pickImage(
-        source: ImageSource.camera, maxWidth: 1280, imageQuality: 85,
+        source: ImageSource.camera, maxWidth: kMaxImageDimension,
+        imageQuality: kImageQuality,
       );
       if (picked != null) setState(() => _selectedFiles.add(File(picked.path)));
     }
@@ -123,7 +125,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   Future<void> _pickVideo(ImageSource source) async {
     Navigator.pop(context);
-    final picked = await _picker.pickVideo(source: source, maxDuration: const Duration(minutes: 5));
+    final picked = await _picker.pickVideo(
+      source: source,
+      maxDuration: kMaxPostVideoDuration,
+    );
     if (picked != null) setState(() => _selectedFiles.add(File(picked.path)));
   }
 

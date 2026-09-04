@@ -160,11 +160,22 @@ class _AdMediaState extends State<_AdMedia> {
     super.initState();
     if (widget.isVideo && widget.mediaUrls.isNotEmpty) {
       _controller =
-          VideoPlayerController.networkUrl(Uri.parse(widget.mediaUrls.first))
+          VideoPlayerController.networkUrl(
+            Uri.parse(
+              MediaUrl.videoStream(widget.mediaUrls.first) ??
+                  widget.mediaUrls.first,
+            ),
+          )
             ..initialize().then((_) {
               if (mounted) setState(() => _videoReady = true);
               _controller!.setLooping(true);
               _controller!.play();
+            }).catchError((Object error) {
+              // Without an onError this rejection escapes into the zone and is
+              // reported as a fatal crash. An ad that will not decode should
+              // simply not play.
+              debugPrint('AdCard: video will not play — $error');
+              if (mounted) setState(() => _videoReady = false);
             });
     }
   }

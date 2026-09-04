@@ -375,7 +375,9 @@ class _VideoCellState extends State<_VideoCell> {
   }
 
   Future<void> _loadThumbnail() async {
-    final c = VideoPlayerController.networkUrl(Uri.parse(widget.url));
+    final c = VideoPlayerController.networkUrl(
+      Uri.parse(MediaUrl.videoStream(widget.url) ?? widget.url),
+    );
     try {
       await c.initialize();
       await c.seekTo(Duration.zero); // park on first frame
