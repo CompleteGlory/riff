@@ -160,7 +160,12 @@ class _AdMediaState extends State<_AdMedia> {
     super.initState();
     if (widget.isVideo && widget.mediaUrls.isNotEmpty) {
       _controller =
-          VideoPlayerController.networkUrl(Uri.parse(widget.mediaUrls.first))
+          VideoPlayerController.networkUrl(
+            Uri.parse(
+              MediaUrl.videoStream(widget.mediaUrls.first) ??
+                  widget.mediaUrls.first,
+            ),
+          )
             ..initialize().then((_) {
               if (mounted) setState(() => _videoReady = true);
               _controller!.setLooping(true);

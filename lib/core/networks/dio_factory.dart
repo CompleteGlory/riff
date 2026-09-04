@@ -21,6 +21,22 @@ class DioFactory {
     ApiConstants.googleSignin,
   ];
 
+  /// Per-request options for a multipart media upload.
+  ///
+  /// The global `receiveTimeout` of 30s is right for a JSON call and wrong for
+  /// an upload. In dio it does not measure the transfer: it wraps the wait for
+  /// the *response headers*, which begins once the body has been written and
+  /// ends when the server answers — and the server only answers after it has
+  /// pushed the file to Cloudinary and had it transcoded. So a video upload
+  /// would stream to 100%, the progress bar would fill, and the request would
+  /// then be aborted at 30 seconds while the server was still working. That is
+  /// exactly the "reaches the end and doesn't upload" report.
+  ///
+  /// `sendTimeout` is deliberately left unset: it would put a ceiling on how
+  /// slow a connection may be, which is not a failure worth inventing.
+  static Options get uploadOptions =>
+      Options(receiveTimeout: const Duration(minutes: 5));
+
   static Future<Dio> getDio() async {
     Duration timeOut = const Duration(seconds: 30);
 

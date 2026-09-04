@@ -13,6 +13,7 @@ import 'package:riff/features/home/add_post/logic/cubit/update_post_cubit.dart';
 import 'package:riff/features/home/feed/Ui/widgets/post/shared_post_card.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
 import 'package:riff/generated/l10n.dart';
+import 'package:riff/core/utils/media_limits.dart';
 
 const _maxMedia = 10;
 
@@ -66,7 +67,7 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
     if (source == ImageSource.gallery) {
       final remaining = _maxMedia - _totalCount;
       final picked = await _picker.pickMultiImage(
-        maxWidth: 1280, imageQuality: 85, limit: remaining,
+        maxWidth: kMaxImageDimension, imageQuality: kImageQuality, limit: remaining,
       );
       if (picked.isNotEmpty) {
         setState(() {
@@ -77,7 +78,7 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
       }
     } else {
       final picked = await _picker.pickImage(
-        source: ImageSource.camera, maxWidth: 1280, imageQuality: 85,
+        source: ImageSource.camera, maxWidth: kMaxImageDimension, imageQuality: kImageQuality,
       );
       if (picked != null && _totalCount < _maxMedia) {
         setState(() => _newFiles.add(File(picked.path)));
@@ -89,7 +90,7 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
     Navigator.pop(context);
     if (_totalCount >= _maxMedia) return;
     final picked = await _picker.pickVideo(
-      source: source, maxDuration: const Duration(minutes: 5),
+      source: source, maxDuration: kMaxPostVideoDuration,
     );
     if (picked != null) setState(() => _newFiles.add(File(picked.path)));
   }

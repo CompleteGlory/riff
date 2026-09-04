@@ -11,6 +11,7 @@ import 'package:riff/features/home/reels/logic/cubit/reels_state.dart';
 import 'package:riff/features/home/reels/ui/widgets/reel_item.dart';
 import 'package:riff/generated/l10n.dart';
 import 'package:riff/core/widgets/app_error_widget.dart';
+import 'package:riff/core/utils/media_url.dart';
 
 class ReelsScreen extends StatelessWidget {
   /// When provided the reel list starts with this post (index 0) and the rest
@@ -127,7 +128,9 @@ class _ReelsBodyState extends State<_ReelsBody> {
     final url = _videoUrl(_reels[index]);
     if (url == null) return;
 
-    final c = VideoPlayerController.networkUrl(Uri.parse(url));
+    final c = VideoPlayerController.networkUrl(
+      Uri.parse(MediaUrl.videoStream(url) ?? url),
+    );
     _controllers[index] = c;
     _ready[index] = false;
 

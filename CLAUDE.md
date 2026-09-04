@@ -311,6 +311,33 @@ npm run migration:deploy
 
 ## File Storage — Cloudinary
 
+**Everything is compressed on the way in and deleted on the way out.** Riff is
+on Cloudinary's **free** plan, where storage, delivered bandwidth and
+transformations share one 25-credit budget — and nothing was ever compressed or
+ever removed. See `src/common/media/` in the API:
+
+| Piece | What it does |
+|---|---|
+| `cloudinary-upload-options.ts` | `uploadOptionsFor(folder, mimetype)` — the **incoming** transformation every upload passes through, so the compressed file *is* the stored original rather than a derived copy next to a full-size one |
+| `media-cleanup.service.ts` | `deleteUnreferenced(urls)` — destroys assets nothing points at any more, after checking `posts.media`, `messages.media_url`, `conversations.image_url` and `users.profile_picture` |
+| `media.module.ts` | `@Global` module providing the cleanup service |
+
+Compression targets: images capped at 1600 px with `quality: auto:good`; video
+transcoded to **H.264** MP4, 1080p, `quality: auto`, 2.5 Mbps ceiling; audio
+re-encoded to 64 kbps AAC. `resource_type` is resolved from the MIME type and
+is **never `'auto'`** — Cloudinary cannot validate a transformation without
+knowing the type, so `'auto'` silently disables all of it. Audio is stored
+under the `video` resource type; Cloudinary has no audio type.
+
+Cleanup is wired into `DeletePost`, `UpdatePost` (media an edit dropped),
+`AdminDeletePost`, `DeleteAccount`, and chat's `deleteMessage`,
+`deleteConversation` and `declineRequest`. Two rules make it safe: call it
+**after** the owning row is gone, so the reference check sees the world as it
+now is; and if the reference check itself fails, keep everything — storage is
+recoverable, a wrongly destroyed asset is not. `MessageRepository.markDeleted`
+also nulls `media_url`, or the tombstone would keep the asset alive forever.
+
+
 All media is uploaded to Cloudinary. Three separate service classes handle this:
 
 | Service | Folder | Used for |
@@ -617,6 +644,8 @@ full widget test.
 | An HTTP error status was lost whenever the body omitted it | `ApiErrorHandler._handleError` | `ApiErrorModel.fromJson` reads `statusCode` from the response *body*. The API usually echoes it, but any handler returning a bare `{"message": …}` produced a model with a null status, so a caller branching on the status (delete-account telling "wrong password" from "something went wrong") silently lost it. Falls back to the status the response actually arrived with |
 | Google sign-in failed on every distributed Android build | Firebase console (project `riff-23655`), not the code | `PlatformException(sign_in_failed, i2.d: 10: …)` — `ApiException` 10, DEVELOPER_ERROR: Google refusing the OAuth client because the calling app's signing certificate isn't registered. Only two SHA-1s were registered for `com.magd.riff`, and both were **debug** keystores (`~/.android/debug.keystore` and `~/riff-prod-debug.keystore`). `android/key.properties` exists on the build machine but is gitignored, so release builds are signed with `~/riff-upload-keystore.jks` — whose SHA-1 `05:68:9A:D1:F8:C8:FE:C7:52:3C:DA:CF:08:E6:22:7C:70:CA:C4:F3` was never added. Debug builds worked, every Firebase App Distribution build did not, and the code was identical in both. Fixed by adding that fingerprint in Firebase; the check is server-side, so no rebuild was needed. **If the signing key ever changes, or if the app ships through Play (App Signing re-signs with Google's own key), the new SHA-1 must be added the same way** |
 | Android CI build failed: `Language version 1.6 is no longer supported` | `sentry_flutter` 8.14.2 `android/build.gradle` | The plugin's own Gradle module pinned Kotlin `languageVersion = "1.6"`, and this project pins the Kotlin Android plugin at 2.2.20, which refuses anything below 1.8 as a hard error — so `assembleProductionRelease` died compiling *Sentry's* module, not ours. Sentry removed the pin in the 9.x line (sentry-dart #3032); 9.28.0 has none. Reproduce any CI Android failure locally with the exact fastlane command from `android/fastlane/Fastfile` in a worktree *without* `key.properties` — that matches the runner |
+| A video upload reached 100% and then failed | `DioFactory`, `create_post_repo.dart`, `media_limits.dart`, `post-media-upload-limits.ts` | Two independent ceilings, both invisible. Dio's `receiveTimeout` does not measure the transfer — it wraps the wait for the **response headers**, which starts once the body is written and ends when the server answers, and the server only answers after pushing the file to Cloudinary. So 30 s was a budget for *server* work, and the request was aborted while that work was still running: bytes all sent, bar full, upload failed. Underneath it the picker allowed **five minutes** of video, and a phone shoots 1080p at ~7.7 Mbps (measured from a crash report's real format string) — roughly a 290 MB upload, past Cloudinary's 100 MB single-upload limit and past anything a mobile connection finishes. Now: uploads carry `DioFactory.uploadOptions` (5-minute receive timeout), video is capped at one minute, and the API rejects a file over 80 MB instead of buffering it whole in a Railway container's memory |
+| A video crashed playback on some Android phones | `MediaUrl.videoStream`, `cloudinary-upload-options.ts` | Phones record HEVC (H.265) and Cloudinary stored it untouched, so one phone's clip was delivered as-is to every other. A tester's device died on `PlatformException(VideoError, … MediaCodecVideoRenderer error … video/hevc …)` — fatal and **unhandled**, and the container reported `format_supported=YES`, which is why nothing caught it. New uploads are transcoded to H.264 on the way into storage; clips posted before that are fixed on delivery, with `f_mp4,vc_h264,q_auto` inserted into the Cloudinary URL. The delivery rule must skip voice notes: they live under `/video/upload/` too, and asking Cloudinary for an H.264 video track of an audio file asks for a track that does not exist |
 | Read receipts stuck on one check — recipient had read the messages | `chat.controller.ts` (`serializeMsg`), `message-status.ts` | Read state only ever existed as a transient `message_status` socket event, upgraded in memory by whoever had that exact chat open at the time. Nothing persisted it and `serializeMsg` had **no `status` field**, so `MessageStatusX.fromString(null)` fell through to `sent` and every message reset to one check as soon as the sender reopened the chat. Status is now derived server-side from `conversation_participants.last_read_at`, returned on every message, and `GET .../messages` also emits a read receipt so a client whose socket hasn't come up still clears the sender's ticks. Voice notes go through the media-upload endpoint, which now carries the same status as a socket-sent text message |
 
 ---

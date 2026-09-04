@@ -46,6 +46,7 @@ class UpdatePostRepo {
       final response = await dio.patch(
         '${ApiConstants.apiBASEURL}/api/posts/$postId',
         data: formData,
+        options: DioFactory.uploadOptions,
       );
 
       final post = Post.fromJson(response.data as Map<String, dynamic>);

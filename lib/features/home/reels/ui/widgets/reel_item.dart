@@ -113,7 +113,9 @@ class _ReelItemState extends State<ReelItem> {
   Future<void> _loadThumb() async {
     final url = _extractVideoUrl();
     if (url == null) return;
-    final c = VideoPlayerController.networkUrl(Uri.parse(url));
+    final c = VideoPlayerController.networkUrl(
+      Uri.parse(MediaUrl.videoStream(url) ?? url),
+    );
     try {
       await c.initialize();
       await c.seekTo(Duration.zero);

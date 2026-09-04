@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:riff/core/networks/api_constants.dart';
 import '../models/chat_models.dart';
+import 'package:riff/core/networks/dio_factory.dart';
 
 class ChatRepo {
   final Dio _dio;
@@ -67,7 +68,11 @@ class ChatRepo {
       if (clientId != null) 'client_id': clientId,
       if (replyToId != null) 'reply_to_id': replyToId,
     });
-    final res = await _dio.post(ApiConstants.chatUpload(conversationId), data: formData);
+    final res = await _dio.post(
+      ApiConstants.chatUpload(conversationId),
+      data: formData,
+      options: DioFactory.uploadOptions,
+    );
     return ChatMessage.fromJson(res.data as Map<String, dynamic>);
   }
 

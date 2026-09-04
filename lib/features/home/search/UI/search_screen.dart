@@ -733,7 +733,9 @@ class _PostThumbnailState extends State<_PostThumbnail> {
   }
 
   Future<void> _loadThumb(String url) async {
-    final c = VideoPlayerController.networkUrl(Uri.parse(url));
+    final c = VideoPlayerController.networkUrl(
+      Uri.parse(MediaUrl.videoStream(url) ?? url),
+    );
     try {
       await c.initialize();
       await c.seekTo(Duration.zero);

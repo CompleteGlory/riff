@@ -18,6 +18,7 @@ import 'package:riff/features/home/chat/data/models/chat_models.dart';
 import 'package:riff/features/home/chat/data/repos/chat_repo.dart';
 import 'package:riff/features/home/user_profile/ui/user_profile_screen.dart';
 import 'package:riff/generated/l10n.dart';
+import 'package:riff/core/utils/media_limits.dart';
 
 class GroupDetailsScreen extends StatefulWidget {
   final Conversation conversation;
@@ -70,7 +71,11 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
 
   Future<void> _pickAndUpload() async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: kMaxImageDimension,
+      imageQuality: 80,
+    );
     if (picked == null) return;
 
     setState(() {
