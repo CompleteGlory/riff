@@ -123,12 +123,30 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
   }
 
+  /// True when [picked] is small enough to upload, complaining if it is not.
+  ///
+  /// The server refuses the same size, so catching it here turns a long upload
+  /// that ends in a failure into an immediate, explainable no.
+  Future<bool> _isVideoSmallEnough(XFile picked) async {
+    final bytes = await picked.length();
+    if (bytes <= kMaxVideoUploadBytes) return true;
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(S.of(context).videoTooLarge)),
+      );
+    }
+    return false;
+  }
+
   Future<void> _pickVideo(ImageSource source) async {
     Navigator.pop(context);
     final picked = await _picker.pickVideo(
       source: source,
       maxDuration: kMaxPostVideoDuration,
     );
+    // maxDuration binds camera capture only — a gallery pick arrives at
+    // whatever size it already was — so the size is what has to be checked.
+    if (picked != null && !await _isVideoSmallEnough(picked)) return;
     if (picked != null) setState(() => _selectedFiles.add(File(picked.path)));
   }
 

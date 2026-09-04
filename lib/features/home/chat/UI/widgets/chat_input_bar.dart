@@ -160,6 +160,15 @@ class _ChatInputBarState extends State<ChatInputBar> {
       maxDuration: kMaxChatVideoDuration,
     );
     if (file == null) return;
+    // maxDuration binds camera capture only; a gallery pick is unbounded.
+    if (await file.length() > kMaxVideoUploadBytes) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.of(context).videoTooLarge)),
+        );
+      }
+      return;
+    }
     final name = file.name;
     widget.cubit.sendMedia(file.path, name, 'video/mp4');
   }

@@ -92,7 +92,17 @@ class _UpdatePostScreenState extends State<UpdatePostScreen> {
     final picked = await _picker.pickVideo(
       source: source, maxDuration: kMaxPostVideoDuration,
     );
-    if (picked != null) setState(() => _newFiles.add(File(picked.path)));
+    if (picked == null) return;
+    // maxDuration binds camera capture only; a gallery pick is unbounded.
+    if (await picked.length() > kMaxVideoUploadBytes) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.of(context).videoTooLarge)),
+        );
+      }
+      return;
+    }
+    setState(() => _newFiles.add(File(picked.path)));
   }
 
   void _showMediaSheet() {

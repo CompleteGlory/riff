@@ -33,3 +33,19 @@ const double kMaxImageDimension = 1600;
 
 /// JPEG quality for picked photos, 0–100.
 const int kImageQuality = 85;
+
+/// Largest video the app will attempt to upload, in bytes.
+///
+/// This is the guard that actually binds. `image_picker`'s `maxDuration`
+/// applies **only to camera capture**: on Android
+/// `launchPickVideoFromGalleryIntent` builds a bare pick intent and never sets
+/// `EXTRA_DURATION_LIMIT`, and on iOS `videoMaximumDuration` is set on
+/// `UIImagePickerController` — the camera path — while the gallery goes through
+/// `PHPicker`, which ignores it and hands back the untouched original. So a
+/// clip chosen from the gallery arrives at whatever size it already was, and
+/// the duration cap says nothing about it.
+///
+/// Matches `MAX_POST_FILE_BYTES` in the API, so the app refuses the same file
+/// the server would, in the moment the user picks it rather than after a long
+/// upload.
+const int kMaxVideoUploadBytes = 80 * 1024 * 1024;
