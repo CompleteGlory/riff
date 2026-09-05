@@ -4,7 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Handles outbound deep links and sharing to TikTok, Instagram, and Spotify.
+/// Handles outbound deep links and sharing to TikTok, Instagram, Spotify and
+/// YouTube.
+///
+/// There is deliberately no `openYouTube`. Every caller uses [openUrl], and an
+/// https link already reaches the installed app through Android App Links and
+/// iOS Universal Links; a custom-scheme opener would be the fourth unreferenced
+/// method in this file.
 ///
 /// Strategy:
 ///   • Try to open the native app first via a custom URL scheme.

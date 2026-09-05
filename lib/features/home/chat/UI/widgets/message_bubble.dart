@@ -9,6 +9,7 @@ import 'package:riff/features/home/feed/Ui/widgets/post/fullscsreen_image.dart';
 import 'package:riff/features/home/chat/logic/voice_note_playback.dart';
 import 'package:riff/generated/l10n.dart';
 import 'package:riff/features/social_share/UI/widgets/link_preview_card.dart';
+import 'package:riff/core/widgets/linkified_text.dart';
 import 'package:riff/features/social_share/data/models/link_preview.dart';
 import '../../../chat/data/models/chat_models.dart';
 
@@ -568,7 +569,19 @@ class _TextBubble extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
             decoration: BoxDecoration(
                 color: bg, borderRadius: BorderRadius.circular(18.r)),
-            child: Text(text, style: TextStyles.font14regular.copyWith(color: fg)),
+            child: LinkifiedText(
+              text: text,
+              style: TextStyles.font14regular.copyWith(color: fg),
+              // A bubble's background is the sender's colour, not the theme's,
+              // so the link takes the bubble's own foreground and is marked
+              // by the underline rather than by a colour that might land on
+              // an unreadable ground.
+              linkStyle: TextStyles.font14regular.copyWith(
+                color: fg,
+                decoration: TextDecoration.underline,
+                decorationColor: fg,
+              ),
+            ),
           ),
           if (previewUrl != null)
             LinkPreviewCard(url: previewUrl, compact: true),

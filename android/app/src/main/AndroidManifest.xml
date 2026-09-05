@@ -136,5 +136,7 @@
         <package android:name="com.instagram.android" />
         <!-- Query Spotify app -->
         <package android:name="com.spotify.music" />
+        <!-- Query YouTube app -->
+        <package android:name="com.google.android.youtube" />
     </queries>
 </manifest>

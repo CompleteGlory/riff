@@ -6,6 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
+import 'package:riff/core/social/social_platform.dart';
+import 'package:riff/core/social/social_platform_labels.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/helpers/spacing.dart';
 import 'package:riff/core/di/dependency_injection.dart';
@@ -245,7 +247,10 @@ class _PostItemState extends State<PostItem>
     final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final shadowColor = isDark ? Colors.transparent : Colors.black.withOpacity(0.05);
     final post = widget.post;
-    final hasBadge = post.sourcePlatform != null && post.sourceUrl != null;
+    // The URL is what makes the badge useful; the platform only decides how
+    // it is dressed. Requiring both hid the badge on every post shared before
+    // its platform was recognised — which is every YouTube share to date.
+    final hasBadge = (post.sourceUrl ?? '').isNotEmpty;
 
     return Container(
       margin: EdgeInsets.symmetric(vertical: 6.h),
@@ -363,7 +368,7 @@ class _PostItemState extends State<PostItem>
             Padding(
               padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 14.h),
               child: _PlatformPlayBadge(
-                platform: post.sourcePlatform!,
+                platform: SocialPlatform.maybeFromKey(post.sourcePlatform),
                 url: post.sourceUrl!,
               ),
             ),
@@ -377,56 +382,12 @@ class _PostItemState extends State<PostItem>
 
 class _PlatformPlayBadge extends StatelessWidget {
   const _PlatformPlayBadge({required this.platform, required this.url});
-  final String platform;
+
+  /// Null when the post carries a link from somewhere this build has no
+  /// branding for. The badge then reads "Open link" in the app's own grey
+  /// instead of borrowing whichever platform an if-chain happened to end on.
+  final SocialPlatform? platform;
   final String url;
-
-  bool get _isInstagram => platform == 'instagram';
-  bool get _isTikTok    => platform == 'tiktok';
-  bool get _isSpotify   => platform == 'spotify';
-
-  String get _label {
-    if (_isInstagram) return 'Play on Instagram';
-    if (_isTikTok)    return 'Play on TikTok';
-    if (_isSpotify)   return 'Play on Spotify';
-    return 'Open link';
-  }
-
-  String get _logoUrl {
-    if (_isInstagram) return 'https://logo.clearbit.com/instagram.com';
-    if (_isTikTok)    return 'https://logo.clearbit.com/tiktok.com';
-    return 'https://logo.clearbit.com/spotify.com';
-  }
-
-  Color _bgColor(bool isDark) {
-    if (_isInstagram) return const Color(0x1FDD2A7B);
-    if (_isTikTok)    return isDark ? const Color(0x1A69C9D0) : const Color(0x12010101);
-    return const Color(0x121DB954);
-  }
-
-  Color _borderColor(bool isDark) {
-    if (_isInstagram) return const Color(0xFFDD2A7B);
-    if (_isTikTok)    return const Color(0xFF69C9D0); // teal always
-    return const Color(0xFF1DB954);
-  }
-
-  Color _textColor(bool isDark) {
-    if (_isInstagram) return const Color(0xFFDD2A7B);
-    if (_isTikTok)    return isDark ? const Color(0xFF69C9D0) : const Color(0xFF010101);
-    return const Color(0xFF1DB954);
-  }
-
-  List<BoxShadow> _glow(bool isDark) {
-    if (_isInstagram) {
-      return [BoxShadow(color: const Color(0x33DD2A7B), blurRadius: 8, spreadRadius: 1)];
-    }
-    if (_isTikTok && isDark) {
-      return [BoxShadow(color: const Color(0x3369C9D0), blurRadius: 8, spreadRadius: 1)];
-    }
-    if (_isSpotify) {
-      return [BoxShadow(color: const Color(0x221DB954), blurRadius: 8, spreadRadius: 1)];
-    }
-    return [];
-  }
 
   Future<void> _open() async {
     final uri = Uri.tryParse(url);
@@ -437,43 +398,44 @@ class _PlatformPlayBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = _borderColor(isDark);
+    final brightness = Theme.of(context).brightness;
+    final brand = platform;
+
+    // Border keeps the brand colour on both themes; text and icon use the
+    // theme-safe variant, which is how TikTok's teal turns black on white.
+    final border = brand?.accent ?? ColorManager.lightGrey;
+    final foreground = brand?.accentOn(brightness) ?? ColorManager.normalGrey;
+
     return GestureDetector(
       onTap: _open,
       child: Container(
         width: double.infinity,
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
         decoration: BoxDecoration(
-          color: _bgColor(isDark),
+          color: foreground.withValues(alpha: 0.07),
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: accent, width: 1),
-          boxShadow: _glow(isDark),
+          border: Border.all(color: border, width: 1),
+          boxShadow: brand == null
+              ? const []
+              : [
+                  BoxShadow(
+                    color: brand.accent.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4.r),
-              child: Image.network(
-                _logoUrl,
-                width: 20.r,
-                height: 20.r,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => Icon(
-                  Icons.play_circle_outline_rounded,
-                  size: 20.r,
-                  color: _textColor(isDark),
-                ),
-              ),
-            ),
+            Icon(brand?.icon ?? Icons.link_rounded, size: 20.r, color: foreground),
             SizedBox(width: 8.w),
             Text(
-              _label,
-              style: TextStyles.font13SemiBold.copyWith(color: _textColor(isDark)),
+              brand?.openLabel(context) ?? neutralLinkLabel(context),
+              style: TextStyles.font13SemiBold.copyWith(color: foreground),
             ),
             SizedBox(width: 6.w),
-            Icon(Icons.open_in_new_rounded, size: 14.r, color: _textColor(isDark)),
+            Icon(Icons.open_in_new_rounded, size: 14.r, color: foreground),
           ],
         ),
       ),

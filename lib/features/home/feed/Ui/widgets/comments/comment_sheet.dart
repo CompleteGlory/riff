@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:riff/core/di/dependency_injection.dart';
+import 'package:riff/core/widgets/linkified_text.dart';
 import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
 import 'package:riff/core/helpers/spacing.dart';
@@ -614,8 +615,8 @@ class _CommentsSheetState extends State<CommentsSheet> {
                                               verticalSpace(4),
 
                                               // Comment text
-                                              Text(
-                                                c.content ?? '',
+                                              LinkifiedText(
+                                                text: c.content ?? '',
                                                 style: TextStyles.font14regular
                                                     .copyWith(
                                                   color: onSurface.withOpacity(0.78),

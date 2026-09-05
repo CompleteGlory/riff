@@ -16,4 +16,17 @@ class ColorManager {
   static const Color white      = Color(0xFFFFFFFF);
   static const Color green      = Color(0xFF0C9409);
   static const Color red        = Color(0xFFED1010);
+
+  /// Colour for a pressable link inside body text.
+  ///
+  /// [accent] cannot be used on both themes: electric lime on the warm
+  /// off-white [surface] is about 1.3:1, which is not a low-contrast link so
+  /// much as an invisible one. The light variant is the same hue darkened
+  /// until it clears WCAG AA for body text (~5:1 on [surface]), so a link
+  /// still reads as Riff's colour rather than as a generic browser blue.
+  static const Color linkOnDark  = accent;
+  static const Color linkOnLight = Color(0xFF5B7300);
+
+  static Color link(Brightness brightness) =>
+      brightness == Brightness.dark ? linkOnDark : linkOnLight;
 }

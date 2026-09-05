@@ -23,9 +23,17 @@ platform :android do
       release_notes: <<~RELEASE_NOTES
         Version 1.0.21
 
-        Date: 2026-09-05
+        Date: 2026-09-06
 
         Added in this build
+
+        - YouTube links now work like Instagram, TikTok and Spotify ones.
+          Share a video or a Short into Riff and the post carries a
+          YouTube button that opens it; the same button appears when you
+          open that post full-screen.
+        - Links in a post, a chat message or a reel caption are pressable.
+          Before, a link anyone pasted was dead text — the only way to
+          follow it was to copy the whole message and leave the app.
 
         - A camera inside Riff, and it is the picker too. Tap the media
           button when adding to a post or sending a message and the camera
@@ -39,6 +47,10 @@ platform :android do
           something you had already saved.
 
         Fixed in this build
+
+        - Platform buttons show the right logo again. They were loading
+          them from a service that has since shut down, so every one of
+          them had quietly fallen back to a blank placeholder.
 
         - The feed and reels no longer reload every time you switch tabs.
           Leaving a tab and coming back threw the posts away and fetched

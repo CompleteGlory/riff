@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/utils/media_url.dart';
+import 'package:riff/core/widgets/linkified_text.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/helpers/spacing.dart';
@@ -87,8 +88,8 @@ class SharedPostCard extends StatelessWidget {
           if ((originalPost.content ?? '').isNotEmpty)
             Padding(
               padding: EdgeInsets.fromLTRB(12.w, 0, 12.w, 8.h),
-              child: Text(
-                originalPost.content!,
+              child: LinkifiedText(
+                text: originalPost.content!,
                 style: TextStyles.font14Medium,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,

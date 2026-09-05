@@ -2,6 +2,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:riff/core/utils/media_url.dart';
+import 'package:riff/core/social/social_platform.dart';
+import 'package:riff/core/widgets/linkified_text.dart';
+import 'package:riff/core/social/social_platform_labels.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -572,15 +575,13 @@ class _ReelItemState extends State<ReelItem> {
   /// True only for link-only posts (no video file) from an external platform.
   /// Posts that have a real video + a sourceUrl play normally with a small badge.
   bool get _isExternalPlatform =>
-      widget.post.sourceUrl != null &&
-      widget.post.sourcePlatform != null &&
-      !_hasVideoMedia;
+      (widget.post.sourceUrl ?? '').isNotEmpty && !_hasVideoMedia;
 
   // ── External platform reel ───────────────────────────────────────────────
 
   Widget _buildExternalPlatformReel(BuildContext context) {
     final post = widget.post;
-    final platform = post.sourcePlatform!;
+    final platform = SocialPlatform.maybeFromKey(post.sourcePlatform);
     final url = post.sourceUrl!;
     final bottomInset = MediaQuery.of(context).padding.bottom + 8.h;
 
@@ -639,8 +640,8 @@ class _ReelItemState extends State<ReelItem> {
               ),
               if ((post.content ?? '').isNotEmpty) ...[
                 SizedBox(height: 4.h),
-                Text(
-                  post.content ?? '',
+                LinkifiedText(
+                  text: post.content ?? '',
                   style: TextStyles.font12Medium.copyWith(color: Colors.white70),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -909,10 +910,10 @@ class _ReelItemState extends State<ReelItem> {
             children: [
               // Platform badge above author when post has a sourceUrl
               if (!_isExternalPlatform &&
-                  widget.post.sourceUrl != null &&
-                  widget.post.sourcePlatform != null) ...[
+                  (widget.post.sourceUrl ?? '').isNotEmpty) ...[
                 _ReelPlatformBadge(
-                  platform: widget.post.sourcePlatform!,
+                  platform:
+                      SocialPlatform.maybeFromKey(widget.post.sourcePlatform),
                   url: widget.post.sourceUrl!,
                 ),
                 SizedBox(height: 8.h),
@@ -1298,18 +1299,13 @@ class _ReelAction extends StatelessWidget {
 // ── Platform background ────────────────────────────────────────────────────────
 
 class _PlatformBackground extends StatelessWidget {
-  final String platform;
+  final SocialPlatform? platform;
   final String? thumbnail;
   const _PlatformBackground({required this.platform, this.thumbnail});
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = switch (platform) {
-      'spotify'   => const Color(0xFF0A1A0A),
-      'tiktok'    => const Color(0xFF080808),
-      'instagram' => const Color(0xFF120818),
-      _           => const Color(0xFF0D0D0D),
-    };
+    final bgColor = platform?.reelBackground ?? const Color(0xFF0D0D0D);
 
     return Stack(
       fit: StackFit.expand,
@@ -1348,7 +1344,9 @@ class _PlatformBackground extends StatelessWidget {
 // ── Platform reel card ─────────────────────────────────────────────────────────
 
 class _PlatformReelCard extends StatelessWidget {
-  final String platform;
+  /// Null for a link from somewhere this build has no branding for. Every
+  /// getter below falls back to a neutral treatment rather than to Spotify's.
+  final SocialPlatform? platform;
   final String url;
   final String? thumbnail;
   final String? caption;
@@ -1360,60 +1358,17 @@ class _PlatformReelCard extends StatelessWidget {
     this.caption,
   });
 
-  bool get _isSpotify   => platform == 'spotify';
-  bool get _isTikTok    => platform == 'tiktok';
-  bool get _isInstagram => platform == 'instagram';
+  Color get _accentColor => platform?.solidButtonColor ?? Colors.white;
 
-  String get _platformName {
-    if (_isSpotify)   return 'Spotify';
-    if (_isTikTok)    return 'TikTok';
-    if (_isInstagram) return 'Instagram';
-    return platform;
-  }
+  Color get _buttonTextColor => platform?.onAccent ?? Colors.black;
 
-  String get _buttonLabel {
-    if (_isSpotify)   return 'Play on Spotify';
-    if (_isTikTok)    return 'Watch on TikTok';
-    if (_isInstagram) return 'Watch on Instagram';
-    return 'Open link';
-  }
-
-  Color get _accentColor {
-    if (_isSpotify)   return const Color(0xFF1DB954);
-    if (_isTikTok)    return const Color(0xFFFF0050);
-    if (_isInstagram) return const Color(0xFFDD2A7B);
-    return Colors.white;
-  }
-
-  Color get _buttonTextColor {
-    if (_isSpotify) return Colors.black;
-    return Colors.white;
-  }
-
-  Decoration get _buttonDecoration {
-    if (_isInstagram) {
-      return BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF405DE6), Color(0xFF833AB4), Color(0xFFC13584),
-                   Color(0xFFE1306C), Color(0xFFFD1D1D), Color(0xFFF77737)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+  Decoration get _buttonDecoration => BoxDecoration(
+        gradient: platform?.gradient,
+        color: platform?.gradient == null ? _accentColor : null,
         borderRadius: BorderRadius.circular(30),
       );
-    }
-    return BoxDecoration(
-      color: _accentColor,
-      borderRadius: BorderRadius.circular(30),
-    );
-  }
 
-  IconData get _platformIcon {
-    if (_isSpotify)   return Icons.music_note_rounded;
-    if (_isTikTok)    return Icons.play_circle_outline_rounded;
-    if (_isInstagram) return Icons.camera_alt_outlined;
-    return Icons.open_in_new_rounded;
-  }
+  IconData get _platformIcon => platform?.icon ?? Icons.open_in_new_rounded;
 
   Future<void> _open() async {
     final uri = Uri.tryParse(url);
@@ -1472,14 +1427,14 @@ class _PlatformReelCard extends StatelessWidget {
                     Icon(_platformIcon, size: 14, color: _accentColor),
                     SizedBox(width: 6.w),
                     Text(
-                      _platformName,
+                      platform?.displayName ?? neutralLinkLabel(context),
                       style: TextStyles.font12semiBold.copyWith(color: _accentColor),
                     ),
                   ]),
                   if ((caption ?? '').isNotEmpty) ...[
                     SizedBox(height: 6.h),
-                    Text(
-                      caption!,
+                    LinkifiedText(
+                      text: caption!,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyles.font13SemiBold.copyWith(color: Colors.white),
@@ -1499,7 +1454,8 @@ class _PlatformReelCard extends StatelessWidget {
                           Icon(_platformIcon, size: 16, color: _buttonTextColor),
                           SizedBox(width: 8.w),
                           Text(
-                            _buttonLabel,
+                            platform?.openLabel(context) ??
+                                neutralLinkLabel(context),
                             style: TextStyles.font13SemiBold
                                 .copyWith(color: _buttonTextColor),
                           ),
@@ -1536,33 +1492,14 @@ class _PlatformIconBanner extends StatelessWidget {
 // ── Small platform badge (shown over a real video) ────────────────────────────
 
 class _ReelPlatformBadge extends StatelessWidget {
-  final String platform;
+  final SocialPlatform? platform;
   final String url;
   const _ReelPlatformBadge({required this.platform, required this.url});
 
-  bool get _isSpotify   => platform == 'spotify';
-  bool get _isTikTok    => platform == 'tiktok';
-  bool get _isInstagram => platform == 'instagram';
-
-  String get _label {
-    if (_isSpotify)   return 'Play on Spotify';
-    if (_isTikTok)    return 'Watch on TikTok';
-    if (_isInstagram) return 'Watch on Instagram';
-    return 'Open link';
-  }
-
-  Color get _accent {
-    if (_isSpotify)   return const Color(0xFF1DB954);
-    if (_isTikTok)    return const Color(0xFF69C9D0);
-    if (_isInstagram) return const Color(0xFFDD2A7B);
-    return Colors.white70;
-  }
-
-  String get _logoUrl {
-    if (_isInstagram) return 'https://logo.clearbit.com/instagram.com';
-    if (_isTikTok)    return 'https://logo.clearbit.com/tiktok.com';
-    return 'https://logo.clearbit.com/spotify.com';
-  }
+  /// The badge sits on top of a playing video, so it is always on a dark
+  /// ground regardless of the app theme — the brand colour, never its
+  /// light-theme variant.
+  Color get _accent => platform?.accent ?? Colors.white70;
 
   Future<void> _open() async {
     final uri = Uri.tryParse(url);
@@ -1587,18 +1524,15 @@ class _ReelPlatformBadge extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(3.r),
-              child: Image.network(
-                _logoUrl,
-                width: 16.r,
-                height: 16.r,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) =>
-                    Icon(Icons.play_circle_outline_rounded, size: 16.r, color: _accent),
+              child: Icon(
+                platform?.icon ?? Icons.link_rounded,
+                size: 16.r,
+                color: _accent,
               ),
             ),
             SizedBox(width: 6.w),
             Text(
-              _label,
+              platform?.openLabel(context) ?? neutralLinkLabel(context),
               style: TextStyles.font12semiBold.copyWith(color: _accent),
             ),
             SizedBox(width: 4.w),

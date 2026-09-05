@@ -8,6 +8,7 @@ import 'package:video_player/video_player.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/helpers/spacing.dart';
 import 'package:riff/core/utils/media_url.dart';
+import 'package:riff/core/widgets/linkified_text.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/features/home/feed/data/models/post.dart';
@@ -249,6 +250,13 @@ class PostContent extends StatelessWidget {
 ///
 /// The two gestures don't fight: a tap ends before the long-press timer fires,
 /// so that recognizer rejects and the card's tap recognizer wins the arena.
+///
+/// Links inside the body are pressable — see [LinkifiedText]. That is a third
+/// recognizer in the same arena and it resolves the same way: a link's own
+/// recognizer only competes for touches landing on its glyphs, so tapping a
+/// URL opens the URL, tapping the rest of the paragraph still opens the post,
+/// and a long press anywhere copies. Before this, a link pasted into a post
+/// was unreachable text — copy the whole body, leave Riff, paste.
 @visibleForTesting
 class CopyablePostText extends StatelessWidget {
   const CopyablePostText({super.key, required this.text});
@@ -276,7 +284,7 @@ class CopyablePostText extends StatelessWidget {
       // opaque so the whole line box responds, not just the glyphs.
       behavior: HitTestBehavior.opaque,
       onLongPress: () => _copy(context),
-      child: Text(text, style: TextStyles.font16Medium),
+      child: LinkifiedText(text: text, style: TextStyles.font16Medium),
     );
   }
 }
