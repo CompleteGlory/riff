@@ -120,9 +120,14 @@ class AppRouter {
         );
 
       case Routes.resetPassword:
+        // The reset token is passed here rather than parked in shared storage:
+        // it used to be written into the live session key, which signed a
+        // logged-in user out of their real account.
+        final resetToken = settings.arguments as String?;
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
-            create: (context) => getIt<ForgotPasswordCubit>(),
+            create: (context) => getIt<ForgotPasswordCubit>()
+              ..seedResetToken(resetToken ?? ''),
             child: const ResetPasswordScreen(),
           ),
         );
