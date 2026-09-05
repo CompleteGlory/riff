@@ -59,6 +59,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   /// Spotify share text looks like "Song – Artist" (already cleaned by captionText).
   /// We show this in the banner subtitle but do NOT pre-fill it into the caption
   /// field so the user writes their own commentary.
+  /// The platform this screen was opened from, or null for a plain post.
+  SocialPlatform? get _sharedFrom =>
+      SocialPlatform.maybeFromKey(widget.sourcePlatform);
+
   String? get _spotifyTitle {
     final t = widget.initialCaption?.trim();
     if (t == null || t.isEmpty) return null;
@@ -73,7 +77,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     // For IG/TikTok, pre-fill with the caption text from the share.
     // For Spotify we show the song title in the banner but leave caption blank
     // so the user writes their own post text.
-    if (widget.sourcePlatform != 'spotify' &&
+    // Audio platforms show their title in the banner instead, leaving the
+    // caption free for the user's own words. `isAudio` says what the string
+    // compare here used to only imply, and a future audio platform inherits
+    // the behaviour rather than needing this line edited again.
+    if (!(_sharedFrom?.isAudio ?? false) &&
         widget.initialCaption != null &&
         widget.initialCaption!.isNotEmpty) {
       _contentController.text = widget.initialCaption!;
@@ -214,10 +222,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             // Social-share origin banner (shown when opened via share sheet)
             if (isShare) ...[
               _SocialShareBanner(
-                platform: SocialPlatform.maybeFromKey(widget.sourcePlatform),
+                platform: _sharedFrom,
                 // For Spotify: extracted song title shown as subtitle in the banner.
                 // For IG/TT: displayTitle is null (caption is already pre-filled above).
-                displayTitle: widget.sourcePlatform == 'spotify'
+                displayTitle: (_sharedFrom?.isAudio ?? false)
                     ? _spotifyTitle
                     : null,
               ),

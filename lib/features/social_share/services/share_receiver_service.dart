@@ -98,12 +98,13 @@ class ShareReceiverService {
       // Concatenate all text/url items into one string and extract the URL.
       final raw = textItems.map((f) => f.path).join(' ');
       final url = _extractUrl(raw);
-      // Detect platform from URL first; fall back to keyword detection so
-      // Spotify shares without an https URL (e.g. spotify: URI only) still
-      // get identified correctly.
-      final platform = url != null
-          ? _detectPlatform(url)
-          : _detectPlatformFromText(raw);
+      // The platform comes from the link and only from the link. There used
+      // to be a keyword fallback for text with no URL, written for Spotify
+      // shares carrying a bare `spotify:` URI — but `_extractUrl` already
+      // returns those, so the fallback was only ever reached when there was
+      // no link at all, and it then stamped `source_platform` on a post with
+      // no `source_url`: "I found this on TikTok" filed as a TikTok share.
+      final platform = url == null ? null : _detectPlatform(url);
       receivedContent.value = SharedContent(
         text: raw,
         url: url,
@@ -135,21 +136,6 @@ class ShareReceiverService {
   /// replaced also said yes to a URL that merely mentioned the domain in a
   /// query parameter.
   static String? _detectPlatform(String url) => SocialPlatform.fromUrl(url)?.key;
-
-  /// Fallback when no extractable URL was found — infer from keywords.
-  ///
-  /// Only reachable for a share carrying no link at all, which in practice
-  /// means Spotify's bare `spotify:` URI or a plain-text caption. Kept
-  /// deliberately narrow: guessing a platform from the word appearing anywhere
-  /// in the text would label "I found this on TikTok" as a TikTok share and
-  /// then ask the API to store a `source_url` that does not exist.
-  static String? _detectPlatformFromText(String text) {
-    final lower = text.toLowerCase();
-    for (final platform in SocialPlatform.values) {
-      if (lower.contains(platform.key)) return platform.key;
-    }
-    return null;
-  }
 
   void clearContent() => receivedContent.value = null;
   void clearMedia()   => receivedMedia.value   = null;

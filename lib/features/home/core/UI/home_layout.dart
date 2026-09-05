@@ -70,7 +70,8 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     getIt<NotificationsCubit>().load();
 
     // Listen for content shared to Riff from the system share sheet.
-    // IG/TikTok links open CreatePostScreen with pre-filled caption + source.
+    // Any share from a platform SocialPlatform recognises opens
+    // CreatePostScreen with its caption pre-filled and its source recorded.
     // Spotify/generic URLs go to the chat composer.
     // Media files go to the post-creation tab.
     ShareReceiverService.instance.init();
