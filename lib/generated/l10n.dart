@@ -4598,6 +4598,26 @@ class S {
       args: [count],
     );
   }
+
+  /// `Couldn't start that conversation.`
+  String get couldNotStartConversation {
+    return Intl.message(
+      'Couldn\'t start that conversation.',
+      name: 'couldNotStartConversation',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Could not update the group.`
+  String get failedToUpdateGroup {
+    return Intl.message(
+      'Could not update the group.',
+      name: 'failedToUpdateGroup',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

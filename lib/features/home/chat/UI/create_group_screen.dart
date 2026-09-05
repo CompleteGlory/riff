@@ -1,19 +1,16 @@
 // ignore_for_file: use_build_context_synchronously
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:riff/core/di/dependency_injection.dart';
-import 'package:riff/core/networks/api_constants.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
-import 'package:riff/features/home/chat/data/repos/chat_repo.dart';
 import 'package:riff/features/home/chat/logic/cubit/chats_list_cubit.dart';
-import 'package:riff/features/home/search/data/repos/search_repo.dart';
+import 'package:riff/features/home/chat/logic/cubit/user_search_cubit.dart';
 import 'package:riff/features/home/search/data/models/search_user.dart';
 import 'package:riff/generated/l10n.dart';
 import 'package:riff/core/utils/media_limits.dart';
@@ -30,9 +27,16 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   final _descCtrl = TextEditingController();
   final _searchCtrl = TextEditingController();
 
+  /// Owned by the State, not created inside `build`.
+  ///
+  /// A `BlocProvider` created in `build` sits *below* this element, and
+  /// `context.read` walks upward — so a State method reading it that way finds
+  /// nothing and throws on the first keystroke. Holding it here and handing it
+  /// down with `BlocProvider.value` gives both the State and the subtree the
+  /// same instance.
+  late final UserSearchCubit _userSearch = getIt<UserSearchCubit>();
+
   final List<SearchUser> _selected = [];
-  List<SearchUser> _searchResults = [];
-  bool _searching = false;
   bool _creating = false;
 
   File? _groupImage;
@@ -41,6 +45,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
   @override
   void dispose() {
+    _userSearch.close();
     _nameCtrl.dispose();
     _descCtrl.dispose();
     _searchCtrl.dispose();
@@ -63,15 +68,14 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     });
 
     try {
-      final dio = getIt<Dio>();
-      final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(
-          picked.path,
-          filename: picked.name,
-        ),
-      });
-      final res = await dio.post(ApiConstants.chatGroupPhotoUpload, data: formData);
-      final url = (res.data as Map<String, dynamic>)['url'] as String?;
+      // The group does not exist yet, so this is the upload alone — but it
+      // is still a network call with a payload to parse, which is the data
+      // layer's job, not a widget's.
+      final url = await getIt<ChatsListCubit>().uploadGroupPhoto(
+        picked.path,
+        picked.name,
+      );
+      if (url == null) throw StateError('group photo upload failed');
       setState(() {
         _uploadedImageUrl = url;
         _uploadingImage = false;
@@ -82,21 +86,11 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   }
 
   Future<void> _search(String q) async {
-    if (q.trim().isEmpty) {
-      setState(() => _searchResults = []);
-      return;
-    }
-    setState(() => _searching = true);
-    try {
-      final res = await getIt<SearchRepo>().searchUsers(q);
-      setState(() {
-        _searchResults = res;
-        _searching = false;
-      });
-    } catch (_) {
-      setState(() => _searching = false);
-    }
+    // Debounce, request and result-ordering live on the cubit — this was
+    // the second copy of the same logic, and it did not even debounce.
+    _userSearch.search(q);
   }
+
 
   void _toggle(SearchUser user) {
     setState(() {
@@ -123,15 +117,26 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     }
     setState(() => _creating = true);
     try {
-      final conv = await getIt<ChatRepo>().createGroupConversation(
-        name: name,
-        description: _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
-        imageUrl: _uploadedImageUrl,
-        memberIds: _selected.map((u) => u.id).toList(),
-      );
-      context.read<ChatsListCubit>().prependConversation(conv);
-      if (mounted) Navigator.pop(context);
+      // One call: the cubit creates the group and puts it at the top of its
+      // own list, so the two halves cannot disagree.
+      final conv = await context.read<ChatsListCubit>().createGroup(
+            name: name,
+            description:
+                _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+            imageUrl: _uploadedImageUrl,
+            memberIds: _selected.map((u) => u.id).toList(),
+          );
+      if (!mounted) return;
+      if (conv != null) {
+        Navigator.pop(context);
+      } else {
+        setState(() => _creating = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(s.groupCreationError(''))),
+        );
+      }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _creating = false);
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(s.groupCreationError(e.toString()))));
@@ -140,6 +145,15 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // This screen's own search field, so its own cubit — a factory, not a
+    // singleton, or the chat list's field and this one would clear each other.
+    return BlocProvider<UserSearchCubit>.value(
+      value: _userSearch,
+      child: Builder(builder: _buildBody),
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
     final s = S.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -266,12 +280,16 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
             ),
           ),
         ),
-        if (_searching) const LinearProgressIndicator(),
+        BlocBuilder<UserSearchCubit, UserSearchState>(
+          builder: (_, search) => search.isSearching
+              ? const LinearProgressIndicator()
+              : const SizedBox.shrink(),
+        ),
         Expanded(
           child: ListView.builder(
-            itemCount: _searchResults.length,
+            itemCount: context.watch<UserSearchCubit>().state.results.length,
             itemBuilder: (_, i) {
-              final user = _searchResults[i];
+              final user = context.watch<UserSearchCubit>().state.results[i];
               final selected = _isSelected(user.id);
               return ListTile(
                 leading: CircleAvatar(

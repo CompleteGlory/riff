@@ -6,6 +6,7 @@
 import 'dart:async' as _i4;
 
 import 'package:mockito/mockito.dart' as _i1;
+import 'package:mockito/src/dummies.dart' as _i5;
 import 'package:riff/features/home/chat/data/models/chat_models.dart' as _i2;
 import 'package:riff/features/home/chat/data/repos/chat_repo.dart' as _i3;
 
@@ -132,6 +133,19 @@ class MockChatRepo extends _i1.Mock implements _i3.ChatRepo {
             ),
           )
           as _i4.Future<List<_i2.ChatMessage>>);
+
+  @override
+  _i4.Future<String> uploadGroupPhoto(String? filePath, String? fileName) =>
+      (super.noSuchMethod(
+            Invocation.method(#uploadGroupPhoto, [filePath, fileName]),
+            returnValue: _i4.Future<String>.value(
+              _i5.dummyValue<String>(
+                this,
+                Invocation.method(#uploadGroupPhoto, [filePath, fileName]),
+              ),
+            ),
+          )
+          as _i4.Future<String>);
 
   @override
   _i4.Future<_i2.ChatMessage> uploadMedia(

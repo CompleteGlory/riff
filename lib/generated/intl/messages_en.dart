@@ -236,6 +236,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "couldNotDeleteConversation": MessageLookupByLibrary.simpleMessage(
       "Could not delete conversation.",
     ),
+    "couldNotStartConversation": MessageLookupByLibrary.simpleMessage(
+      "Couldn\'t start that conversation.",
+    ),
     "createAnAccount": MessageLookupByLibrary.simpleMessage(
       "Create an account",
     ),
@@ -437,6 +440,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "failedToUpdateComment": MessageLookupByLibrary.simpleMessage(
       "Failed to update comment",
+    ),
+    "failedToUpdateGroup": MessageLookupByLibrary.simpleMessage(
+      "Could not update the group.",
     ),
     "failedToUpdateLike": MessageLookupByLibrary.simpleMessage(
       "Failed to update like",

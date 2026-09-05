@@ -239,6 +239,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "couldNotDeleteConversation": MessageLookupByLibrary.simpleMessage(
       "تعذر حذف المحادثة.",
     ),
+    "couldNotStartConversation": MessageLookupByLibrary.simpleMessage(
+      "تعذّر بدء هذه المحادثة.",
+    ),
     "createAnAccount": MessageLookupByLibrary.simpleMessage("إنشاء حساب"),
     "createAnAccountBtn": MessageLookupByLibrary.simpleMessage("إنشاء حساب"),
     "createGroupBtn": MessageLookupByLibrary.simpleMessage("إنشاء"),
@@ -418,6 +421,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "failedToUpdateComment": MessageLookupByLibrary.simpleMessage(
       "فشل تحديث التعليق",
+    ),
+    "failedToUpdateGroup": MessageLookupByLibrary.simpleMessage(
+      "تعذّر تحديث المجموعة.",
     ),
     "failedToUpdateLike": MessageLookupByLibrary.simpleMessage(
       "فشل تحديث الإعجاب",

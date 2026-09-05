@@ -552,6 +552,33 @@ on a device without one. iOS already had all three usage descriptions.
 
 ---
 
+## Layering — where logic is allowed to live
+
+    View (UI/)  →  Cubit (logic/cubit/)  →  Repository (data/repos/)  →  Dio
+
+The Cubit is the ViewModel. A widget may lay out, animate, navigate and format;
+it must not call a repository, hold domain state, or orchestrate a multi-step
+operation. **Resolving a *cubit* from GetIt in a widget is fine; resolving a
+*repository* or `Dio` is not.**
+
+Two rules that were learned by breaking them:
+
+- **An operation with two halves belongs in one place.** The chat screens used
+  to call `getIt<ChatRepo>()` and then tell `ChatsListCubit` what had happened.
+  Whichever half threw, the other had already run — a row could vanish without
+  the server agreeing, or a group could be renamed while the list showed the
+  old name. `deleteConversation`, `startDirectConversation`, `createGroup`,
+  `updateGroup` and the two photo methods now live on the cubit and do both.
+- **A `BlocProvider` created inside `build` is below that State element.**
+  `context.read` walks *upward*, so a State method reading a cubit provided
+  that way throws on the first interaction. Hold it as a `late final` field and
+  hand it down with `BlocProvider.value`.
+
+`UserSearchCubit` is `registerFactory`, not a singleton: two search fields
+sharing one would clear each other.
+
+---
+
 ## Share Receiver (Receiving shares from other apps)
 
 - Package: `receive_sharing_intent: ^1.8.1`
@@ -661,6 +688,7 @@ test file has a co-located `.md` explaining coverage, mocks and gotchas:
 | Chat image → fullscreen | `test/features/home/chat/UI/widgets/message_bubble_test.dart` | [message_bubble_test.md](test/features/home/chat/UI/widgets/message_bubble_test.md) |
 | Reaction chips + "edited" marker | `test/features/home/chat/UI/widgets/message_reactions_test.dart` | [message_reactions_test.md](test/features/home/chat/UI/widgets/message_reactions_test.md) |
 | Chat list re-sort after a delete | `test/features/home/chat/logic/conversation_ordering_test.dart` | [conversation_ordering_test.md](test/features/home/chat/logic/conversation_ordering_test.md) |
+| Chat user search (debounce, stale results) | `test/features/home/chat/logic/cubit/user_search_cubit_test.dart` | [user_search_cubit_test.md](test/features/home/chat/logic/cubit/user_search_cubit_test.md) |
 | Camera capture result + mode | `test/core/camera/camera_capture_test.dart` | [camera_capture_test.md](test/core/camera/camera_capture_test.md) |
 | Reel author follow status | `test/features/home/feed/data/models/author_test.dart` | [author_test.md](test/features/home/feed/data/models/author_test.md) |
 | Device gallery access + paging | `test/core/camera/device_gallery_test.dart` | [device_gallery_test.md](test/core/camera/device_gallery_test.md) |
@@ -768,6 +796,7 @@ full widget test.
 | An HTTP error status was lost whenever the body omitted it | `ApiErrorHandler._handleError` | `ApiErrorModel.fromJson` reads `statusCode` from the response *body*. The API usually echoes it, but any handler returning a bare `{"message": …}` produced a model with a null status, so a caller branching on the status (delete-account telling "wrong password" from "something went wrong") silently lost it. Falls back to the status the response actually arrived with |
 | Google sign-in failed on every distributed Android build | Firebase console (project `riff-23655`), not the code | `PlatformException(sign_in_failed, i2.d: 10: …)` — `ApiException` 10, DEVELOPER_ERROR: Google refusing the OAuth client because the calling app's signing certificate isn't registered. Only two SHA-1s were registered for `com.magd.riff`, and both were **debug** keystores (`~/.android/debug.keystore` and `~/riff-prod-debug.keystore`). `android/key.properties` exists on the build machine but is gitignored, so release builds are signed with `~/riff-upload-keystore.jks` — whose SHA-1 `05:68:9A:D1:F8:C8:FE:C7:52:3C:DA:CF:08:E6:22:7C:70:CA:C4:F3` was never added. Debug builds worked, every Firebase App Distribution build did not, and the code was identical in both. Fixed by adding that fingerprint in Firebase; the check is server-side, so no rebuild was needed. **If the signing key ever changes, or if the app ships through Play (App Signing re-signs with Google's own key), the new SHA-1 must be added the same way** |
 | Android CI build failed: `Language version 1.6 is no longer supported` | `sentry_flutter` 8.14.2 `android/build.gradle` | The plugin's own Gradle module pinned Kotlin `languageVersion = "1.6"`, and this project pins the Kotlin Android plugin at 2.2.20, which refuses anything below 1.8 as a hard error — so `assembleProductionRelease` died compiling *Sentry's* module, not ours. Sentry removed the pin in the 9.x line (sentry-dart #3032); 9.28.0 has none. Reproduce any CI Android failure locally with the exact fastlane command from `android/fastlane/Fastfile` in a worktree *without* `key.properties` — that matches the runner |
+| Chat screens went around their own cubit | `chats_list_screen`, `create_group_screen`, `group_details_screen`, `ChatsListCubit`, `ChatRepo` | Eight sites. Five called `getIt<ChatRepo>()` / `getIt<SearchRepo>()` and then told the cubit what had happened, so a failure in either half left the list and the server disagreeing. Two built `FormData`, called **`getIt<Dio>()` directly** and hand-parsed the response to upload a group photo — `ApiConstants.chatGroupPhotoUpload` was referenced only from widgets and no repository had ever owned it. And the user search existed twice, once in each screen, with only one of the copies debouncing. Now: the conversation operations live on `ChatsListCubit`, `ChatRepo.uploadGroupPhoto` owns the transport, and one `UserSearchCubit` (a factory, with debounce and a stale-response epoch guard) serves both fields |
 | The offline banner appeared at launch on a working connection | `ConnectivityService` | `reportDioError` went offline on the first transport-level failure, and several things look identical to a dead network from inside Dio: a cold Railway container answering its first request slowly is a `receiveTimeout`, and `unknown` with no response catches any non-network exception. Cold start fires profile, feed, notifications and chat at once, so one was enough. The probe that was supposed to arbitrate was an `InternetAddress.lookup` — a failed DNS lookup is routine on a device that has just woken or is behind a VPN, and a successful one proves nothing about the server; `HomeLayout` runs it on `resumed`, which fires at launch. A transport failure is now a suspicion that triggers a probe, the probe is a real HTTP request where any status counts as reachable, and a definitive response bumps an epoch so a slow probe cannot overwrite it — a race the existing tests caught on the first attempt |
 | Reels offered a Follow button for someone you already follow | `post.repository.ts` (`findReelsWithAuthor`), `Author`, `reel_item.dart` | Two halves. The reels SQL built its author JSON from id, name, username and image and **nothing else** — the same query computes `is_liked` with an `EXISTS` subquery, so the shape was there and the follow question had simply never been asked. With nothing to read, `reel_item` declared `bool _isFollowing = false` and only set it when the viewer tapped Follow, so every reel started as "not following". The query now returns `follow_status`, `Author` exposes `isFollowedByViewer` / `hasPendingFollowRequest`, and the reel seeds its state from them. Two traps: the identical author block appears in `findAllWithAuthor` earlier in the file, so a first pass at the fix edited the **feed** query instead and a whole-file grep still looked right — the spec asserts against a slice of the reels method for that reason; and `FollowCubit.follow` swallows its own errors and re-emits the previous state, so `await`ing it never throws and the old `catch` could never run — a failed follow left the button hidden as though it had worked. The emitted status is now read back, which also distinguishes a public account (`following`) from a request to a private one (`pending`, shown as "Requested") |
 | Chat could not take a photo, only choose one | `chat_input_bar.dart`, `lib/core/camera/` | The attach sheet offered Photo and Video, both gallery-only, so sending a picture of what was actually in front of you meant leaving Riff, opening the system camera, returning, and finding the shot in the gallery. Its two labels were also hardcoded English in an app that localizes everything else, and `update_post_screen` had four more of the same |

@@ -573,5 +573,9 @@
     "placeholders": {
       "count": {}
     }
-  }
+  },
+  "couldNotStartConversation": "تعذّر بدء هذه المحادثة.",
+  "@couldNotStartConversation": {},
+  "failedToUpdateGroup": "تعذّر تحديث المجموعة.",
+  "@failedToUpdateGroup": {}
 }

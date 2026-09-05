@@ -2,7 +2,6 @@
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
@@ -10,13 +9,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:riff/core/di/dependency_injection.dart';
 import 'package:riff/core/helpers/constants.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
-import 'package:riff/core/networks/api_constants.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/utils/media_url.dart';
 import 'package:riff/features/home/chat/data/models/chat_models.dart';
-import 'package:riff/features/home/chat/data/repos/chat_repo.dart';
 import 'package:riff/features/home/user_profile/ui/user_profile_screen.dart';
+import 'package:riff/features/home/chat/logic/cubit/chats_list_cubit.dart';
 import 'package:riff/generated/l10n.dart';
 import 'package:riff/core/utils/media_limits.dart';
 
@@ -84,22 +82,15 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
     });
 
     try {
-      final dio = getIt<Dio>();
-
-      // 1. Upload to Cloudinary via our endpoint
-      final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(picked.path, filename: picked.name),
-      });
-      final uploadRes = await dio.post(ApiConstants.chatGroupPhotoUpload, data: formData);
-      final url = (uploadRes.data as Map<String, dynamic>)['url'] as String?;
-
-      if (url == null) throw Exception('No URL returned');
-
-      // 2. Patch the conversation
-      final updated = await getIt<ChatRepo>().updateGroup(
+      // Upload and PATCH are one operation, and both belong behind the data
+      // layer. This State class used to build the FormData, call getIt<Dio>()
+      // itself and dig the URL out of the response map.
+      final updated = await getIt<ChatsListCubit>().updateGroupPhoto(
         _conv.id,
-        imageUrl: url,
+        picked.path,
+        picked.name,
       );
+      if (updated == null) throw StateError('group photo upload failed');
 
       if (mounted) {
         setState(() {
@@ -302,17 +293,32 @@ class _EditGroupSheetState extends State<_EditGroupSheet> {
     if (name.isEmpty) return;
     setState(() => _saving = true);
     try {
-      final updated = await getIt<ChatRepo>().updateGroup(
-        widget.conversationId,
-        name: name,
-        description: _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
-      );
-      if (mounted) Navigator.pop(context, updated);
-    } catch (e) {
+      // Through the cubit so the conversations list is updated too: popping
+      // with the new name left that list showing the old one until the next
+      // full refresh. Resolved from GetIt rather than the widget tree because
+      // this screen is pushed on a bare MaterialPageRoute with no provider
+      // above it — `context.read` would throw. The cubit is an app-scoped
+      // singleton, so both reach the same instance.
+      final updated = await getIt<ChatsListCubit>().updateGroup(
+            widget.conversationId,
+            name: name,
+            description:
+                _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+          );
+      if (!mounted) return;
+      if (updated != null) {
+        Navigator.pop(context, updated);
+      } else {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.of(context).failedToUpdateGroup)),
+        );
+      }
+    } catch (_) {
       if (mounted) {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update: $e')),
+          SnackBar(content: Text(S.of(context).failedToUpdateGroup)),
         );
       }
     }
