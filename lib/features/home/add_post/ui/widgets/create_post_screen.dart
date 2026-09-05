@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/helpers/spacing.dart';
+import 'package:riff/core/social/social_platform.dart';
+import 'package:riff/core/social/social_platform_labels.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/core/widgets/button.dart';
@@ -212,7 +214,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             // Social-share origin banner (shown when opened via share sheet)
             if (isShare) ...[
               _SocialShareBanner(
-                platform: widget.sourcePlatform!,
+                platform: SocialPlatform.maybeFromKey(widget.sourcePlatform),
                 // For Spotify: extracted song title shown as subtitle in the banner.
                 // For IG/TT: displayTitle is null (caption is already pre-filled above).
                 displayTitle: widget.sourcePlatform == 'spotify'
@@ -450,53 +452,30 @@ class _MediaPickerPlaceholder extends StatelessWidget {
 
 class _SocialShareBanner extends StatelessWidget {
   const _SocialShareBanner({required this.platform, this.displayTitle});
-  final String platform;
+
+  /// Null for a link Riff has no branding for — the banner still says where
+  /// the share came from, in neutral colours, rather than claiming Spotify.
+  final SocialPlatform? platform;
+
   /// For Spotify: extracted song name / artist, shown as a subtitle.
   final String? displayTitle;
 
-  bool get _isInstagram => platform == 'instagram';
-  bool get _isTikTok    => platform == 'tiktok';
-  bool get _isSpotify   => platform == 'spotify';
-
-  String get _label {
-    if (_isInstagram) return 'Instagram';
-    if (_isTikTok)    return 'TikTok';
-    return 'Spotify';
-  }
-
-  String get _logoUrl {
-    if (_isInstagram) return 'https://logo.clearbit.com/instagram.com';
-    if (_isTikTok)    return 'https://logo.clearbit.com/tiktok.com';
-    return 'https://logo.clearbit.com/spotify.com';
-  }
-
-  Color get _color {
-    if (_isInstagram) return const Color(0xFFDD2A7B);
-    if (_isTikTok)    return const Color(0xFF010101);
-    return const Color(0xFF1DB954);
-  }
-
   @override
   Widget build(BuildContext context) {
+    final brand = platform;
+    final color =
+        brand?.accentOn(Theme.of(context).brightness) ?? ColorManager.normalGrey;
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
       decoration: BoxDecoration(
-        color: _color.withOpacity(0.10),
+        color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: _color.withOpacity(0.5), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.5), width: 1),
       ),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6.r),
-            child: Image.network(
-              _logoUrl,
-              width: 24.r,
-              height: 24.r,
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => Icon(Icons.link_rounded, size: 24.r, color: _color),
-            ),
-          ),
+          Icon(brand?.icon ?? Icons.link_rounded, size: 24.r, color: color),
           horizontalSpace(10),
           Expanded(
             child: Column(
@@ -504,15 +483,15 @@ class _SocialShareBanner extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Sharing from $_label',
-                  style: TextStyles.font14Medium.copyWith(color: _color),
+                  brand?.sharingFromLabel(context) ?? neutralLinkLabel(context),
+                  style: TextStyles.font14Medium.copyWith(color: color),
                 ),
                 if (displayTitle != null && displayTitle!.isNotEmpty) ...[
                   SizedBox(height: 2.h),
                   Text(
                     displayTitle!,
                     style: TextStyles.font12Medium.copyWith(
-                      color: _color.withOpacity(0.75),
+                      color: color.withValues(alpha: 0.75),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

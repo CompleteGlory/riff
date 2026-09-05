@@ -639,5 +639,31 @@
   "couldNotStartConversation": "Couldn't start that conversation.",
   "@couldNotStartConversation": {},
   "failedToUpdateGroup": "Could not update the group.",
-  "@failedToUpdateGroup": {}
+  "@failedToUpdateGroup": {},
+  "playOnPlatform": "Play on {platform}",
+  "@playOnPlatform": {
+    "placeholders": {
+      "platform": {
+        "type": "String"
+      }
+    }
+  },
+  "watchOnPlatform": "Watch on {platform}",
+  "@watchOnPlatform": {
+    "placeholders": {
+      "platform": {
+        "type": "String"
+      }
+    }
+  },
+  "openExternalLink": "Open link",
+  "@openExternalLink": {},
+  "sharingFromPlatform": "Sharing from {platform}",
+  "@sharingFromPlatform": {
+    "placeholders": {
+      "platform": {
+        "type": "String"
+      }
+    }
+  }
 }

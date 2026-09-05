@@ -14,6 +14,8 @@
 		<string>snssdk1233</string>
 		<string>instagram</string>
 		<string>spotify</string>
+		<string>youtube</string>
+		<string>vnd.youtube</string>
 	</array>
 
 	<!-- Custom URL scheme so Spotify / other OAuth providers can redirect back to Riff -->

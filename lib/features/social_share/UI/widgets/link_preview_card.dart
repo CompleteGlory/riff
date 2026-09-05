@@ -4,12 +4,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/di/dependency_injection.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
+import 'package:riff/core/social/social_platform.dart';
 import 'package:riff/features/social_share/data/models/link_preview.dart';
 import 'package:riff/features/social_share/data/repos/link_preview_repo.dart';
 import 'package:riff/features/social_share/services/platform_share_service.dart';
 
-/// Shows a rich link preview card for Spotify / TikTok / Instagram URLs
-/// found inside a chat message or post. Fetches data lazily & caches it.
+/// Shows a rich link preview card for a link found inside a chat message.
+/// Fetches data lazily and caches it. Platforms Riff knows get their own
+/// treatment; everything else falls back to an Open Graph card.
 class LinkPreviewCard extends StatefulWidget {
   final String url;
   final bool compact; // compact = inside a chat bubble; expanded = in post
@@ -47,6 +49,8 @@ class _LinkPreviewCardState extends State<LinkPreviewCard> {
         return _TikTokCard(preview: p, compact: widget.compact);
       case 'instagram':
         return _InstagramCard(preview: p, compact: widget.compact);
+      case 'youtube':
+        return _YouTubeCard(preview: p, compact: widget.compact);
       default:
         return _GenericCard(preview: p, compact: widget.compact);
     }
@@ -493,5 +497,170 @@ class _GenericCard extends StatelessWidget {
         ]),
       ),
     );
+  }
+}
+
+// ─── YouTube card (red) ──────────────────────────────────────────────────────
+
+/// Mirrors the TikTok card's shape — a thumbnail with the title over it —
+/// because a YouTube link is the same kind of thing: one video, with a
+/// creator's name attached.
+class _YouTubeCard extends StatelessWidget {
+  final LinkPreview preview;
+  final bool compact;
+  const _YouTubeCard({required this.preview, required this.compact});
+
+  static const _brand = SocialPlatform.youtube;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: () => PlatformShareService.openUrl(preview.url),
+      child: Container(
+        margin: EdgeInsets.only(top: 6.h),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        clipBehavior: Clip.hardEdge,
+        child: compact
+            ? _YouTubeCompact(preview: preview)
+            : _YouTubeFull(preview: preview),
+      ),
+    );
+  }
+}
+
+class _YouTubeThumb extends StatelessWidget {
+  const _YouTubeThumb({required this.size});
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size.r,
+      height: size.r,
+      color: const Color(0xFF1A1A1A),
+      child: Icon(_YouTubeCard._brand.icon,
+          color: _YouTubeCard._brand.accent, size: size * 0.5),
+    );
+  }
+}
+
+class _YouTubeCompact extends StatelessWidget {
+  final LinkPreview preview;
+  const _YouTubeCompact({required this.preview});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(children: [
+      if (preview.image != null)
+        CachedNetworkImage(
+          imageUrl: preview.image!,
+          width: 56.r,
+          height: 56.r,
+          fit: BoxFit.cover,
+          errorWidget: (_, __, ___) => const _YouTubeThumb(size: 56),
+        )
+      else
+        const _YouTubeThumb(size: 56),
+      SizedBox(width: 10.w),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(preview.title ?? _YouTubeCard._brand.displayName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyles.font12semiBold),
+            if (preview.authorName != null)
+              Text(preview.authorName!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyles.font12regular
+                      .copyWith(color: ColorManager.normalGrey)),
+          ],
+        ),
+      ),
+      Padding(
+        padding: EdgeInsets.symmetric(horizontal: 10.w),
+        child: Icon(Icons.open_in_new_rounded,
+            size: 16, color: _YouTubeCard._brand.accent),
+      ),
+    ]);
+  }
+}
+
+class _YouTubeFull extends StatelessWidget {
+  final LinkPreview preview;
+  const _YouTubeFull({required this.preview});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(children: [
+      if (preview.image != null)
+        CachedNetworkImage(
+          imageUrl: preview.image!,
+          width: double.infinity,
+          height: 200.h,
+          fit: BoxFit.cover,
+          errorWidget: (_, __, ___) => SizedBox(
+              height: 200.h, child: const Center(child: _YouTubeThumb(size: 56))),
+        )
+      else
+        SizedBox(
+            height: 200.h, child: const Center(child: _YouTubeThumb(size: 56))),
+      Positioned.fill(
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.transparent, Color(0xCC000000)],
+            ),
+          ),
+        ),
+      ),
+      Positioned(
+        bottom: 10.h,
+        left: 12.w,
+        right: 12.w,
+        child: Row(children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (preview.authorName != null)
+                  Text(preview.authorName!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyles.font12semiBold
+                          .copyWith(color: Colors.white)),
+                Text(preview.title ?? _YouTubeCard._brand.displayName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyles.font12regular
+                        .copyWith(color: const Color(0xDDFFFFFF))),
+              ],
+            ),
+          ),
+          SizedBox(width: 8.w),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _YouTubeCard._brand.accent,
+              foregroundColor: _YouTubeCard._brand.onAccent,
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20.r)),
+            ),
+            onPressed: () => PlatformShareService.openUrl(preview.url),
+            child: Icon(Icons.play_arrow_rounded,
+                size: 18, color: _YouTubeCard._brand.onAccent),
+          ),
+        ]),
+      ),
+    ]);
   }
 }

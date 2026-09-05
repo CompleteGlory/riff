@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
+import 'package:riff/core/social/social_platform.dart';
+
 /// Payload produced when Riff is opened via the share sheet.
 class SharedContent {
   /// The raw shared text (caption, URL, or both).
@@ -11,16 +13,25 @@ class SharedContent {
   /// First http/https URL extracted from [text], if any.
   final String? url;
 
-  /// 'instagram' | 'tiktok' | 'spotify' — set when URL is from those platforms.
+  /// The recognised platform's wire key, or null. See [SocialPlatform].
   final String? platform;
 
   const SharedContent({required this.text, this.url, this.platform});
 
-  bool get isInstagram  => platform == 'instagram';
-  bool get isTikTok     => platform == 'tiktok';
-  bool get isSpotify    => platform == 'spotify';
-  /// True for all platforms that open CreatePostScreen (IG, TikTok, Spotify).
-  bool get isSocialShare => isInstagram || isTikTok || isSpotify;
+  bool get isInstagram => platform == SocialPlatform.instagram.key;
+  bool get isTikTok    => platform == SocialPlatform.tiktok.key;
+  bool get isSpotify   => platform == SocialPlatform.spotify.key;
+  bool get isYouTube   => platform == SocialPlatform.youtube.key;
+
+  /// True when the share came from a platform Riff recognises, which is what
+  /// makes `CreatePostScreen` record `source_url` / `source_platform` and show
+  /// the origin banner.
+  ///
+  /// Enumerating the platforms here is what made adding one a four-file job
+  /// and is why a YouTube share used to arrive as anonymous text; asking
+  /// [SocialPlatform] instead means a new platform is recognised the moment it
+  /// is declared.
+  bool get isSocialShare => SocialPlatform.maybeFromKey(platform) != null;
 
   /// Text with the source URL stripped out — suitable for pre-filling a caption.
   String get captionText {
@@ -47,7 +58,8 @@ class SharedContent {
 ///
 /// Call [init] once in HomeLayout.initState, [dispose] in dispose.
 ///
-/// • [receivedContent] fires for text/URL shares (including IG/TikTok links).
+/// • [receivedContent] fires for text/URL shares, including links from any
+///   platform in [SocialPlatform].
 /// • [receivedMedia]   fires for image/video file shares.
 class ShareReceiverService {
   ShareReceiverService._();
@@ -116,19 +128,26 @@ class ShareReceiverService {
     return _spotifyUriRegex.firstMatch(text)?.group(0);
   }
 
-  static String? _detectPlatform(String url) {
-    if (url.contains('instagram.com') || url.contains('instagr.am')) return 'instagram';
-    if (url.contains('tiktok.com')) return 'tiktok';
-    if (url.contains('spotify.com') || url.startsWith('spotify:')) return 'spotify';
-    return null;
-  }
+  /// Identifies the platform from the shared URL.
+  ///
+  /// Delegates to [SocialPlatform.fromUrl], which matches on the parsed host
+  /// rather than on `url.contains('tiktok.com')` — the substring test this
+  /// replaced also said yes to a URL that merely mentioned the domain in a
+  /// query parameter.
+  static String? _detectPlatform(String url) => SocialPlatform.fromUrl(url)?.key;
 
-  /// Fallback when no extractable URL was found — infer platform from keywords.
+  /// Fallback when no extractable URL was found — infer from keywords.
+  ///
+  /// Only reachable for a share carrying no link at all, which in practice
+  /// means Spotify's bare `spotify:` URI or a plain-text caption. Kept
+  /// deliberately narrow: guessing a platform from the word appearing anywhere
+  /// in the text would label "I found this on TikTok" as a TikTok share and
+  /// then ask the API to store a `source_url` that does not exist.
   static String? _detectPlatformFromText(String text) {
     final lower = text.toLowerCase();
-    if (lower.contains('spotify')) return 'spotify';
-    if (lower.contains('tiktok')) return 'tiktok';
-    if (lower.contains('instagram')) return 'instagram';
+    for (final platform in SocialPlatform.values) {
+      if (lower.contains(platform.key)) return platform.key;
+    }
     return null;
   }
 

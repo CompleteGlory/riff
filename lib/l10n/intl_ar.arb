@@ -577,5 +577,31 @@
   "couldNotStartConversation": "تعذّر بدء هذه المحادثة.",
   "@couldNotStartConversation": {},
   "failedToUpdateGroup": "تعذّر تحديث المجموعة.",
-  "@failedToUpdateGroup": {}
+  "@failedToUpdateGroup": {},
+  "playOnPlatform": "تشغيل على {platform}",
+  "@playOnPlatform": {
+    "placeholders": {
+      "platform": {
+        "type": "String"
+      }
+    }
+  },
+  "watchOnPlatform": "مشاهدة على {platform}",
+  "@watchOnPlatform": {
+    "placeholders": {
+      "platform": {
+        "type": "String"
+      }
+    }
+  },
+  "openExternalLink": "فتح الرابط",
+  "@openExternalLink": {},
+  "sharingFromPlatform": "مشاركة من {platform}",
+  "@sharingFromPlatform": {
+    "placeholders": {
+      "platform": {
+        "type": "String"
+      }
+    }
+  }
 }
