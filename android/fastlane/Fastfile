@@ -21,9 +21,9 @@ platform :android do
       testers: "fadyalaa441@gmail.com, fadyalaa2112@gmail.com, zakymagd@gmail.com, magddevf@gmail.com, Danielgeorge369@gmail.com, marten.atef.eng@gmail.com" ,
       upload_timeout: 600,
       release_notes: <<~RELEASE_NOTES
-        Version 1.0.20
+        Version 1.0.21
 
-        Date: 2026-09-04
+        Date: 2026-09-05
 
         Added in this build
 
@@ -56,6 +56,9 @@ platform :android do
         - Forgot your password now works. The app said a code was on its way
           but no email was ever sent. Codes are emailed for real.
         - "Resend code" resends, instead of taking you back a screen.
+        - Tapping "Forgot password" while signed in no longer signs you out.
+          The reset code was being stored where your login is kept, which
+          replaced your session with a code that expires in ten minutes.
 
         Previously
 
