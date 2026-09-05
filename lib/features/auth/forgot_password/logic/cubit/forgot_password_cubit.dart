@@ -6,8 +6,6 @@ import 'package:riff/features/auth/forgot_password/data/models/reset_password_re
 import 'package:riff/features/auth/forgot_password/data/models/verify_otp_request_body.dart';
 import 'package:riff/features/auth/forgot_password/data/repos/forgot_pasword_repo.dart';
 import 'package:riff/features/auth/forgot_password/logic/cubit/forgot_password_state.dart';
-import 'package:riff/core/helpers/shared_pref_helper.dart';
-import 'package:riff/core/helpers/constants.dart';
 
 class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
   final ForgotPasswordRepo _forgotPasswordRepo;
@@ -28,6 +26,19 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
   String email = "";
   String _resetToken = "";
 
+  /// Hands this cubit the token minted by the previous screen.
+  ///
+  /// The three reset screens each get their own cubit from the router, so the
+  /// token set while verifying the OTP is on a *different instance* from the
+  /// one that resets the password. That gap used to be bridged by writing the
+  /// token into SharedPreferences under the live session key — which is what
+  /// signed the user out of their real account. It now travels as a route
+  /// argument, the same way `email` already does.
+  void seedResetToken(String token) => _resetToken = token;
+
+  /// Exposed so the screen that verified the OTP can pass it onward.
+  String get resetToken => _resetToken;
+
   Future<void> emitForgotPasswordStates() async {
     email = mailController.text;
     emit(const ForgotPasswordState.loading());
@@ -39,7 +50,6 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
       success: (resetToken) async {
         if (resetToken != null) {
           _resetToken = resetToken; // Store token from requestOtp
-           debugPrint('Debug: Token received from requestOtp: "$resetToken"');
         }
         emit(ForgotPasswordState.success("OTP sent successfully"));
       },
@@ -59,7 +69,6 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
       success: (resetToken) async {
         if (resetToken != null) {
           _resetToken = resetToken;  // Store token from verifyOtp
-           debugPrint('Debug: Token received from verifyOtp: "$resetToken"');
         }
         emit(const ForgotPasswordState.otpVerified("OTP verified successfully"));
       },
@@ -71,18 +80,6 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
 
   Future<void> emitResetPasswordState() async {
     emit(const ForgotPasswordState.resetPasswordLoading());
-    debugPrint('Debug: Reset token before request: "$_resetToken"');
-
-    // If token not present in memory, try to recover it from SharedPreferences
-    if (_resetToken.isEmpty) {
-      final stored = await SharedPrefHelper.getString(SharedPrefKeys.userToken);
-      if (stored != null && stored.isNotEmpty) {
-        _resetToken = stored;
-        debugPrint('Debug: Reset token recovered from SharedPrefs: "$_resetToken"');
-      } else {
-        debugPrint('Debug: No reset token available in SharedPrefs');
-      }
-    }
 
     final response = await _forgotPasswordRepo.resetPassword(
       ResetPasswordRequestBody(resetToken: _resetToken, newPassword: newPasswordController.text),
@@ -95,5 +92,12 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
         emit(ForgotPasswordState.resetPasswordFailed(apiErrorModel));
       },
     );
+  }
+  @override
+  Future<void> close() {
+    mailController.dispose();
+    newPasswordController.dispose();
+    confirmPasswordController.dispose();
+    return super.close();
   }
 }

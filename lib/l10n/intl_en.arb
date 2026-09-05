@@ -635,5 +635,9 @@
     "placeholders": {
       "count": {}
     }
-  }
+  },
+  "couldNotStartConversation": "Couldn't start that conversation.",
+  "@couldNotStartConversation": {},
+  "failedToUpdateGroup": "Could not update the group.",
+  "@failedToUpdateGroup": {}
 }

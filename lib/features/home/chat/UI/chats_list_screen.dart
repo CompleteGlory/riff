@@ -8,12 +8,12 @@ import 'package:riff/core/themes/colors/color_manager.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
 import 'package:riff/features/home/chat/data/models/chat_models.dart';
 import 'package:riff/features/home/chat/logic/cubit/chats_list_cubit.dart';
+import 'package:riff/features/home/chat/logic/cubit/user_search_cubit.dart';
 import 'package:riff/features/home/chat/logic/cubit/chat_cubit.dart';
 import 'package:riff/features/home/chat/UI/chat_detail_screen.dart';
 import 'package:riff/features/home/chat/UI/create_group_screen.dart';
 import 'package:riff/features/home/chat/data/repos/chat_repo.dart';
 import 'package:riff/features/home/chat/data/services/chat_socket_service.dart';
-import 'package:riff/features/home/search/data/repos/search_repo.dart';
 import 'package:riff/features/home/search/data/models/search_user.dart';
 import 'package:riff/core/helpers/shared_pref_helper.dart';
 import 'package:riff/core/widgets/app_error_widget.dart';
@@ -36,9 +36,6 @@ class _ChatsListScreenState extends State<ChatsListScreen>
   String _myId = '';
 
   // User search state
-  List<SearchUser> _userResults = [];
-  bool _searchingUsers = false;
-  Timer? _debounce;
 
   // IDs of users already in a conversation (to exclude from user results)
   Set<String> _existingUserIds = {};
@@ -57,30 +54,21 @@ class _ChatsListScreenState extends State<ChatsListScreen>
     if (mounted) setState(() => _myId = id);
   }
 
+  /// Owned by the State, not created inside `build`.
+  ///
+  /// A `BlocProvider` created in `build` sits *below* this element, and
+  /// `context.read` walks upward — so a State method reading it that way finds
+  /// nothing and throws on the first keystroke. Holding it here and handing it
+  /// down with `BlocProvider.value` gives both the State and the subtree the
+  /// same instance.
+  late final UserSearchCubit _userSearch = getIt<UserSearchCubit>();
+
   void _onQueryChanged() {
     final q = _searchCtrl.text.trim();
     setState(() => _query = q.toLowerCase());
 
-    _debounce?.cancel();
-    if (q.isEmpty) {
-      setState(() { _userResults = []; _searchingUsers = false; });
-      return;
-    }
-    _debounce = Timer(const Duration(milliseconds: 350), () => _searchUsers(q));
-  }
-
-  Future<void> _searchUsers(String q) async {
-    setState(() => _searchingUsers = true);
-    try {
-      final results = await getIt<SearchRepo>().searchUsers(q);
-      if (!mounted) return;
-      setState(() {
-        _userResults = results;
-        _searchingUsers = false;
-      });
-    } catch (_) {
-      if (mounted) setState(() => _searchingUsers = false);
-    }
+    // Debounce, request and result-ordering all live on the cubit now.
+    _userSearch.search(q);
   }
 
   void _showConvOptions(BuildContext ctx, Conversation conv) {
@@ -125,10 +113,12 @@ class _ChatsListScreenState extends State<ChatsListScreen>
             onPressed: () async {
               Navigator.pop(ctx);
               try {
-                await getIt<ChatRepo>().deleteConversation(conv.id);
-                if (mounted) {
-                  ctx.read<ChatsListCubit>().removeConversation(conv.id);
-                }
+                // One call: the cubit deletes and updates its own list, so
+                // the row cannot disappear without the server agreeing.
+                final deleted = await ctx
+                    .read<ChatsListCubit>()
+                    .deleteConversation(conv.id);
+                if (!deleted) throw Exception('delete failed');
               } catch (_) {
                 if (mounted) {
                   ScaffoldMessenger.of(ctx).showSnackBar(
@@ -146,7 +136,7 @@ class _ChatsListScreenState extends State<ChatsListScreen>
 
   @override
   void dispose() {
-    _debounce?.cancel();
+    _userSearch.close();
     _tabs.dispose();
     _searchCtrl.dispose();
     super.dispose();
@@ -202,32 +192,22 @@ class _ChatsListScreenState extends State<ChatsListScreen>
   /// first is still in flight. The endpoint checks for an existing conversation
   /// and creates one if absent, so two concurrent calls both find nothing and
   /// both create — which is how a user ends up listed twice, once with the
-  /// history and once empty.
-  bool _startingChat = false;
 
   Future<void> _startChat(SearchUser user) async {
-    if (_startingChat) return;
-    _startingChat = true;
-    try {
-      final conv = await getIt<ChatRepo>().startDirectConversation(user.id);
-      if (!mounted) return;
-      context.read<ChatsListCubit>().prependConversation(conv);
+    // The re-entrancy guard moved to the cubit with the operation: it protects
+    // that cubit's list from two taps prepending the same thread twice.
+    final conv = await context.read<ChatsListCubit>()
+        .startDirectConversation(user.id);
+    if (!mounted) return;
+    if (conv != null) {
       _openChat(conv);
-    } catch (e) {
-      if (!mounted) return;
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyError(e.toString()))),
+        SnackBar(content: Text(S.of(context).couldNotStartConversation)),
       );
-    } finally {
-      _startingChat = false;
     }
   }
 
-  String _friendlyError(String err) {
-    if (err.contains('blocked')) return 'You cannot message this user.';
-    if (err.contains('not_following')) return 'You need to follow this user first.';
-    return 'Could not start conversation.';
-  }
 
   List<Conversation> _filterConvs(List<Conversation> list) {
     if (_query.isEmpty) return list;
@@ -237,6 +217,16 @@ class _ChatsListScreenState extends State<ChatsListScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Owned by this screen, not the app: the search field's debounce and
+    // results are this screen's, and a factory hands out a fresh one so two
+    // search fields never clear each other.
+    return BlocProvider<UserSearchCubit>.value(
+      value: _userSearch,
+      child: _buildBody(context, isDark),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, bool isDark) {
     return Scaffold(
       appBar: AppBar(
         title: Text(S.of(context).chatMessagesTitle),
@@ -291,7 +281,11 @@ class _ChatsListScreenState extends State<ChatsListScreen>
         ),
 
         // Loading indicator for user search
-        if (_searchingUsers) const LinearProgressIndicator(minHeight: 2),
+        BlocBuilder<UserSearchCubit, UserSearchState>(
+          builder: (_, search) => search.isSearching
+              ? const LinearProgressIndicator(minHeight: 2)
+              : const SizedBox.shrink(),
+        ),
 
         // Says which list is a snapshot; the global banner says why.
         BlocBuilder<ChatsListCubit, ChatsListState>(
@@ -317,7 +311,7 @@ class _ChatsListScreenState extends State<ChatsListScreen>
                 return _SearchResults(
                   query: _query,
                   state: state,
-                  userResults: _userResults,
+                  userResults: context.watch<UserSearchCubit>().state.results,
                   existingUserIds: _existingUserIds,
                   onConvTap: _openChat,
                   onUserTap: _startChat,

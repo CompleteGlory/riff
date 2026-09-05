@@ -214,6 +214,129 @@ class ChatsListCubit extends Cubit<ChatsListState>
     emit(ChatsListLoaded(conversations: cur.conversations, requests: cur.requests));
   }
 
+  // ── Conversation operations ───────────────────────────────────────────────
+  //
+  // These live here rather than in the screens because each is *one* operation
+  // that happens to have two halves: a call to the repository and a change to
+  // the list this cubit owns. Splitting them left the screens calling
+  // `getIt<ChatRepo>()` directly and then telling the cubit what had happened
+  // — so the list could be updated without the server agreeing, or the server
+  // could be changed without the list noticing, depending on which half threw.
+
+  /// True when the conversation was deleted and removed from the list.
+  ///
+  /// Returns a result rather than throwing: the caller's only job is to show a
+  /// message, and the list is already correct either way.
+  Future<bool> deleteConversation(String conversationId) async {
+    try {
+      await _repo.deleteConversation(conversationId);
+      removeConversation(conversationId);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Opens (or finds) the direct conversation with [userId] and puts it at the
+  /// top of the list. Null means it could not be started.
+  ///
+  /// The re-entrancy guard is here rather than in the screen because it is
+  /// protecting *this* cubit's list: two taps used to race two
+  /// `startDirectConversation` calls and prepend the same thread twice.
+  Future<Conversation?> startDirectConversation(String userId) async {
+    if (_startingConversation) return null;
+    _startingConversation = true;
+    try {
+      final conv = await _repo.startDirectConversation(userId);
+      prependConversation(conv);
+      return conv;
+    } catch (_) {
+      return null;
+    } finally {
+      _startingConversation = false;
+    }
+  }
+
+  bool _startingConversation = false;
+
+  /// Creates a group and puts it at the top of the list. Null means it failed.
+  Future<Conversation?> createGroup({
+    required String name,
+    String? description,
+    String? imageUrl,
+    required List<String> memberIds,
+  }) async {
+    try {
+      final conv = await _repo.createGroupConversation(
+        name: name,
+        description: description,
+        imageUrl: imageUrl,
+        memberIds: memberIds,
+      );
+      prependConversation(conv);
+      return conv;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Uploads a group photo and returns its URL, or null on failure.
+  ///
+  /// Used before a group exists, when creating one.
+  Future<String?> uploadGroupPhoto(String filePath, String fileName) async {
+    try {
+      return await _repo.uploadGroupPhoto(filePath, fileName);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Uploads a new photo for an existing group and applies it, returning the
+  /// updated conversation or null on failure.
+  Future<Conversation?> updateGroupPhoto(
+    String conversationId,
+    String filePath,
+    String fileName,
+  ) async {
+    final url = await uploadGroupPhoto(filePath, fileName);
+    if (url == null) return null;
+    return updateGroup(conversationId, imageUrl: url);
+  }
+
+  /// Renames or re-describes a group, and updates the row in the list.
+  ///
+  /// The list update is the part the screen could not do for itself: it popped
+  /// with the updated conversation and left this cubit holding the old name
+  /// until the next full refresh.
+  Future<Conversation?> updateGroup(
+    String conversationId, {
+    String? name,
+    String? description,
+    String? imageUrl,
+  }) async {
+    try {
+      final updated = await _repo.updateGroup(
+        conversationId,
+        name: name,
+        description: description,
+        imageUrl: imageUrl,
+      );
+      final cur = state;
+      if (!isClosed && cur is ChatsListLoaded) {
+        final idx =
+            cur.conversations.indexWhere((c) => c.id == conversationId);
+        if (idx != -1) {
+          final next = List<Conversation>.from(cur.conversations)
+            ..[idx] = updated;
+          emit(ChatsListLoaded(conversations: next, requests: cur.requests));
+        }
+      }
+      return updated;
+    } catch (_) {
+      return null;
+    }
+  }
+
   void prependConversation(Conversation conv) {
     final cur = state;
     if (isClosed) return;

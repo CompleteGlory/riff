@@ -50,6 +50,27 @@ class ChatRepo {
     return (res.data as List).map((e) => ChatMessage.fromJson(e as Map<String, dynamic>)).toList();
   }
 
+  /// Uploads a group photo and returns the stored URL.
+  ///
+  /// This lived in two widgets, which each built the `FormData`, called
+  /// `getIt<Dio>()` directly and dug the URL out of the response map. HTTP and
+  /// payload parsing belong here; the screens now ask a cubit for a picture.
+  Future<String> uploadGroupPhoto(String filePath, String fileName) async {
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(filePath, filename: fileName),
+    });
+    final res = await _dio.post(
+      ApiConstants.chatGroupPhotoUpload,
+      data: formData,
+      options: DioFactory.uploadOptions,
+    );
+    final url = (res.data as Map<String, dynamic>)['url'] as String?;
+    if (url == null || url.isEmpty) {
+      throw StateError('Group photo upload returned no URL');
+    }
+    return url;
+  }
+
   Future<ChatMessage> uploadMedia(
     String conversationId,
     String filePath,

@@ -48,8 +48,12 @@ void main() {
         success: (token) => expect(token, 'otp-reset-tok'),
         failure: (_) => fail('expected success'),
       );
+      // The reset token must NOT reach the session key. It used to be written
+      // there, and that key is the live access token every authenticated
+      // request sends — so a signed-in user who tapped "Forgot password" was
+      // silently switched onto a ten-minute reset credential.
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString(SharedPrefKeys.userToken), 'otp-reset-tok');
+      expect(prefs.getString(SharedPrefKeys.userToken), isNull);
     });
 
     test('accepts the camelCase resetToken key too', () async {
@@ -109,8 +113,12 @@ void main() {
         success: (token) => expect(token, 'verify-tok'),
         failure: (_) => fail('expected success'),
       );
+      // The reset token must NOT reach the session key. It used to be written
+      // there, and that key is the live access token every authenticated
+      // request sends — so a signed-in user who tapped "Forgot password" was
+      // silently switched onto a ten-minute reset credential.
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString(SharedPrefKeys.userToken), 'verify-tok');
+      expect(prefs.getString(SharedPrefKeys.userToken), isNull);
     });
 
     test('returns success with null token when the body has none', () async {

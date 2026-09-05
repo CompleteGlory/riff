@@ -1,13 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:riff/core/networks/api_error_handler.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/networks/api_services.dart';
 import 'package:riff/features/auth/forgot_password/data/models/request_otp_request_body.dart';
 import 'package:riff/features/auth/forgot_password/data/models/reset_password_request_body.dart';
 import 'package:riff/features/auth/forgot_password/data/models/verify_otp_request_body.dart';
-import 'package:riff/core/networks/dio_factory.dart';
-import 'package:riff/core/helpers/shared_pref_helper.dart';
-import 'package:riff/core/helpers/constants.dart';
 
 class ForgotPasswordRepo {
   final ApiService _apiService;
@@ -29,11 +25,13 @@ class ForgotPasswordRepo {
           }
 
           if (resetToken != null && resetToken.isNotEmpty) {
-            debugPrint('Debug: Repo - requestOtp found token: "$resetToken"');
-            // override the Authorization header with the reset token so subsequent requests
-            // (verify OTP / reset password) use it
-            DioFactory.setTokenIntoHeaderAfterLogin(resetToken);
-            await SharedPrefHelper.setData(SharedPrefKeys.userToken, resetToken);
+            // Returned, never stored. This used to also write the token into
+            // SharedPrefKeys.userToken and set it as the global Dio header —
+            // and that key is the *live session* credential every
+            // authenticated request reads, so a signed-in user who tapped
+            // "Forgot password" had their session replaced by a ten-minute
+            // reset token. /auth/reset-password is a public endpoint that
+            // takes the token in its body, so no header was ever needed.
             return ApiResult.success(resetToken);
           }
         }
@@ -60,11 +58,9 @@ class ForgotPasswordRepo {
           }
 
           if (resetToken != null && resetToken.isNotEmpty) {
-             debugPrint('Debug: Repo - verifyOtp found token: "$resetToken"');
-            // Store reset token for use in reset password request
-            DioFactory.setTokenIntoHeaderAfterLogin(resetToken);
-            await SharedPrefHelper.setData(SharedPrefKeys.userToken, resetToken);
-            // Return the token so cubit can store it
+            // Returned to the caller, which passes it to the reset screen as a
+            // route argument. See the note in requestOtp for why it is no
+            // longer written into the session token key.
             return ApiResult.success(resetToken);
           }
         }
@@ -79,7 +75,6 @@ class ForgotPasswordRepo {
   }
 
   Future<ApiResult<void>> resetPassword(ResetPasswordRequestBody resetPasswordRequestBody) async {
-     debugPrint('Debug: Repo - resetPassword using token: "${resetPasswordRequestBody.resetToken}"');
     try {
       final response = await _apiService.resetPassword(resetPasswordRequestBody);
       return ApiResult.success(response.data);

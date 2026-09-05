@@ -147,7 +147,40 @@ void main() {
     );
 
     blocTest<ForgotPasswordCubit, ForgotPasswordState>(
-      'recovers the token from SharedPreferences when none is held in memory',
+      'uses the token it was seeded with, not the stored session token',
+      build: () {
+        when(mockRepo.resetPassword(any))
+            .thenAnswer((_) async => const ApiResult.success(null));
+        return cubit;
+      },
+      setUp: () {
+        // A signed-in session sitting in storage. The cubit used to fall back
+        // to reading exactly this key when it held no token of its own —
+        // which only worked because the repo had overwritten the live session
+        // with the reset token. It must be ignored entirely now.
+        SharedPreferences.setMockInitialValues({
+          SharedPrefKeys.userToken: 'the-live-session-token',
+        });
+      },
+      act: (c) {
+        c.seedResetToken('seeded-reset-tok');
+        c.newPasswordController.text = 'NewPass123';
+        c.emitResetPasswordState();
+      },
+      expect: () => [
+        const ForgotPasswordState.resetPasswordLoading(),
+        isA<ResetPasswordSuccess>(),
+      ],
+      verify: (_) {
+        final captured =
+            verify(mockRepo.resetPassword(captureAny)).captured.single
+                as ResetPasswordRequestBody;
+        expect(captured.resetToken, 'seeded-reset-tok');
+      },
+    );
+
+    blocTest<ForgotPasswordCubit, ForgotPasswordState>(
+      'never reads the session token, even with no reset token seeded',
       build: () {
         when(mockRepo.resetPassword(any))
             .thenAnswer((_) async => const ApiResult.success(null));
@@ -155,7 +188,7 @@ void main() {
       },
       setUp: () {
         SharedPreferences.setMockInitialValues({
-          SharedPrefKeys.userToken: 'stored-tok',
+          SharedPrefKeys.userToken: 'the-live-session-token',
         });
       },
       act: (c) {
@@ -170,7 +203,10 @@ void main() {
         final captured =
             verify(mockRepo.resetPassword(captureAny)).captured.single
                 as ResetPasswordRequestBody;
-        expect(captured.resetToken, 'stored-tok');
+        // Empty, and the server rejects it. Sending the user's *real* access
+        // token to a password-reset endpoint is the failure mode being
+        // guarded against.
+        expect(captured.resetToken, isEmpty);
       },
     );
 

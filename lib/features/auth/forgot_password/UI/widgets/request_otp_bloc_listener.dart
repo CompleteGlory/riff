@@ -38,7 +38,13 @@ class VerifyOTPBlocListener extends StatelessWidget {
               if (Navigator.of(context, rootNavigator: true).canPop()) {
                 Navigator.of(context, rootNavigator: true).pop();
               }
-              Navigator.of(context).pushReplacementNamed(Routes.resetPassword);
+              // The token goes with the navigation, the same way the email
+              // does one screen earlier. Each route builds its own cubit, so
+              // anything left on this one does not survive the push.
+              Navigator.of(context).pushReplacementNamed(
+                Routes.resetPassword,
+                arguments: context.read<ForgotPasswordCubit>().resetToken,
+              );
             },
             otpVerificationFailed: (error) {
               _setupErrorState(context, error.message!);

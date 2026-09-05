@@ -46,6 +46,7 @@ import 'package:riff/features/home/feed/data/repos/report_repo.dart';
 import 'package:riff/features/home/chat/data/repos/chat_repo.dart';
 import 'package:riff/features/home/chat/data/services/chat_socket_service.dart';
 import 'package:riff/features/home/chat/logic/cubit/chats_list_cubit.dart';
+import 'package:riff/features/home/chat/logic/cubit/user_search_cubit.dart';
 import 'package:riff/features/home/chat/logic/cubit/chat_cubit.dart';
 import 'package:riff/features/home/block/data/repos/block_repo.dart';
 import 'package:riff/features/home/block/logic/cubit/block_cubit.dart';
@@ -164,6 +165,9 @@ Future<void> setUpGetIt() async {
   getIt.registerLazySingleton<ChatSocketService>(() => ChatSocketService());
   // Singleton so HomeLayout and ChatsListScreen share the same unread state
   getIt.registerLazySingleton<ChatsListCubit>(() => ChatsListCubit(getIt()));
+  // Not a singleton: each search field owns its own debounce timer, results
+  // and epoch, and two fields sharing one would clear each other.
+  getIt.registerFactory<UserSearchCubit>(() => UserSearchCubit(getIt()));
   getIt.registerFactory<ChatCubit>(() => ChatCubit(getIt(), getIt()));
 
   // block
