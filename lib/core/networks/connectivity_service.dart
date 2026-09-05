@@ -65,20 +65,53 @@ class ConnectivityService {
   Duration _backoff = minBackoff;
   Future<bool>? _inFlightProbe;
 
+  /// Bumped by every *definitive* report — a real response from the server.
+  ///
+  /// A probe that started before the bump is answering a question that has
+  /// since been settled by better evidence, so it must not apply its result.
+  /// Without this, a probe begun on a failed request can land after the next
+  /// request has already succeeded and drag the app back offline. The same
+  /// epoch trick `NotificationsCubit` uses against a poll that overwrites a
+  /// local change.
+  int _epoch = 0;
+
   // ── Reporting from the network layer ──────────────────────────────────────
 
   /// A request completed — whatever else happened, we can reach the server.
-  void reportReachable() => _setOnline(true);
+  ///
+  /// This is proof, so it also invalidates any probe still in flight.
+  void reportReachable() {
+    _epoch++;
+    _setOnline(true);
+  }
 
   /// Classifies [error] and updates the status accordingly.
+  ///
+  /// A transport failure is a **suspicion, not a verdict**. Declaring the
+  /// whole app offline on one failed request is how the banner appeared at
+  /// launch on a perfectly good connection: a cold Railway container is slow
+  /// to answer its first request, a `receiveTimeout` looks identical to a dead
+  /// network from here, and `unknown` with no response catches any non-network
+  /// exception thrown along the way. So the failure triggers a probe and the
+  /// probe decides.
+  ///
+  /// This mirrors what `SessionManager` already learned the hard way: one
+  /// rejection is not proof, and acting on it alone produced exactly this
+  /// class of false positive.
   void reportDioError(DioException error) {
-    if (isNetworkFailure(error)) {
-      _setOnline(false);
-    } else {
+    if (!isNetworkFailure(error)) {
       // The server produced a response, so the transport is healthy even
-      // though this particular request failed.
+      // though this particular request failed. That is conclusive, and it
+      // clears an offline state immediately — and outranks any probe still
+      // running.
+      _epoch++;
       _setOnline(true);
+      return;
     }
+    // Already offline: the backoff timer owns recovery, and probing per failed
+    // request while offline would hammer the host.
+    if (!_isOnline) return;
+    unawaited(checkNow());
   }
 
   /// Whether [error] is a transport failure (no answer from the server) rather
@@ -116,19 +149,44 @@ class ConnectivityService {
   }
 
   Future<bool> _runProbe() async {
+    final startedAt = _epoch;
     final reachable = await (probe ?? _defaultProbe)();
+    // A real response arrived while this was running. It is better evidence
+    // than a probe, and it has already been applied.
+    if (startedAt != _epoch) return reachable;
     _setOnline(reachable);
     return reachable;
   }
 
+  /// Asks the API host for anything at all.
+  ///
+  /// This used to be a DNS lookup, which answers a different question. A
+  /// resolved name does not mean the server is reachable, and — the reason the
+  /// banner appeared at launch — a failed lookup does not mean the device is
+  /// offline: DNS is routinely unavailable for a moment on a device that has
+  /// just woken, behind a VPN, or on a network still coming up.
+  ///
+  /// **Any HTTP status counts as reachable**, including 401 and 404. The
+  /// question is whether packets reach the server and come back, not whether
+  /// it liked the request. Only a transport-level exception means offline.
+  ///
+  /// Deliberately a bare [HttpClient] rather than the app's Dio: routing it
+  /// through the interceptor would report its own outcome back into this
+  /// service and probe recursively.
   Future<bool> _defaultProbe() async {
+    final client = HttpClient()
+      ..connectionTimeout = const Duration(seconds: 5);
     try {
-      final host = Uri.parse(ApiConstants.apiBASEURL).host;
-      final addresses = await InternetAddress.lookup(host)
-          .timeout(const Duration(seconds: 5));
-      return addresses.isNotEmpty && addresses.first.rawAddress.isNotEmpty;
+      final request = await client
+          .headUrl(Uri.parse(ApiConstants.apiBASEURL))
+          .timeout(const Duration(seconds: 6));
+      final response = await request.close().timeout(const Duration(seconds: 6));
+      await response.drain<void>();
+      return true;
     } catch (_) {
       return false;
+    } finally {
+      client.close(force: true);
     }
   }
 
