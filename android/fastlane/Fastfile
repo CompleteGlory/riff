@@ -40,6 +40,9 @@ platform :android do
 
         Fixed in this build
 
+        - The "You're offline" bar no longer appears when you open the app on
+          a working connection. One slow request was enough to trigger it;
+          the app now checks before believing it.
         - Reels no longer ask you to follow someone you already follow. The
           button appeared on every reel because the app was never told who
           you follow; now it is. A request still awaiting approval shows

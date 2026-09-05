@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -23,6 +24,10 @@ void main() {
         response: response,
         error: error,
       );
+
+  /// Lets an in-flight probe complete. The status now settles a microtask
+  /// after a failure rather than synchronously with it.
+  Future<void> pumpProbe() => Future<void>.delayed(Duration.zero);
 
   Response<dynamic> response(int status) => Response<dynamic>(
         requestOptions: RequestOptions(path: '/api/posts'),
@@ -81,16 +86,36 @@ void main() {
   });
 
   group('status transitions', () {
+    /// A probe that always answers [reachable], so a test never touches the
+    /// network. Every transport failure now consults one.
+    void stubProbe(bool reachable) =>
+        service.probe = () async => reachable;
+
     test('starts online so nothing shows a banner before the first request',
         () {
       expect(service.isOnline, isTrue);
     });
 
-    test('a transport failure goes offline and a response comes back', () async {
+    test('one failed request does not by itself go offline', () async {
+      // The reported bug: the banner appeared at launch on a good connection.
+      // A cold server answering slowly, or any non-network exception with no
+      // response, looks exactly like a dead network from here — so a single
+      // failure is a suspicion and the probe settles it.
+      stubProbe(true);
+
+      service.reportDioError(dio(DioExceptionType.connectionError));
+      await pumpProbe();
+
+      expect(service.isOnline, isTrue);
+    });
+
+    test('a failed request goes offline once a probe agrees', () async {
+      stubProbe(false);
       final seen = <bool>[];
       final sub = service.onStatusChanged.listen(seen.add);
 
       service.reportDioError(dio(DioExceptionType.connectionError));
+      await pumpProbe();
       expect(service.isOffline, isTrue);
 
       service.reportReachable();
@@ -101,12 +126,26 @@ void main() {
       await sub.cancel();
     });
 
+    test('a slow response is not mistaken for a dead network', () async {
+      // receiveTimeout means the server accepted the connection and then took
+      // too long. The transport demonstrably worked; the server was slow.
+      stubProbe(true);
+
+      service.reportDioError(dio(DioExceptionType.receiveTimeout));
+      await pumpProbe();
+
+      expect(service.isOnline, isTrue);
+    });
+
     test('only transitions are emitted, never repeats', () async {
+      stubProbe(false);
       final seen = <bool>[];
       final sub = service.onStatusChanged.listen(seen.add);
 
       service.reportDioError(dio(DioExceptionType.connectionError));
+      await pumpProbe();
       service.reportDioError(dio(DioExceptionType.connectionTimeout));
+      await pumpProbe();
       service.reportReachable();
       service.reportReachable();
 
@@ -115,10 +154,37 @@ void main() {
       await sub.cancel();
     });
 
+    test('a real response outranks a probe still in flight', () async {
+      // The probe from a failed request can land *after* the next request has
+      // succeeded. Applying it then would drag a working app offline — which
+      // is how the first attempt at this fix broke an existing test.
+      final probeStarted = Completer<void>();
+      final probeAnswer = Completer<bool>();
+      service.probe = () {
+        if (!probeStarted.isCompleted) probeStarted.complete();
+        return probeAnswer.future;
+      };
+
+      service.reportDioError(dio(DioExceptionType.connectionError));
+      await probeStarted.future;
+
+      // Better evidence arrives while the probe is still running.
+      service.reportReachable();
+      expect(service.isOnline, isTrue);
+
+      probeAnswer.complete(false);
+      await pumpProbe();
+
+      expect(service.isOnline, isTrue,
+          reason: 'a stale probe must not override a real response');
+    });
+
     // An HTTP error proves the server answered, so it should clear an offline
     // state rather than leave the banner up until the next successful request.
-    test('a server error while offline restores the online state', () {
+    test('a server error while offline restores the online state', () async {
+      stubProbe(false);
       service.reportDioError(dio(DioExceptionType.connectionError));
+      await pumpProbe();
       expect(service.isOffline, isTrue);
 
       service.reportDioError(
@@ -127,9 +193,34 @@ void main() {
       expect(service.isOnline, isTrue);
     });
 
-    test('the notifier mirrors the status for widgets', () {
-      expect(service.status.value, isTrue);
+    test('does not probe again for each failure while already offline',
+        () async {
+      var probes = 0;
+      service.probe = () async {
+        probes++;
+        return false;
+      };
+
       service.reportDioError(dio(DioExceptionType.connectionError));
+      await pumpProbe();
+      expect(probes, 1);
+
+      // Offline already; the backoff timer owns recovery from here, and
+      // probing per failed request would hammer a host that is not answering.
+      service.reportDioError(dio(DioExceptionType.connectionError));
+      service.reportDioError(dio(DioExceptionType.connectionTimeout));
+      await pumpProbe();
+
+      expect(probes, 1);
+    });
+
+    test('the notifier mirrors the status for widgets', () async {
+      stubProbe(false);
+      expect(service.status.value, isTrue);
+
+      service.reportDioError(dio(DioExceptionType.connectionError));
+      await pumpProbe();
+
       expect(service.status.value, isFalse);
     });
   });
