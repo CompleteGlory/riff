@@ -40,6 +40,12 @@ platform :android do
 
         Fixed in this build
 
+        - The feed and reels no longer reload every time you switch tabs.
+          Leaving a tab and coming back threw the posts away and fetched
+          them again, losing your place. They stay put now.
+        - Opening a reel from a post no longer asks you to follow someone
+          you already follow. That was fixed in the Reels tab last build
+          but not on this path.
         - The "You're offline" bar no longer appears when you open the app on
           a working connection. One slow request was enough to trigger it;
           the app now checks before believing it.

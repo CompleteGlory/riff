@@ -290,6 +290,37 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
     }
   }
 
+  /// Tabs the user has actually opened.
+  ///
+  /// `IndexedStack` builds every child, so handing it all five screens up
+  /// front would fire the feed, reels and profile requests at launch. A tab
+  /// stays an empty box until it is first selected, and is kept alive from
+  /// then on.
+  final Set<int> _visitedTabs = <int>{};
+
+  /// Keeps each opened tab mounted instead of rebuilding it.
+  ///
+  /// This used to be `cubit.screens[cubit.currentIndex]`, which swaps the
+  /// widget on every tab change — so the feed was unmounted and remounted each
+  /// time, and since `FeedScreen` creates its cubit with
+  /// `getIt<FeedCubit>()..getPosts()` and `FeedCubit` is a factory, every
+  /// switch built a fresh cubit and fired a fresh request. Reels did the same.
+  /// That is the "it keeps loading forever" report: the feed genuinely
+  /// re-fetched every time the user came back to it, losing scroll position
+  /// with it.
+  Widget _buildTabs(HomeCubit cubit) {
+    _visitedTabs.add(cubit.currentIndex);
+    return IndexedStack(
+      index: cubit.currentIndex,
+      children: List<Widget>.generate(
+        cubit.screens.length,
+        (i) => _visitedTabs.contains(i)
+            ? cubit.screens[i]
+            : const SizedBox.shrink(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<CreatePostCubit, CreatePostState>(
@@ -432,7 +463,7 @@ class _HomeLayoutState extends State<HomeLayout> with WidgetsBindingObserver {
                       ],
                     ),
               drawer: const AppDrawer(),
-              body: cubit.screens[cubit.currentIndex],
+              body: _buildTabs(cubit),
               bottomNavigationBar: AppBottomNav(cubit: cubit),
             );
           },
