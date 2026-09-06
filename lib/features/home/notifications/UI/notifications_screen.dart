@@ -1320,7 +1320,15 @@ class _FollowBackButtonState extends State<_FollowBackButton> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) => Container(
+      // The builder's own context, not this State's.
+      //
+      // The sheet outlives the button that opened it: the notifications list
+      // polls every 30s, and a refresh that drops this row disposes the State
+      // while its sheet is still on screen. Everything inside then reads
+      // `context`, which is `_element!` — so the sheet threw on its own
+      // rebuild and again when Cancel was tapped. Two separate fatals in
+      // Sentry, one cause. A route's context belongs to the route.
+      builder: (sheetContext) => Container(
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
@@ -1339,7 +1347,11 @@ class _FollowBackButtonState extends State<_FollowBackButton> {
               style: TextStyles.font14semiBold),
           SizedBox(height: 20.h),
           GestureDetector(
-            onTap: () { Navigator.pop(context); _unfollow(); },
+            onTap: () {
+              Navigator.pop(sheetContext);
+              // The row may be gone; only its own State can unfollow.
+              if (mounted) _unfollow();
+            },
             child: Container(
               width: double.infinity,
               padding: EdgeInsets.symmetric(vertical: 14.h),
@@ -1352,7 +1364,7 @@ class _FollowBackButtonState extends State<_FollowBackButton> {
                 Icon(Icons.person_remove_outlined,
                     color: ColorManager.red, size: 18.r),
                 SizedBox(width: 8.w),
-                Text(S.of(context).unfollowBtn,
+                Text(S.of(sheetContext).unfollowBtn,
                     style: TextStyles.font14semiBold.copyWith(
                         color: ColorManager.red)),
               ]),
@@ -1360,7 +1372,7 @@ class _FollowBackButtonState extends State<_FollowBackButton> {
           ),
           SizedBox(height: 10.h),
           GestureDetector(
-            onTap: () => Navigator.pop(context),
+            onTap: () => Navigator.pop(sheetContext),
             child: Container(
               width: double.infinity,
               padding: EdgeInsets.symmetric(vertical: 14.h),
@@ -1370,7 +1382,7 @@ class _FollowBackButtonState extends State<_FollowBackButton> {
                     : const Color(0xFFF5F5F5),
                 borderRadius: BorderRadius.circular(12.r),
               ),
-              child: Text(S.of(context).cancelBtn,
+              child: Text(S.of(sheetContext).cancelBtn,
                   textAlign: TextAlign.center,
                   style: TextStyles.font14semiBold),
             ),

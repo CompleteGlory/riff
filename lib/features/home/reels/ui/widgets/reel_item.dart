@@ -288,6 +288,11 @@ class _ReelItemState extends State<ReelItem> {
 
   void _openComments() async {
     final commentCubit = getIt<CommentCubit>();
+    // Resolved before the await. `context` is a getter over `_element!`, so it
+    // throws the moment this State is disposed — and swiping to the next reel
+    // while the comments load does exactly that. The NavigatorState outlives
+    // the reel, so the loading sheet can still be dismissed either way.
+    final navigator = Navigator.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -300,11 +305,16 @@ class _ReelItemState extends State<ReelItem> {
     );
 
     final result = await commentCubit.getPostComments(widget.post.id.toString());
-    Navigator.pop(context);
+    navigator.pop();
+
+    // Past this point everything touches `context` or this State's fields, so
+    // there is nothing safe left to do for a reel the user has scrolled away
+    // from.
+    if (!mounted) return;
 
     result.when(
       success: (comments) {
-        if (mounted) setState(() => _commentCount = comments.length);
+        setState(() => _commentCount = comments.length);
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
