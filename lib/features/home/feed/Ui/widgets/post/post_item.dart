@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:riff/core/networks/api_result.dart';
 import 'package:riff/core/themes/colors/color_manager.dart';
+import 'package:riff/core/social/post_source_link.dart';
 import 'package:riff/core/social/social_platform.dart';
 import 'package:riff/core/social/social_platform_labels.dart';
 import 'package:riff/core/themes/text_styles/text_styles.dart';
@@ -247,10 +248,14 @@ class _PostItemState extends State<PostItem>
     final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final shadowColor = isDark ? Colors.transparent : Colors.black.withOpacity(0.05);
     final post = widget.post;
-    // The URL is what makes the badge useful; the platform only decides how
-    // it is dressed. Requiring both hid the badge on every post shared before
-    // its platform was recognised — which is every YouTube share to date.
-    final hasBadge = (post.sourceUrl ?? '').isNotEmpty;
+    // Not just the share-sheet columns: a link pasted into the composer never
+    // wrote them, so those posts had no affordance at all. See
+    // resolvePostSourceLink.
+    final source = resolvePostSourceLink(
+      sourceUrl: post.sourceUrl,
+      sourcePlatform: post.sourcePlatform,
+      content: post.content,
+    );
 
     return Container(
       margin: EdgeInsets.symmetric(vertical: 6.h),
@@ -346,7 +351,8 @@ class _PostItemState extends State<PostItem>
                   ]),
                 ),
                 Padding(
-                  padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, hasBadge ? 10.h : 14.h),
+                  padding:
+                      EdgeInsets.fromLTRB(14.w, 0, 14.w, source != null ? 10.h : 14.h),
                   child: PostActions(
                     isLiked: isLiked,
                     likeCount: likeCount,
@@ -364,12 +370,12 @@ class _PostItemState extends State<PostItem>
           ),
 
           // ── Platform play badge — outside the tap zone so it gets its own press ──
-          if (hasBadge)
+          if (source != null)
             Padding(
               padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 14.h),
               child: _PlatformPlayBadge(
-                platform: SocialPlatform.maybeFromKey(post.sourcePlatform),
-                url: post.sourceUrl!,
+                platform: source.platform,
+                url: source.url,
               ),
             ),
         ],
