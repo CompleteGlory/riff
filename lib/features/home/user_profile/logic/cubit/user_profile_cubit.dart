@@ -38,6 +38,10 @@ class UserProfileCubit extends Cubit<UserProfileState> {
 
     final profileResult = await _repo.getUserProfile(userId);
     final postsResult = await _repo.getUserPosts(userId);
+    // Two awaits, so leaving the profile before they finish closes this cubit
+    // and every emit below throws "Cannot emit new states after calling
+    // close". `removePostLocally` above already guards; this did not.
+    if (isClosed) return;
 
     profileResult.when(
       success: (profile) {

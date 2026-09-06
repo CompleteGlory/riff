@@ -49,6 +49,12 @@ class _FeedEmptyStateState extends State<FeedEmptyState>
 
   Future<void> _loadSuggested() async {
     final result = await _suggestedRepo.getSuggested();
+    // Scrolling past the empty state while this is in flight disposes the
+    // widget. `setState` is `_element!.markNeedsBuild()` once the debug
+    // asserts are stripped, so in a release build that is not a warning —
+    // it is `Null check operator used on a null value`, fatal, which is how
+    // this reached Sentry.
+    if (!mounted) return;
     result.when(
       success: (users) => setState(() {
         _suggested = users;
