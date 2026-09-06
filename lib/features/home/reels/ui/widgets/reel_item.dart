@@ -360,7 +360,10 @@ class _ReelItemState extends State<ReelItem> {
   // ── Playback speed ──────────────────────────────────────────────────────────
 
   void _setSpeed(double speed) {
-    setState(() => _playbackSpeed = speed);
+    // Called from the options sheet, which outlives this reel: the sheet stays
+    // up while the pager moves underneath it. The speed itself still applies —
+    // the controller is not owned by this State — but the rebuild must not.
+    if (mounted) setState(() => _playbackSpeed = speed);
     widget.controller?.setPlaybackSpeed(speed);
   }
 
@@ -1084,6 +1087,9 @@ class _ReelItemState extends State<ReelItem> {
                 final dur = controller.value.duration;
                 await controller.seekTo(
                     Duration(milliseconds: (v * dur.inMilliseconds).round()));
+                // Letting go of the scrubber and immediately swiping to the
+                // next reel disposes this one while the seek is still running.
+                if (!mounted) return;
                 if (widget.isActive) controller.play();
                 setState(() => _draggingSlider = false);
               },

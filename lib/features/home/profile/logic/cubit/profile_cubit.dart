@@ -138,6 +138,9 @@ class ProfileCubit extends Cubit<ProfileState>
   Future<void> uploadProfileImage(File file) async {
     emit(const ProfileState.imageUploading());
     final result = await _repo.uploadProfileImage(file);
+    // Nothing to report to a screen the user has already left; emitting
+    // here throws "Cannot emit new states after calling close".
+    if (isClosed) return;
     result.when(
       success: (url) => emit(ProfileState.imageUploadSuccess(url)),
       failure: (error) => emit(

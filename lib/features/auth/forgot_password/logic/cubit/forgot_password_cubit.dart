@@ -46,6 +46,9 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
     final response = await _forgotPasswordRepo.requestOtp(
       RequestOtpRequestBody(email: mailController.text),
     );
+    // The three reset screens each get their own instance from the router,
+    // so leaving one mid-request closes this cubit before the reply lands.
+    if (isClosed) return;
     response.when(
       success: (resetToken) async {
         if (resetToken != null) {
@@ -65,6 +68,9 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
     final response = await _forgotPasswordRepo.verifyOtp(
       VerifyOtpRequestBody(email: mailController.text, otp: otp),
     );
+    // The three reset screens each get their own instance from the router,
+    // so leaving one mid-request closes this cubit before the reply lands.
+    if (isClosed) return;
     response.when(
       success: (resetToken) async {
         if (resetToken != null) {
@@ -84,6 +90,9 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
     final response = await _forgotPasswordRepo.resetPassword(
       ResetPasswordRequestBody(resetToken: _resetToken, newPassword: newPasswordController.text),
     );
+    // The three reset screens each get their own instance from the router,
+    // so leaving one mid-request closes this cubit before the reply lands.
+    if (isClosed) return;
     response.when(
       success: (data) async {
         emit(const ForgotPasswordState.resetPasswordSuccess("Password reset successfully"));

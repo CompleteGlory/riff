@@ -148,22 +148,32 @@ class _CommentsSheetState extends State<CommentsSheet> {
     final commentCubit = getIt<CommentCubit>();
     final res = await commentCubit.createComment(widget.postId, text);
 
-    setState(() => _isSending = false);
+    // Deliberately NOT a blanket `if (!mounted) return`. The sheet is
+    // dismissible mid-send — swipe it down, tap the scrim, press back — but
+    // the post underneath is still mounted and owns the visible comment
+    // count, so `onCommentCreated` has to fire whether this sheet survived or
+    // not. Only the parts that touch this State are guarded.
+    if (mounted) setState(() => _isSending = false);
 
     res.when(
       success: (comment) {
         final saved = commentWithAuthorFallback(comment, tempAuthor);
-        final index = _comments.indexWhere((c) => c.id == tempId);
-        if (index != -1) {
-          setState(() {
-            _comments[index] = saved;
-            _pendingIds.remove(tempId);
-            _commentLikes[saved.id] = saved.isLiked ?? false;
-          });
+        if (mounted) {
+          final index = _comments.indexWhere((c) => c.id == tempId);
+          if (index != -1) {
+            setState(() {
+              _comments[index] = saved;
+              _pendingIds.remove(tempId);
+              _commentLikes[saved.id] = saved.isLiked ?? false;
+            });
+          }
         }
+        // The comment was saved; the count must move even if the sheet is gone.
         widget.onCommentCreated(saved);
       },
       failure: (_) {
+        // The optimistic bubble and the banner both died with the sheet.
+        if (!mounted) return;
         setState(() {
           _comments.removeWhere((c) => c.id == tempId);
           _pendingIds.remove(tempId);
@@ -186,6 +196,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
         ? await commentCubit.unlikeComment(comment.id.toString())
         : await commentCubit.likeComment(comment.id.toString());
 
+    if (!mounted) return;
     res.when(
       success: (_) {},
       failure: (_) {
@@ -223,6 +234,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
     if (confirmed != true) return;
 
     final res = await getIt<CommentCubit>().deleteComment(comment.id.toString());
+    if (!mounted) return;
     res.when(
       success: (_) {
         setState(() {
@@ -257,6 +269,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
     });
 
     final res = await getIt<CommentCubit>().updateComment(comment.id.toString(), text);
+    if (!mounted) return;
     res.when(
       success: (_) => _showSuccessSnackBar(S.of(context).commentUpdated),
       failure: (_) {

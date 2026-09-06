@@ -74,6 +74,7 @@ class UserProfileCubit extends Cubit<UserProfileState> {
     ));
     try {
       final status = await _followRepo.followUser(userId);
+      if (isClosed) return;
       // Correct if server disagrees (edge case)
       if (status != optimisticStatus) {
         final correctedDelta = status == 'accepted' ? 1 : 0;
@@ -87,6 +88,7 @@ class UserProfileCubit extends Cubit<UserProfileState> {
       }
     } catch (_) {
       // Revert on error
+      if (isClosed) return;
       emit(UserProfileState.loaded(
         profile: cur.profile,
         posts: cur.posts,
@@ -109,6 +111,7 @@ class UserProfileCubit extends Cubit<UserProfileState> {
       await _followRepo.unfollowUser(userId);
     } catch (_) {
       // Revert on error
+      if (isClosed) return;
       emit(UserProfileState.loaded(
         profile: cur.profile,
         posts: cur.posts,

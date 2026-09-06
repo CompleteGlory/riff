@@ -131,6 +131,9 @@ class _PostItemState extends State<PostItem>
         });
       },
       onError: (error) {
+        // Fires from an async failure, so the row may be gone — `onRevert`
+        // directly above already guards for the same reason.
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: ColorManager.primaryBlack,
@@ -148,6 +151,13 @@ class _PostItemState extends State<PostItem>
 
   void _openComments(String postId) async {
     final commentCubit = getIt<CommentCubit>();
+    // Resolved before the await: `context` is a getter over `_element!`, so it
+    // throws once this post scrolls out of the list and is disposed. The
+    // NavigatorState outlives the row, so the loading sheet still closes.
+    // Identical to the crash Sentry recorded in reel_item._openComments; this
+    // copy sits on the busiest screen in the app.
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
 
     showModalBottomSheet(
       context: context,
@@ -181,7 +191,11 @@ class _PostItemState extends State<PostItem>
     );
 
     final result = await commentCubit.getPostComments(postId);
-    Navigator.pop(context);
+    navigator.pop();
+
+    // Everything past here touches `context` or this State; a disposed row has
+    // nothing left worth doing.
+    if (!mounted) return;
 
     result.when(
       success: (comments) {
@@ -198,13 +212,15 @@ class _PostItemState extends State<PostItem>
             postId: postId,
             initialCommentsCount: comments.length,
             onCommentCreated: (Comment newComment) {
-              setState(() => commentCount++);
+              // The sheet outlives the row: it stays open while the feed
+              // rebuilds underneath it.
+              if (mounted) setState(() => commentCount++);
             },
           ),
         );
       },
       failure: (_) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(content: Text(S.of(context).failedToLoadComments)),
         );
       },

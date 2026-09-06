@@ -57,6 +57,10 @@ class _NewUserOnboardingScreenState extends State<NewUserOnboardingScreen> {
 
   Future<void> _loadSuggested() async {
     final result = await _suggestedRepo.getSuggested();
+    // Started from initState, so finishing onboarding before it returns
+    // disposes this screen. Same shape as the feed empty state, which Sentry
+    // recorded as a fatal null-check in release.
+    if (!mounted) return;
     result.when(
       success: (users) => setState(() {
         _suggested = users;
