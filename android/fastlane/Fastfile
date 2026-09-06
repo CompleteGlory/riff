@@ -27,6 +27,9 @@ platform :android do
 
         Added in this build
 
+        - Posts you shared before this update get the YouTube button
+          too. It reads the link out of the post itself, so old posts are
+          handled without you having to repost anything.
         - YouTube links now work like Instagram, TikTok and Spotify ones.
           Share a video or a Short into Riff and the post carries a
           YouTube button that opens it; the same button appears when you

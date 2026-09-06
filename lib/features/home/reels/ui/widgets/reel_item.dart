@@ -2,6 +2,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:riff/core/utils/media_url.dart';
+import 'package:riff/core/social/post_source_link.dart';
 import 'package:riff/core/social/social_platform.dart';
 import 'package:riff/core/widgets/linkified_text.dart';
 import 'package:riff/core/social/social_platform_labels.dart';
@@ -574,15 +575,23 @@ class _ReelItemState extends State<ReelItem> {
 
   /// True only for link-only posts (no video file) from an external platform.
   /// Posts that have a real video + a sourceUrl play normally with a small badge.
-  bool get _isExternalPlatform =>
-      (widget.post.sourceUrl ?? '').isNotEmpty && !_hasVideoMedia;
+  /// What this post points at, from its stored share columns or from a link
+  /// in its body. Resolved once per build rather than per getter.
+  PostSourceLink? get _source => resolvePostSourceLink(
+        sourceUrl: widget.post.sourceUrl,
+        sourcePlatform: widget.post.sourcePlatform,
+        content: widget.post.content,
+      );
+
+  bool get _isExternalPlatform => _source != null && !_hasVideoMedia;
 
   // ── External platform reel ───────────────────────────────────────────────
 
   Widget _buildExternalPlatformReel(BuildContext context) {
     final post = widget.post;
-    final platform = SocialPlatform.maybeFromKey(post.sourcePlatform);
-    final url = post.sourceUrl!;
+    final source = _source!;
+    final platform = source.platform;
+    final url = source.url;
     final bottomInset = MediaQuery.of(context).padding.bottom + 8.h;
 
     // Resolve thumbnail from post media (first image if any)
@@ -909,12 +918,10 @@ class _ReelItemState extends State<ReelItem> {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Platform badge above author when post has a sourceUrl
-              if (!_isExternalPlatform &&
-                  (widget.post.sourceUrl ?? '').isNotEmpty) ...[
+              if (!_isExternalPlatform && _source != null) ...[
                 _ReelPlatformBadge(
-                  platform:
-                      SocialPlatform.maybeFromKey(widget.post.sourcePlatform),
-                  url: widget.post.sourceUrl!,
+                  platform: _source!.platform,
+                  url: _source!.url,
                 ),
                 SizedBox(height: 8.h),
               ],
