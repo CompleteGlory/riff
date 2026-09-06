@@ -18,6 +18,9 @@ class FeatureRequestCubit extends Cubit<FeatureRequestState> {
       description: description,
       motivation: motivation,
     );
+    // Nothing to report to a screen the user has already left; emitting
+    // here throws "Cannot emit new states after calling close".
+    if (isClosed) return;
     result.when(
       success: (_) => emit(FeatureRequestSuccess()),
       failure: (err) => emit(FeatureRequestFailure(err.message ?? 'Failed to submit')),

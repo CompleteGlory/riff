@@ -20,6 +20,9 @@ class BugReportCubit extends Cubit<BugReportState> {
       stepsToReproduce: stepsToReproduce,
       severity: severity,
     );
+    // Nothing to report to a screen the user has already left; emitting
+    // here throws "Cannot emit new states after calling close".
+    if (isClosed) return;
     result.when(
       success: (_) => emit(BugReportSuccess()),
       failure: (err) => emit(BugReportFailure(err.message ?? 'Failed to submit')),

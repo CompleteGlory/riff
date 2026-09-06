@@ -76,11 +76,16 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         picked.name,
       );
       if (url == null) throw StateError('group photo upload failed');
+      // Backing out of group creation while the photo uploads disposes this
+      // screen; the upload itself is already done and nothing here needs to
+      // survive it.
+      if (!mounted) return;
       setState(() {
         _uploadedImageUrl = url;
         _uploadingImage = false;
       });
     } catch (_) {
+      if (!mounted) return;
       setState(() => _uploadingImage = false);
     }
   }

@@ -46,6 +46,7 @@ class SignupCubit extends Cubit<SignupState<void>> {
             password: passwordController.text,
           ),
         );
+        if (isClosed) return;
         loginResult.when(
           success: (_) => emit(const SignupState.success(null)),
           failure: (_) => emit(const SignupState.success(null)), // proceed anyway

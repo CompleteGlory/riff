@@ -49,6 +49,9 @@ class LoginCubit extends Cubit<LoginState<LoginResponse>> {
   }
 
   void _handleResponse(ApiResult<LoginResponse> response) {
+    // Every caller awaits a request before reaching here, so backing out of
+    // the login screen mid-request closes this cubit first.
+    if (isClosed) return;
     response.when(
       success: (data) {
         // ✅ Token and userId are already saved in LoginRepo

@@ -18,6 +18,9 @@ class ReportCubit extends Cubit<ReportState> {
       reason: reason,
       details: details,
     );
+    // Nothing to report to a screen the user has already left; emitting
+    // here throws "Cannot emit new states after calling close".
+    if (isClosed) return;
     result.when(
       success: (_) => emit(ReportSuccess()),
       failure: (err) => emit(ReportFailure(err.message ?? 'Failed to submit report')),
@@ -35,6 +38,9 @@ class ReportCubit extends Cubit<ReportState> {
       reason: reason,
       details: details,
     );
+    // Nothing to report to a screen the user has already left; emitting
+    // here throws "Cannot emit new states after calling close".
+    if (isClosed) return;
     result.when(
       success: (_) => emit(ReportSuccess()),
       failure: (err) => emit(ReportFailure(err.message ?? 'Failed to submit report')),
