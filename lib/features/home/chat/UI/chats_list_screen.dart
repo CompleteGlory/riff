@@ -222,7 +222,15 @@ class _ChatsListScreenState extends State<ChatsListScreen>
     // search fields never clear each other.
     return BlocProvider<UserSearchCubit>.value(
       value: _userSearch,
-      child: _buildBody(context, isDark),
+      // `Builder` is load-bearing, not decoration. Calling `_buildBody(context)`
+      // directly hands it the context from *above* this provider, so any
+      // `context.watch<UserSearchCubit>()` inside walks up past it and throws
+      // ProviderNotFoundException. That is not theoretical: it crashed the
+      // chat list in production the moment anyone typed in the search field,
+      // because the only such lookup sits behind `if (_query.isNotEmpty)`.
+      // `create_group_screen` has always had this Builder, which is why the
+      // identical code there never failed.
+      child: Builder(builder: (context) => _buildBody(context, isDark)),
     );
   }
 
