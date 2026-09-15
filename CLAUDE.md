@@ -320,58 +320,83 @@ npm run migration:deploy
 
 ---
 
-## File Storage — Cloudinary
+## File Storage — Cloudflare R2 (migrating off Cloudinary)
 
-**Everything is compressed on the way in and deleted on the way out.** Riff is
-on Cloudinary's **free** plan, where storage, delivered bandwidth and
-transformations share one 25-credit budget — and nothing was ever compressed or
-ever removed. See `src/common/media/` in the API:
+**Every new upload is compressed locally and stored on R2; old rows may still
+point at Cloudinary until the backfill runs.** Full plan, rationale and
+status: `docs/cloudinary-to-r2-migration.md`. Short version: Cloudinary's
+free 25-credit tier (storage + delivered bandwidth + transformations share
+one pool) was exhausted, and measured usage showed **94.7% of spent credits
+were delivered bandwidth**, not storage — the exact cost R2's free egress
+eliminates. `MediaUrl.resolve()` in the Flutter app already renders any
+absolute URL as-is, so a Cloudinary row and an R2 row coexist with zero
+client changes during the migration. See `src/common/media/` in the API:
 
 | Piece | What it does |
 |---|---|
-| `cloudinary-upload-options.ts` | `uploadOptionsFor(folder, mimetype)` — the **incoming** transformation every upload passes through, so the compressed file *is* the stored original rather than a derived copy next to a full-size one |
-| `media-cleanup.service.ts` | `deleteUnreferenced(urls)` — destroys assets nothing points at any more, after checking `posts.media`, `messages.media_url`, `conversations.image_url` and `users.profile_picture` |
+| `compression-options.ts` | `kindFromMime` + the compression policy numbers (max dimensions, bitrates) — provider-agnostic, shared by whatever does the compressing |
+| `upload-to-storage.ts` | `uploadCompressed(folder, file)` — compresses locally (`sharp` for images, `ffmpeg` for video/audio, run via `child_process.spawn` against `@ffmpeg-installer/ffmpeg`'s bundled binary) and uploads to R2. Falls back to storing the file uncompressed if compression itself throws — never let compression be the reason a post fails to publish |
+| `r2-client.ts` | Thin S3-compatible client (`@aws-sdk/client-s3`) for R2's endpoint — `putObject`, `deleteObject`, `isR2Url`, `keyFromUrl` |
+| `media-cleanup.service.ts` | `deleteUnreferenced(urls)` — destroys assets nothing points at any more, on **whichever provider** each URL belongs to (`parse()` checks R2 first, then Cloudinary), after checking `posts.media`, `ads.media`, `messages.media_url`, `conversations.image_url`, `users.profile_image_url` and `store_managers.store_logo` |
 | `media.module.ts` | `@Global` module providing the cleanup service |
 
-Compression targets: images capped at 1600 px with `quality: auto:good`; video
-transcoded to **H.264** MP4, 1080p, `quality: auto`, 2.5 Mbps ceiling; audio
-re-encoded to 64 kbps AAC. `resource_type` is resolved from the MIME type and
-is **never `'auto'`** — Cloudinary cannot validate a transformation without
-knowing the type, so `'auto'` silently disables all of it. Audio is stored
-under the `video` resource type; Cloudinary has no audio type.
+Compression targets (unchanged by the provider switch): images capped at
+1600 px, quality 80; video transcoded to **H.264** MP4, 1080p bounding box,
+2.5 Mbps ceiling, `yuv420p`, `+faststart`; audio re-encoded to 64 kbps mono
+AAC. H.264 specifically is not just a size choice — a tester's Android
+device crashed decoding HEVC (`MediaCodecVideoRenderer error`), so
+transcoding on upload is the fix for playback, not only bandwidth.
+
+`ensureFfmpegExecutable()` in `upload-to-storage.ts` `chmod`s the bundled
+ffmpeg binary before first use rather than relying on
+`@ffmpeg-installer/*`'s own `postinstall` script — pnpm ignores third-party
+install scripts by default, and opting one package in via
+`pnpm.onlyBuiltDependencies` turned out to be a global switch that silently
+started blocking scripts for unrelated packages (`@nestjs/core` among them)
+that were relying on the previous default. The binary ships inside the npm
+package already (no network fetch at install time); only the executable bit
+is ever missing.
 
 Cleanup is wired into `DeletePost`, `UpdatePost` (media an edit dropped),
 `AdminDeletePost`, `DeleteAccount`, and chat's `deleteMessage`,
-`deleteConversation` and `declineRequest`. Two rules make it safe: call it
-**after** the owning row is gone, so the reference check sees the world as it
-now is; and if the reference check itself fails, keep everything — storage is
-recoverable, a wrongly destroyed asset is not. `MessageRepository.markDeleted`
-also nulls `media_url`, or the tombstone would keep the asset alive forever.
+`deleteConversation` and `declineRequest` — **not** yet into ad/store-logo
+deletion (`DeleteAd` has no cleanup call site at all; a real, separate gap
+found while auditing this for the R2 migration, not yet fixed). Two rules
+make cleanup safe: call it **after** the owning row is gone, so the
+reference check sees the world as it now is; and if the reference check
+itself fails, keep everything — storage is recoverable, a wrongly destroyed
+asset is not. `MessageRepository.markDeleted` also nulls `media_url`, or the
+tombstone would keep the asset alive forever.
 
-
-All media is uploaded to Cloudinary. Three separate service classes handle this:
+Five service classes upload media — four go through the shared
+`uploadCompressed`/`uploadCompressedAll`, one previously had two ad-hoc
+direct Cloudinary calls (`AdMediaService`, `FileUploadService`) which now
+also go through the shared path:
 
 | Service | Folder | Used for |
 |---------|--------|---------|
 | `PostMediaService` | `riff/posts` | Post images/videos |
 | `ChatMediaService.save()` | `riff/chat` | Chat media messages |
 | `ChatMediaService.saveGroupPhoto()` | `riff/groups` | Group conversation photos |
-| `AdMediaService` | `riff/ads` | Commercial ad media |
+| `AdMediaService` | `riff/ads`, `riff/stores` | Commercial ad media, store logos |
 | `FileUploadService` (users) | `riff/profiles` | Profile pictures |
 
-**Env vars required:**
+**Env vars required (R2):**
 ```
-CLOUDINARY_CLOUD_NAME=
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
+R2_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET=
+CDN_BASE_URL=
 ```
+`CLOUDINARY_*` stays required too, until the backfill (migration doc's Phase
+2) moves every existing row's URL off Cloudinary — `media-cleanup.service.ts`
+still needs it to delete old-provider rows in the meantime.
 
-Upload pattern (NestJS):
+Upload pattern (NestJS), unchanged in shape from the Cloudinary era — only
+what's inside changed:
 ```typescript
-cloudinary.uploader.upload_stream(
-  { folder: 'riff/<folder>', resource_type: 'auto' | 'image' | 'video' },
-  (error, result) => { ... }
-).end(file.buffer);
+const url = await uploadCompressed('riff/<folder>', file);
 ```
 
 On the Flutter side, always upload via `FormData` with `MultipartFile.fromFile(...)` then pass the returned URL to subsequent API calls.
@@ -811,6 +836,7 @@ full widget test.
 | A video upload reached 100% and then failed | `DioFactory`, `create_post_repo.dart`, `media_limits.dart`, `post-media-upload-limits.ts` | Two independent ceilings, both invisible. Dio's `receiveTimeout` does not measure the transfer — it wraps the wait for the **response headers**, which starts once the body is written and ends when the server answers, and the server only answers after pushing the file to Cloudinary. So 30 s was a budget for *server* work, and the request was aborted while that work was still running: bytes all sent, bar full, upload failed. Underneath it the picker allowed **five minutes** of video, and a phone shoots 1080p at ~7.7 Mbps (measured from a crash report's real format string) — roughly a 290 MB upload, past Cloudinary's 100 MB single-upload limit and past anything a mobile connection finishes. Now: uploads carry `DioFactory.uploadOptions` (5-minute receive timeout), video is capped at one minute, and the API rejects a file over 80 MB instead of buffering it whole in a Railway container's memory |
 | A video crashed playback on some Android phones | `MediaUrl.videoStream`, `cloudinary-upload-options.ts` | Phones record HEVC (H.265) and Cloudinary stored it untouched, so one phone's clip was delivered as-is to every other. A tester's device died on `PlatformException(VideoError, … MediaCodecVideoRenderer error … video/hevc …)` — fatal and **unhandled**, and the container reported `format_supported=YES`, which is why nothing caught it. New uploads are transcoded to H.264 on the way into storage; clips posted before that are fixed on delivery, with `f_mp4,vc_h264,q_auto` inserted into the Cloudinary URL. The delivery rule must skip voice notes: they live under `/video/upload/` too, and asking Cloudinary for an H.264 video track of an audio file asks for a track that does not exist |
 | Read receipts stuck on one check — recipient had read the messages | `chat.controller.ts` (`serializeMsg`), `message-status.ts` | Read state only ever existed as a transient `message_status` socket event, upgraded in memory by whoever had that exact chat open at the time. Nothing persisted it and `serializeMsg` had **no `status` field**, so `MessageStatusX.fromString(null)` fell through to `sent` and every message reset to one check as soon as the sender reopened the chat. Status is now derived server-side from `conversation_participants.last_read_at`, returned on every message, and `GET .../messages` also emits a read receipt so a client whose socket hasn't come up still clears the sender's ticks. Voice notes go through the media-upload endpoint, which now carries the same status as a socket-sent text message |
+| Deleted media was never actually removed from Cloudinary | `MediaCleanupService.referencedUrls` | The `users` reference check queried a column named `profile_picture`, which doesn't exist — the real column is `profile_image_url`. Postgres rejected the query on every call, and `deleteUnreferenced`'s own safety net ("can't confirm it's unreferenced, so keep it") caught that failure and silently kept every asset. Every post, chat media file and group photo deleted since this shipped stayed in Cloudinary, uncleaned — a likely contributor to exhausting the free-tier credits faster than the "compress + clean up on delete" design intended. The existing spec mocked `dataSource.query` to return canned rows without ever inspecting the SQL text, so a wrong column name that still parses and still resolves (just always to zero rows) passed every test. Fixed to `profile_image_url`, with a test that asserts the query string itself rather than just its result |
 
 ---
 
@@ -839,10 +865,18 @@ GOOGLE_WEB_CLIENT_SECRET=
 GOOGLE_ANDROID_CLIENT_ID=
 GOOGLE_IOS_CLIENT_ID=
 
-# Cloudinary
+# Cloudinary — still required until the R2 backfill (migration Phase 2) is
+# done; media-cleanup.service.ts uses it to delete old-provider rows
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
+
+# Cloudflare R2 — where every new upload goes; see docs/cloudinary-to-r2-migration.md
+R2_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET=
+CDN_BASE_URL=
 
 # Firebase (FCM push notifications)
 FIREBASE_SERVICE_ACCOUNT_JSON=
