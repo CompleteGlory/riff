@@ -312,7 +312,6 @@ class GalleryGridSheet extends StatefulWidget {
 
 class _GalleryGridSheetState extends State<GalleryGridSheet> {
   final _gallery = DeviceGallery();
-  final _scroll = ScrollController();
   final List<AssetEntity> _assets = [];
   final List<AssetEntity> _selected = [];
 
@@ -323,24 +322,17 @@ class _GalleryGridSheetState extends State<GalleryGridSheet> {
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(_onScroll);
     _loadMore();
   }
 
-  @override
-  void dispose() {
-    _scroll.dispose();
-    super.dispose();
-  }
-
-  void _onScroll() {
-    if (_loading || _exhausted) return;
+  // Listens to the grid itself: it is driven by the sheet's own controller, so a
+  // listener on a controller of ours never fired and the grid stopped at page 0.
+  bool _onScroll(ScrollNotification n) {
+    if (_loading || _exhausted) return false;
     // Fetch the next page before the user reaches the end, so scrolling does
     // not stall on a library of thousands.
-    if (_scroll.position.pixels >
-        _scroll.position.maxScrollExtent - 600) {
-      _loadMore();
-    }
+    if (n.metrics.extentAfter < 600) _loadMore();
+    return false;
   }
 
   Future<void> _loadMore() async {
@@ -421,26 +413,29 @@ class _GalleryGridSheetState extends State<GalleryGridSheet> {
             ),
           ),
           Expanded(
-            child: GridView.builder(
-              controller: sheetScroll,
-              padding: EdgeInsets.all(8.w),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: 4.w,
-                crossAxisSpacing: 4.w,
+            child: NotificationListener<ScrollNotification>(
+              onNotification: _onScroll,
+              child: GridView.builder(
+                controller: sheetScroll,
+                padding: EdgeInsets.all(8.w),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 4.w,
+                  crossAxisSpacing: 4.w,
+                ),
+                itemCount: _assets.length,
+                itemBuilder: (context, i) {
+                  final asset = _assets[i];
+                  final index = _selected.indexOf(asset);
+                  return GalleryThumb(
+                    asset: asset,
+                    edge: 120.w,
+                    selectionIndex:
+                        multi && index >= 0 ? index + 1 : null,
+                    onTap: () => _toggle(asset),
+                  );
+                },
               ),
-              itemCount: _assets.length,
-              itemBuilder: (context, i) {
-                final asset = _assets[i];
-                final index = _selected.indexOf(asset);
-                return GalleryThumb(
-                  asset: asset,
-                  edge: 120.w,
-                  selectionIndex:
-                      multi && index >= 0 ? index + 1 : null,
-                  onTap: () => _toggle(asset),
-                );
-              },
             ),
           ),
         ],

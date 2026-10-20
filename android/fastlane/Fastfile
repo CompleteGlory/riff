@@ -23,7 +23,7 @@ platform :android do
       release_notes: <<~RELEASE_NOTES
         Version 1.0.21
 
-        Date: 2026-09-06 (build 10022)
+        Date: 2026-10-20
 
         Added in this build
 
@@ -50,6 +50,10 @@ platform :android do
           something you had already saved.
 
         Fixed in this build
+
+        - Scrolling through "All" in the camera now keeps going back through
+          your whole library. It used to stop after your most recent 60
+          photos and videos, so anything older could not be picked.
 
         - Several crashes fixed. Opening the comments on a reel or a post
           and then swiping away, the unfollow sheet in notifications, and
