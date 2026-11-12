@@ -14,9 +14,9 @@
 </p>
 
 <p align="center">
-  <a href="https://apps.apple.com/us/app/riff-social-music/id6794351030"><img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83" height="56" align="middle" alt="Download on the App Store" /></a>
+  <a href="https://apps.apple.com/us/app/riff-social-music/id6794351030"><img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83" width="168" align="middle" alt="Download on the App Store" /></a>
   &nbsp;&nbsp;
-  <a href="https://play.google.com/store/apps/details?id=com.magd.riff"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="83" align="middle" alt="Get it on Google Play" /></a>
+  <a href="https://play.google.com/store/apps/details?id=com.magd.riff"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" width="216" align="middle" alt="Get it on Google Play" /></a>
 </p>
 
 <br />
